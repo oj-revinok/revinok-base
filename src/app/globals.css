@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #BDD630;
+  --text-2xs: 9px; --text-xs: 10px; --text-sm: 11px; --text-base: 12px;
+  --text-md: 13px; --text-lg: 15px; --text-xl: 17px;
+  --text-2xl: 22px; --text-3xl: 24px; --text-4xl: 28px;
+  --w-normal:400; --w-medium:500; --w-semi:600; --w-bold:700; --w-heavy:800; --w-black:900;
+  --ls-tight:-0.025em; --ls-none:0em; --ls-xs:0.02em; --ls-sm:0.04em; --ls-base:0.06em;
+  --lh-tight:1.1; --lh-snug:1.4; --lh-normal:1.6; --lh-relaxed:1.8;
+  --sidebar:220px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #080808;
+  color: #efefef;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #232323; }
