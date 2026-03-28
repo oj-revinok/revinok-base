@@ -1,14 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-interface TeamMember {
-  id: string
-  full_name: string
-  email: string
-  role: string
-  project_count: number
-}
-
 export default async function TeamPage() {
   const supabase = createClient()
 
@@ -22,14 +14,14 @@ export default async function TeamPage() {
     .eq('id', user?.id)
     .single()
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
     redirect('/dashboard')
   }
 
-  const { data: team_members } = await supabase
+  const { data: teamMembers } = await supabase
     .from('profiles')
     .select('*')
-    .order('created_at', { ascending: true })
+    .order('full_name')
 
   return (
     <div style={{ padding: '40px' }}>
@@ -54,6 +46,7 @@ export default async function TeamPage() {
           TEAM
         </h1>
         <button
+          className="btn-primary"
           style={{
             padding: '12px 24px',
             backgroundColor: '#BDD630',
@@ -66,13 +59,6 @@ export default async function TeamPage() {
             letterSpacing: '0.5px',
             cursor: 'pointer',
             fontFamily: 'Montserrat, sans-serif',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#d4e650'
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#BDD630'
           }}
         >
           + INVITE MEMBER
@@ -86,27 +72,17 @@ export default async function TeamPage() {
           gap: '24px',
         }}
       >
-        {team_members && team_members.length > 0 ? (
-          team_members.map((member: TeamMember) => (
+        {teamMembers && teamMembers.length > 0 ? (
+          teamMembers.map((member) => (
             <div
               key={member.id}
+              className="card-hover"
               style={{
                 backgroundColor: '#0e0e0e',
                 border: '1px solid #1a1a1a',
                 borderRadius: '8px',
                 padding: '24px',
-                transition: 'all 0.2s ease',
                 cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLDivElement
-                el.style.borderColor = '#333333'
-                el.style.backgroundColor = '#151515'
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLDivElement
-                el.style.borderColor = '#1a1a1a'
-                el.style.backgroundColor = '#0e0e0e'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
@@ -122,9 +98,10 @@ export default async function TeamPage() {
                     color: '#080808',
                     fontWeight: 700,
                     fontSize: '16px',
+                    flexShrink: 0,
                   }}
                 >
-                  {member.full_name
+                  {(member.full_name || member.email || 'U')
                     .split(' ')
                     .map((n: string) => n[0])
                     .join('')
@@ -132,20 +109,13 @@ export default async function TeamPage() {
                     .toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                    }}
-                  >
-                    {member.full_name}
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
+                    {member.full_name || member.email}
                   </h3>
                   <p
                     style={{
                       margin: '4px 0 0 0',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       color: '#BDD630',
                       textTransform: 'uppercase',
                       fontWeight: 600,
@@ -156,14 +126,7 @@ export default async function TeamPage() {
                 </div>
               </div>
 
-              <p
-                style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '12px',
-                  color: '#999999',
-                  wordBreak: 'break-all',
-                }}
-              >
+              <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#999999', wordBreak: 'break-all' }}>
                 {member.email}
               </p>
 
@@ -177,28 +140,15 @@ export default async function TeamPage() {
                 }}
               >
                 <div>
-                  <p
-                    style={{
-                      fontSize: '10px',
-                      color: '#666666',
-                      margin: 0,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    PROJECTS
+                  <p style={{ fontSize: '10px', color: '#666666', margin: 0, textTransform: 'uppercase' }}>
+                    JOINED
                   </p>
-                  <p
-                    style={{
-                      fontSize: '18px',
-                      fontWeight: 700,
-                      color: '#BDD630',
-                      margin: '4px 0 0 0',
-                    }}
-                  >
-                    {member.project_count || 0}
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', margin: '4px 0 0 0' }}>
+                    {new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </p>
                 </div>
                 <button
+                  className="btn-ghost"
                   style={{
                     padding: '8px 16px',
                     backgroundColor: 'transparent',
@@ -210,15 +160,6 @@ export default async function TeamPage() {
                     textTransform: 'uppercase',
                     cursor: 'pointer',
                     fontFamily: 'Montserrat, sans-serif',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#BDD630'
-                    ;(e.target as HTMLButtonElement).style.color = '#BDD630'
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#1a1a1a'
-                    ;(e.target as HTMLButtonElement).style.color = '#999999'
                   }}
                 >
                   MANAGE
@@ -227,14 +168,7 @@ export default async function TeamPage() {
             </div>
           ))
         ) : (
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              textAlign: 'center',
-              padding: '60px 40px',
-              color: '#666666',
-            }}
-          >
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 40px', color: '#666666' }}>
             <p style={{ fontSize: '14px', margin: 0 }}>No team members yet</p>
           </div>
         )}

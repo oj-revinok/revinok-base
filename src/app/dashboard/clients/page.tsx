@@ -1,14 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 
-interface Client {
-  id: string
-  name: string
-  email: string
-  company: string
-  project_count: number
-  status: string
-}
-
 export default async function ClientsPage() {
   const supabase = createClient()
 
@@ -24,8 +15,10 @@ export default async function ClientsPage() {
 
   const { data: clients } = await supabase
     .from('clients')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .select('*, projects ( id )')
+    .order('name')
+
+  const canCreate = profile?.role === 'admin' || profile?.role === 'project_manager'
 
   return (
     <div style={{ padding: '40px' }}>
@@ -49,8 +42,9 @@ export default async function ClientsPage() {
         >
           CLIENTS
         </h1>
-        {(profile?.role === 'admin' || profile?.role === 'pm') && (
+        {canCreate && (
           <button
+            className="btn-primary"
             style={{
               padding: '12px 24px',
               backgroundColor: '#BDD630',
@@ -63,13 +57,6 @@ export default async function ClientsPage() {
               letterSpacing: '0.5px',
               cursor: 'pointer',
               fontFamily: 'Montserrat, sans-serif',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#d4e650'
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#BDD630'
             }}
           >
             + ADD CLIENT
@@ -87,163 +74,97 @@ export default async function ClientsPage() {
         >
           <thead>
             <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
-              <th
-                style={{
-                  padding: '16px 24px',
-                  textAlign: 'left',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#BDD630',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                CLIENT
-              </th>
-              <th
-                style={{
-                  padding: '16px 24px',
-                  textAlign: 'left',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#BDD630',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                EMAIL
-              </th>
-              <th
-                style={{
-                  padding: '16px 24px',
-                  textAlign: 'left',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#BDD630',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                PROJECTS
-              </th>
-              <th
-                style={{
-                  padding: '16px 24px',
-                  textAlign: 'left',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#BDD630',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                STATUS
-              </th>
+              {['CLIENT', 'INDUSTRY', 'EMAIL', 'PROJECTS'].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    padding: '16px 24px',
+                    textAlign: 'left',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#BDD630',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {clients && clients.length > 0 ? (
-              clients.map((client: Client, index: number) => (
+              clients.map((client, index) => (
                 <tr
                   key={client.id}
+                  className="nav-link"
                   style={{
                     borderBottom: index < clients.length - 1 ? '1px solid #1a1a1a' : 'none',
-                    transition: 'background-color 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#151515'
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent'
+                    cursor: 'pointer',
                   }}
                 >
-                  <td
-                    style={{
-                      padding: '16px 24px',
-                      fontSize: '14px',
-                      color: '#ffffff',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div
                         style={{
                           width: '36px',
                           height: '36px',
                           borderRadius: '50%',
-                          backgroundColor: '#BDD630',
+                          backgroundColor: client.avatar_color || '#BDD630',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#080808',
                           fontWeight: 700,
                           fontSize: '13px',
+                          flexShrink: 0,
                         }}
                       >
-                        {client.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        {(client.brand_name || client.name)
+                          .split(' ')
+                          .map((n: string) => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontWeight: 600 }}>{client.name}</p>
-                        {client.company && (
-                          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666666' }}>
-                            {client.company}
+                        <p style={{ margin: 0, fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>
+                          {client.brand_name || client.name}
+                        </p>
+                        {client.website && (
+                          <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#666666' }}>
+                            {client.website.replace('https://', '')}
                           </p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td
-                    style={{
-                      padding: '16px 24px',
-                      fontSize: '13px',
-                      color: '#999999',
-                    }}
-                  >
-                    {client.email}
+                  <td style={{ padding: '16px 24px', fontSize: '13px', color: '#999999' }}>
+                    {client.industry || '—'}
                   </td>
-                  <td
-                    style={{
-                      padding: '16px 24px',
-                      fontSize: '13px',
-                      color: '#999999',
-                    }}
-                  >
-                    {client.project_count || 0}
+                  <td style={{ padding: '16px 24px', fontSize: '13px', color: '#999999' }}>
+                    {client.email || '—'}
                   </td>
-                  <td
-                    style={{
-                      padding: '16px 24px',
-                      fontSize: '12px',
-                    }}
-                  >
+                  <td style={{ padding: '16px 24px' }}>
                     <span
                       style={{
                         display: 'inline-block',
                         padding: '4px 12px',
-                        backgroundColor: client.status === 'active' ? '#4ade80' : '#666666',
-                        color: '#080808',
+                        backgroundColor: '#1a1a1a',
+                        color: '#BDD630',
                         borderRadius: '4px',
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        fontSize: '10px',
+                        fontSize: '13px',
                       }}
                     >
-                      {client.status || 'ACTIVE'}
+                      {(client as { projects?: { id: string }[] }).projects?.length ?? 0}
                     </span>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={4}
-                  style={{
-                    padding: '60px 24px',
-                    textAlign: 'center',
-                    color: '#666666',
-                    fontSize: '14px',
-                  }}
-                >
+                <td colSpan={4} style={{ padding: '60px 24px', textAlign: 'center', color: '#666666', fontSize: '14px' }}>
                   No clients yet
                 </td>
               </tr>

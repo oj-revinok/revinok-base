@@ -25,3 +25,18 @@ body {
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: #232323; }
+
+/* Reusable hover utilities (safe for server components) */
+.card-hover { transition: all 0.2s ease; }
+.card-hover:hover { border-color: #333333 !important; background-color: #151515 !important; }
+
+.btn-primary { transition: all 0.2s ease; }
+.btn-primary:hover { background-color: #d4e650 !important; }
+
+.btn-ghost { transition: all 0.2s ease; }
+.btn-ghost:hover { background-color: #1a1a1a !important; color: #BDD630 !important; border-color: #BDD630 !important; }
+
+.nav-link { transition: all 0.2s ease; }
+.nav-link:hover { background-color: #1a1a1a !important; color: #BDD630 !important; }
+
+body { overflow: auto; }
