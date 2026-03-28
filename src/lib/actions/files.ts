@@ -28,8 +28,8 @@ export async function saveFileRecord(
     name: fileName,
     url: publicUrl,
     storage_path: storagePath,
-    size: fileSize,
-    type: mimeType,
+    size_bytes: fileSize,
+    file_type: mimeType,
     uploaded_by: user.id,
   })
 

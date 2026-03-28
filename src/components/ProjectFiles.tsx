@@ -12,8 +12,8 @@ interface ProjectFile {
   name: string
   url: string
   storage_path: string
-  size: number
-  type: string
+  size_bytes: number | null
+  file_type: string | null
   created_at: string
 }
 
@@ -23,7 +23,8 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function fileIcon(mimeType: string) {
+function fileIcon(mimeType: string | null) {
+  if (!mimeType) return '📎'
   if (mimeType.startsWith('image/')) return '🖼'
   if (mimeType === 'application/pdf') return '📄'
   if (mimeType.includes('word') || mimeType.includes('document')) return '📝'
@@ -82,8 +83,8 @@ export default function ProjectFiles({
           name: file.name,
           url: data.publicUrl,
           storage_path: path,
-          size: file.size,
-          type: file.type,
+          size_bytes: file.size,
+          file_type: file.type,
           created_at: new Date().toISOString(),
         },
         ...prev,
@@ -170,7 +171,7 @@ export default function ProjectFiles({
                 minHeight: '52px',
               }}
             >
-              <span style={{ fontSize: '18px', flexShrink: 0 }}>{fileIcon(file.type)}</span>
+              <span style={{ fontSize: '18px', flexShrink: 0 }}>{fileIcon(file.file_type)}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <a
                   href={file.url}
@@ -190,7 +191,7 @@ export default function ProjectFiles({
                   {file.name}
                 </a>
                 <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#555555' }}>
-                  {formatBytes(file.size)} ·{' '}
+                  {file.size_bytes ? formatBytes(file.size_bytes) : '—'} ·{' '}
                   {new Date(file.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
