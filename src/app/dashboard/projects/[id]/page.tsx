@@ -71,7 +71,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const client = (project as any).clients
 
   return (
-    <div style={{ padding: '24px 20px 60px' }}>
+    <div style={{ padding: '20px 16px 60px', maxWidth: '100%', overflowX: 'hidden' }}>
       {/* Back + header */}
       <div style={{ marginBottom: '28px' }}>
         <a
@@ -103,21 +103,21 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Project name — the hero */}
+            {/* CLIENT NAME — the hero headline */}
             <h1 style={{
-              fontSize: 'clamp(26px, 6vw, 38px)',
+              fontSize: 'clamp(24px, 6vw, 38px)',
               fontWeight: 900,
               color: '#ffffff',
-              margin: '0 0 8px 0',
+              margin: '0 0 6px 0',
               textTransform: 'uppercase',
               letterSpacing: '-1px',
               wordBreak: 'break-word',
               lineHeight: 1.1,
             }}>
-              {project.name}
+              {client ? (client.brand_name || client.name) : project.name}
             </h1>
 
-            {/* Client — secondary label below the title */}
+            {/* Project name / work type — secondary label */}
             {client && (
               <p style={{
                 fontSize: '11px',
@@ -126,13 +126,21 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 margin: '0 0 12px 0',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
+                wordBreak: 'break-word',
               }}>
-                {client.brand_name || client.name}
+                {project.name}
               </p>
             )}
 
             {project.description && (
-              <p style={{ color: '#999999', margin: 0, fontSize: '14px', lineHeight: 1.6, maxWidth: '600px' }}>
+              <p style={{
+                color: '#999999',
+                margin: '0',
+                fontSize: '13px',
+                lineHeight: 1.7,
+                maxWidth: '600px',
+                wordBreak: 'break-word',
+              }}>
                 {project.description}
               </p>
             )}

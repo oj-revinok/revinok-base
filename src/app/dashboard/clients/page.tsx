@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import AddClientModal from '@/components/AddClientModal'
 
 export default async function ClientsPage() {
   const supabase = createClient()
@@ -21,20 +22,20 @@ export default async function ClientsPage() {
   const canCreate = profile?.role === 'admin' || profile?.role === 'project_manager'
 
   return (
-    <div className="page-content">
+    <div style={{ padding: '20px 16px 40px' }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '28px',
+          marginBottom: '20px',
           gap: '12px',
           flexWrap: 'wrap',
         }}
       >
         <h1
           style={{
-            fontSize: 'clamp(24px, 5vw, 32px)',
+            fontSize: 'clamp(22px, 5vw, 32px)',
             fontWeight: 900,
             color: '#ffffff',
             margin: 0,
@@ -44,27 +45,7 @@ export default async function ClientsPage() {
         >
           CLIENTS
         </h1>
-        {canCreate && (
-          <button
-            className="btn-primary"
-            style={{
-              padding: '12px 20px',
-              backgroundColor: '#BDD630',
-              color: '#080808',
-              border: 'none',
-              fontSize: '11px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              fontFamily: 'Montserrat, sans-serif',
-              minHeight: '44px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            + ADD CLIENT
-          </button>
-        )}
+        {canCreate && <AddClientModal />}
       </div>
 
       {clients && clients.length > 0 ? (
