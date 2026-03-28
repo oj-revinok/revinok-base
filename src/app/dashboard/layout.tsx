@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import MobileNav from '@/components/MobileNav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -9,9 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -29,21 +28,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : 'U'
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        backgroundColor: '#080808',
-        fontFamily: 'Montserrat, sans-serif',
-      }}
-    >
+    <div style={{ backgroundColor: '#080808', fontFamily: 'Montserrat, sans-serif', minHeight: '100vh' }}>
+      {/* Desktop sidebar */}
       <Sidebar
         userInitials={userInitials}
         fullName={profile?.full_name ?? null}
         email={user.email ?? ''}
         role={profile?.role ?? 'viewer'}
       />
-      <main className="main-content" style={{ flex: 1 }}>{children}</main>
+
+      {/* Mobile: top logo bar + bottom nav */}
+      <MobileNav />
+
+      {/* Main content */}
+      <main className="main-content">
+        {children}
+      </main>
     </div>
   )
 }

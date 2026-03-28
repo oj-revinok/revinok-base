@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import AddNoteForm from '@/components/AddNoteForm'
+import ProjectFiles from '@/components/ProjectFiles'
 
 const STATUS_COLORS: Record<string, string> = {
   discovery: '#a78bfa',
@@ -25,7 +27,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const { id } = await params
   const supabase = createClient()
 
-  const [{ data: project }, { data: tasks }, { data: notes }, { data: activity }, { data: links }] =
+  const [{ data: project }, { data: tasks }, { data: notes }, { data: activity }, { data: links }, { data: projectFiles }] =
     await Promise.all([
       supabase
         .from('projects')
@@ -41,8 +43,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         .from('notes')
         .select('*, profiles!notes_author_id_fkey ( full_name )')
         .eq('project_id', id)
-        .order('created_at', { ascending: false })
-        .limit(3),
+        .order('created_at', { ascending: false }),
       supabase
         .from('activity_log')
         .select('*, profiles!activity_log_actor_id_fkey ( full_name )')
@@ -54,6 +55,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         .select('*')
         .eq('project_id', id)
         .order('sort_order'),
+      supabase
+        .from('project_files')
+        .select('*')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false }),
     ])
 
   if (!project) notFound()
@@ -97,31 +103,36 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Project name — the hero */}
+            <h1 style={{
+              fontSize: 'clamp(26px, 6vw, 38px)',
+              fontWeight: 900,
+              color: '#ffffff',
+              margin: '0 0 8px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '-1px',
+              wordBreak: 'break-word',
+              lineHeight: 1.1,
+            }}>
+              {project.name}
+            </h1>
+
+            {/* Client — secondary label below the title */}
             {client && (
               <p style={{
                 fontSize: '11px',
-                fontWeight: 700,
-                color: '#BDD630',
-                margin: '0 0 8px 0',
+                fontWeight: 600,
+                color: '#666666',
+                margin: '0 0 12px 0',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
               }}>
                 {client.brand_name || client.name}
               </p>
             )}
-            <h1 style={{
-              fontSize: 'clamp(22px, 5vw, 32px)',
-              fontWeight: 900,
-              color: '#ffffff',
-              margin: 0,
-              textTransform: 'uppercase',
-              letterSpacing: '-1px',
-              wordBreak: 'break-word',
-            }}>
-              {project.name}
-            </h1>
+
             {project.description && (
-              <p style={{ color: '#999999', margin: '12px 0 0 0', fontSize: '14px', lineHeight: 1.6, maxWidth: '600px' }}>
+              <p style={{ color: '#999999', margin: 0, fontSize: '14px', lineHeight: 1.6, maxWidth: '600px' }}>
                 {project.description}
               </p>
             )}
@@ -145,11 +156,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — no budget */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '12px',
           marginBottom: '28px',
         }}
@@ -158,7 +169,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           { label: 'Total Tasks', value: tasks?.length ?? 0, color: '#ffffff' },
           { label: 'In Progress', value: inProgressTasks.length, color: '#4a9eff' },
           { label: 'Completed', value: doneTasks.length, color: '#4ade80' },
-          { label: 'Budget', value: project.budget ? `$${Number(project.budget).toLocaleString()}` : 'TBD', color: '#BDD630' },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -185,6 +195,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       >
         {/* Left: Tasks + Notes */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* Tasks */}
           <div style={{ backgroundColor: '#0e0e0e', padding: '20px', border: '1px solid #1a1a1a' }}>
             <h2 style={{ fontSize: '12px', fontWeight: 700, color: '#BDD630', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               TASKS ({tasks?.length ?? 0})
@@ -236,24 +248,51 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             )}
           </div>
 
-          {/* Notes */}
-          {notes && notes.length > 0 && (
-            <div style={{ backgroundColor: '#0e0e0e', padding: '20px', border: '1px solid #1a1a1a' }}>
-              <h2 style={{ fontSize: '12px', fontWeight: 700, color: '#BDD630', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                NOTES
-              </h2>
+          {/* Notes — with add form */}
+          <div style={{ backgroundColor: '#0e0e0e', padding: '20px', border: '1px solid #1a1a1a' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 700, color: '#BDD630', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              NOTES {notes && notes.length > 0 ? `(${notes.length})` : ''}
+            </h2>
+
+            <AddNoteForm projectId={id} />
+
+            {notes && notes.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {notes.map((note) => (
-                  <div key={note.id} style={{ padding: '14px', backgroundColor: '#111111', borderLeft: '3px solid #BDD630' }}>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.6 }}>{note.content}</p>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#555555' }}>
-                      {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </p>
-                  </div>
-                ))}
+                {notes.map((note) => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const author = (note as any).profiles?.full_name
+                  return (
+                    <div key={note.id} style={{ padding: '14px', backgroundColor: '#111111', borderLeft: '3px solid #333333' }}>
+                      <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.6 }}>
+                        {note.content}
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {author && (
+                          <span style={{ fontSize: '11px', color: '#BDD630', fontWeight: 600 }}>
+                            {author}
+                          </span>
+                        )}
+                        {author && <span style={{ fontSize: '11px', color: '#333333' }}>·</span>}
+                        <span style={{ fontSize: '11px', color: '#555555' }}>
+                          {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-          )}
+            ) : (
+              <p style={{ color: '#666666', fontSize: '13px', margin: 0 }}>No notes yet. Add the first one above.</p>
+            )}
+          </div>
+
+          {/* Files */}
+          <div style={{ backgroundColor: '#0e0e0e', padding: '20px', border: '1px solid #1a1a1a' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 700, color: '#BDD630', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              FILES {projectFiles && projectFiles.length > 0 ? `(${projectFiles.length})` : ''}
+            </h2>
+            <ProjectFiles projectId={id} initialFiles={projectFiles ?? []} />
+          </div>
         </div>
 
         {/* Right: Details + Links + Activity */}

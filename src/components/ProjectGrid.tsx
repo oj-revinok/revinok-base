@@ -9,7 +9,6 @@ interface Project {
   status: string
   start_date: string | null
   due_date: string | null
-  budget: number | null
   clients?: { id: string; name: string; brand_name: string | null } | null
 }
 
@@ -47,6 +46,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
           alignItems: 'center',
           marginBottom: '28px',
           gap: '12px',
+          flexWrap: 'wrap',
         }}
       >
         <h1
@@ -88,7 +88,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
       {/* Filter tabs — scrollable on mobile */}
       <div
         className="filter-tabs"
-        style={{ display: 'flex', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' }}
+        style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}
       >
         {ALL_STATUSES.map((status) => {
           const isActive = activeFilter === status
@@ -96,7 +96,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
             <button
               key={status}
               onClick={() => setActiveFilter(status)}
-              className={isActive ? 'tag' : 'tag btn-ghost'}
+              className="tag"
               style={{
                 padding: '10px 16px',
                 backgroundColor: isActive ? '#BDD630' : 'transparent',
@@ -121,7 +121,6 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
 
       {/* Project grid */}
       <div
-        className="grid-auto"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
@@ -143,6 +142,9 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
                 }}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLDivElement
@@ -155,33 +157,40 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   el.style.backgroundColor = '#0e0e0e'
                 }}
               >
-                <div style={{ marginBottom: '14px' }}>
-                  <p
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      color: '#BDD630',
-                      margin: '0 0 6px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {project.clients?.brand_name || project.clients?.name || 'Internal'}
-                  </p>
+                {/* Project name — the hero */}
+                <div>
                   <h2
                     style={{
-                      fontSize: '18px',
-                      fontWeight: 700,
+                      fontSize: '20px',
+                      fontWeight: 800,
                       color: '#ffffff',
-                      margin: 0,
-                      lineHeight: 1.3,
+                      margin: '0 0 6px 0',
+                      lineHeight: 1.2,
+                      letterSpacing: '-0.5px',
+                      wordBreak: 'break-word',
                     }}
                   >
                     {project.name}
                   </h2>
+                  {/* Client — secondary label */}
+                  {(project.clients?.brand_name || project.clients?.name) && (
+                    <p
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: '#666666',
+                        margin: 0,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      {project.clients?.brand_name || project.clients?.name}
+                    </p>
+                  )}
                 </div>
 
-                <div style={{ marginBottom: '14px' }}>
+                {/* Status badge */}
+                <div>
                   <span
                     className="tag"
                     style={{
@@ -205,42 +214,41 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                       color: '#999999',
                       fontSize: '13px',
                       lineHeight: '1.5',
-                      margin: '0 0 14px 0',
+                      margin: 0,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
+                      flex: 1,
                     }}
                   >
                     {project.description}
                   </p>
                 )}
 
+                {/* Footer: date only (no budget) */}
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingTop: '14px',
+                    paddingTop: '12px',
                     borderTop: '1px solid #1a1a1a',
                     fontSize: '11px',
-                    color: '#666666',
+                    color: '#555555',
+                    marginTop: 'auto',
                   }}
                 >
-                  <span>
-                    {project.start_date
-                      ? new Date(project.start_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : 'TBD'}
-                  </span>
-                  {project.budget && (
-                    <span style={{ color: '#555555', fontWeight: 600 }}>
-                      ${project.budget.toLocaleString()}
-                    </span>
-                  )}
+                  {project.due_date
+                    ? `Due ${new Date(project.due_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}`
+                    : project.start_date
+                    ? `Started ${new Date(project.start_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}`
+                    : 'No dates set'}
                 </div>
               </div>
             </a>
