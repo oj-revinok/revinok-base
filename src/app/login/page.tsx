@@ -18,10 +18,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         setError(error.message)
@@ -30,7 +27,7 @@ export default function LoginPage() {
       }
 
       router.push('/dashboard')
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }
@@ -45,10 +42,11 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: 'Montserrat, sans-serif',
+        padding: '20px',
       }}
     >
-      <div style={{ width: '100%', maxWidth: '420px', padding: '40px' }}>
-        <div style={{ marginBottom: '60px', textAlign: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
+        <div style={{ marginBottom: '56px', textAlign: 'center' }}>
           <h1
             style={{
               fontSize: '32px',
@@ -67,7 +65,7 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSignIn}>
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '20px' }}>
             <label
               style={{
                 display: 'block',
@@ -88,12 +86,11 @@ export default function LoginPage() {
               placeholder="you@example.com"
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '14px 16px',
                 backgroundColor: '#0e0e0e',
                 border: '1px solid #1a1a1a',
                 color: '#ffffff',
                 fontSize: '14px',
-                borderRadius: '6px',
                 fontFamily: 'Montserrat, sans-serif',
                 boxSizing: 'border-box',
               }}
@@ -101,7 +98,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
+          <div style={{ marginBottom: '28px' }}>
             <label
               style={{
                 display: 'block',
@@ -122,12 +119,11 @@ export default function LoginPage() {
               placeholder="••••••••"
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '14px 16px',
                 backgroundColor: '#0e0e0e',
                 border: '1px solid #1a1a1a',
                 color: '#ffffff',
                 fontSize: '14px',
-                borderRadius: '6px',
                 fontFamily: 'Montserrat, sans-serif',
                 boxSizing: 'border-box',
               }}
@@ -142,9 +138,8 @@ export default function LoginPage() {
                 backgroundColor: '#2a1515',
                 border: '1px solid #8b3a3a',
                 color: '#ff6b6b',
-                borderRadius: '6px',
                 fontSize: '13px',
-                marginBottom: '24px',
+                marginBottom: '20px',
               }}
             >
               {error}
@@ -154,13 +149,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
+            className="btn-primary"
             style={{
               width: '100%',
-              padding: '14px 24px',
+              padding: '16px 24px',
               backgroundColor: '#BDD630',
               color: '#080808',
               border: 'none',
-              borderRadius: '6px',
               fontSize: '12px',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -169,12 +164,7 @@ export default function LoginPage() {
               fontFamily: 'Montserrat, sans-serif',
               transition: 'all 0.2s ease',
               opacity: loading ? 0.7 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) (e.target as HTMLButtonElement).style.backgroundColor = '#d4e650'
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) (e.target as HTMLButtonElement).style.backgroundColor = '#BDD630'
+              minHeight: '52px',
             }}
           >
             {loading ? 'SIGNING IN...' : 'SIGN IN'}
@@ -193,11 +183,7 @@ export default function LoginPage() {
           Need an account?{' '}
           <a
             href="mailto:hello@revinok.com"
-            style={{
-              color: '#BDD630',
-              textDecoration: 'none',
-              fontWeight: 600,
-            }}
+            style={{ color: '#BDD630', textDecoration: 'none', fontWeight: 600 }}
           >
             CONTACT SUPPORT
           </a>

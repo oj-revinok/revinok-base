@@ -38,18 +38,20 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
     : projects.filter((p) => p.status?.toLowerCase() === activeFilter.toLowerCase())
 
   return (
-    <div style={{ padding: '40px' }}>
+    <div style={{ padding: '24px 20px 40px', maxWidth: '1400px' }}>
+      {/* Header */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '40px',
+          marginBottom: '28px',
+          gap: '12px',
         }}
       >
         <h1
           style={{
-            fontSize: '32px',
+            fontSize: 'clamp(24px, 5vw, 32px)',
             fontWeight: 900,
             color: '#ffffff',
             margin: 0,
@@ -62,41 +64,44 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
         {canCreate && (
           <button
             onClick={() => alert('Create project form coming soon')}
+            className="btn-primary"
             style={{
-              padding: '12px 24px',
+              padding: '12px 20px',
               backgroundColor: '#BDD630',
               color: '#080808',
               border: 'none',
-              borderRadius: '6px',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               cursor: 'pointer',
               fontFamily: 'Montserrat, sans-serif',
+              whiteSpace: 'nowrap',
+              minHeight: '44px',
             }}
-            onMouseEnter={(e) => { (e.currentTarget).style.backgroundColor = '#d4e650' }}
-            onMouseLeave={(e) => { (e.currentTarget).style.backgroundColor = '#BDD630' }}
           >
             + NEW PROJECT
           </button>
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '40px', flexWrap: 'wrap' }}>
+      {/* Filter tabs — scrollable on mobile */}
+      <div
+        className="filter-tabs"
+        style={{ display: 'flex', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' }}
+      >
         {ALL_STATUSES.map((status) => {
           const isActive = activeFilter === status
           return (
             <button
               key={status}
               onClick={() => setActiveFilter(status)}
+              className={isActive ? 'tag' : 'tag btn-ghost'}
               style={{
-                padding: '8px 16px',
+                padding: '10px 16px',
                 backgroundColor: isActive ? '#BDD630' : 'transparent',
                 color: isActive ? '#080808' : '#999999',
                 border: isActive ? 'none' : '1px solid #1a1a1a',
-                borderRadius: '6px',
                 fontSize: '11px',
                 fontWeight: 600,
                 textTransform: 'uppercase',
@@ -104,18 +109,8 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                 cursor: 'pointer',
                 fontFamily: 'Montserrat, sans-serif',
                 transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  (e.currentTarget).style.backgroundColor = '#1a1a1a'
-                  ;(e.currentTarget).style.color = '#BDD630'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  (e.currentTarget).style.backgroundColor = 'transparent'
-                  ;(e.currentTarget).style.color = '#999999'
-                }
+                minHeight: '44px',
+                flexShrink: 0,
               }}
             >
               {status}
@@ -126,10 +121,11 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
 
       {/* Project grid */}
       <div
+        className="grid-auto"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '24px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
+          gap: '16px',
         }}
       >
         {filtered && filtered.length > 0 ? (
@@ -143,8 +139,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                 style={{
                   backgroundColor: '#0e0e0e',
                   border: '1px solid #1a1a1a',
-                  borderRadius: '8px',
-                  padding: '24px',
+                  padding: '20px',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   height: '100%',
@@ -160,10 +155,10 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   el.style.backgroundColor = '#0e0e0e'
                 }}
               >
-                <div style={{ marginBottom: '16px' }}>
-                  <h3
+                <div style={{ marginBottom: '14px' }}>
+                  <p
                     style={{
-                      fontSize: '11px',
+                      fontSize: '10px',
                       fontWeight: 700,
                       color: '#BDD630',
                       margin: '0 0 6px 0',
@@ -172,7 +167,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                     }}
                   >
                     {project.clients?.brand_name || project.clients?.name || 'Internal'}
-                  </h3>
+                  </p>
                   <h2
                     style={{
                       fontSize: '18px',
@@ -186,14 +181,14 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   </h2>
                 </div>
 
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: '14px' }}>
                   <span
+                    className="tag"
                     style={{
                       display: 'inline-block',
                       padding: '4px 12px',
                       backgroundColor: statusColors[project.status?.toLowerCase()] || '#666666',
                       color: '#080808',
-                      borderRadius: '4px',
                       fontSize: '10px',
                       fontWeight: 700,
                       textTransform: 'uppercase',
@@ -210,7 +205,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                       color: '#999999',
                       fontSize: '13px',
                       lineHeight: '1.5',
-                      margin: '0 0 16px 0',
+                      margin: '0 0 14px 0',
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
@@ -226,7 +221,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    paddingTop: '16px',
+                    paddingTop: '14px',
                     borderTop: '1px solid #1a1a1a',
                     fontSize: '11px',
                     color: '#666666',

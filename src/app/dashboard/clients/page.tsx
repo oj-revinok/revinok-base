@@ -21,18 +21,19 @@ export default async function ClientsPage() {
   const canCreate = profile?.role === 'admin' || profile?.role === 'project_manager'
 
   return (
-    <div style={{ padding: '40px' }}>
+    <div style={{ padding: '24px 20px 40px' }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '40px',
+          marginBottom: '28px',
+          gap: '12px',
         }}
       >
         <h1
           style={{
-            fontSize: '32px',
+            fontSize: 'clamp(24px, 5vw, 32px)',
             fontWeight: 900,
             color: '#ffffff',
             margin: 0,
@@ -46,17 +47,18 @@ export default async function ClientsPage() {
           <button
             className="btn-primary"
             style={{
-              padding: '12px 24px',
+              padding: '12px 20px',
               backgroundColor: '#BDD630',
               color: '#080808',
               border: 'none',
-              borderRadius: '6px',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               cursor: 'pointer',
               fontFamily: 'Montserrat, sans-serif',
+              minHeight: '44px',
+              whiteSpace: 'nowrap',
             }}
           >
             + ADD CLIENT
@@ -64,12 +66,15 @@ export default async function ClientsPage() {
         )}
       </div>
 
-      <div style={{ backgroundColor: '#0e0e0e', borderRadius: '8px', border: '1px solid #1a1a1a' }}>
+      {/* Desktop table */}
+      <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', overflowX: 'auto' }}>
         <table
+          className="responsive-table"
           style={{
             width: '100%',
             borderCollapse: 'collapse',
             fontFamily: 'Montserrat, sans-serif',
+            minWidth: '500px',
           }}
         >
           <thead>
@@ -78,13 +83,14 @@ export default async function ClientsPage() {
                 <th
                   key={h}
                   style={{
-                    padding: '16px 24px',
+                    padding: '16px 20px',
                     textAlign: 'left',
                     fontSize: '11px',
                     fontWeight: 700,
                     color: '#BDD630',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {h}
@@ -103,13 +109,13 @@ export default async function ClientsPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  <td style={{ padding: '16px 24px' }}>
+                  <td style={{ padding: '16px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div
+                        className="avatar"
                         style={{
                           width: '36px',
                           height: '36px',
-                          borderRadius: '50%',
                           backgroundColor: client.avatar_color || '#BDD630',
                           display: 'flex',
                           alignItems: 'center',
@@ -139,20 +145,20 @@ export default async function ClientsPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '16px 24px', fontSize: '13px', color: '#999999' }}>
+                  <td style={{ padding: '16px 20px', fontSize: '13px', color: '#999999' }}>
                     {client.industry || '—'}
                   </td>
-                  <td style={{ padding: '16px 24px', fontSize: '13px', color: '#999999' }}>
+                  <td style={{ padding: '16px 20px', fontSize: '13px', color: '#999999' }}>
                     {client.email || '—'}
                   </td>
-                  <td style={{ padding: '16px 24px' }}>
+                  <td style={{ padding: '16px 20px' }}>
                     <span
+                      className="tag"
                       style={{
                         display: 'inline-block',
                         padding: '4px 12px',
                         backgroundColor: '#1a1a1a',
                         color: '#BDD630',
-                        borderRadius: '4px',
                         fontWeight: 700,
                         fontSize: '13px',
                       }}
@@ -164,7 +170,7 @@ export default async function ClientsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={4} style={{ padding: '60px 24px', textAlign: 'center', color: '#666666', fontSize: '14px' }}>
+                <td colSpan={4} style={{ padding: '60px 20px', textAlign: 'center', color: '#666666', fontSize: '14px' }}>
                   No clients yet
                 </td>
               </tr>

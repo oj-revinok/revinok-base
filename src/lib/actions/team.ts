@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -28,31 +29,68 @@ export async function updateMemberRole(profileId: string, role: string) {
 
 export async function inviteMember(formData: FormData) {
   const supabase = createClient()
+  const admin = createAdminClient()
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const email = formData.get('email') as string
+  const email = (formData.get('email') as string)?.trim().toLowerCase()
   const role = formData.get('role') as string
-  const projectId = (formData.get('project_id') as string) || null
+  const fullName = (formData.get('full_name') as string)?.trim() || null
 
-  // Create invitation record
-  const { data: invite, error: inviteError } = await supabase
-    .from('invitations')
-    .insert({ email, role, invited_by: user.id, project_id: projectId })
-    .select()
-    .single()
+  if (!email || !role) {
+    throw new Error('Email and role are required')
+  }
 
-  if (inviteError) throw inviteError
+  // Check if user already exists
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .eq('email', email)
+    .maybeSingle()
 
-  // Send invite via Supabase Auth (magic link / invite)
-  const { error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: { role, invited_by: user.id },
+  if (existingProfile) {
+    throw new Error('A team member with this email already exists')
+  }
+
+  // Send invite via Supabase Auth Admin API (uses service role)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://revinok-base.netlify.app'
+
+  const { data: inviteData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: {
+      role,
+      full_name: fullName,
+      invited_by: user.id,
+    },
+    redirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
   })
 
-  if (authError) throw authError
+  if (authError) {
+    throw new Error(`Failed to send invite: ${authError.message}`)
+  }
+
+  // Store invitation record
+  await supabase
+    .from('invitations')
+    .insert({
+      email,
+      role,
+      invited_by: user.id,
+    })
+    .select()
+    .maybeSingle()
+
+  // Pre-set the role in profiles (the trigger creates the profile on signup)
+  // If the user was already created (invite creates auth user immediately), update their profile
+  if (inviteData?.user?.id) {
+    await admin
+      .from('profiles')
+      .update({ role, full_name: fullName, email })
+      .eq('id', inviteData.user.id)
+  }
 
   revalidatePath('/dashboard/team')
-  return invite
+  return { success: true, email }
 }
 
 export async function getClients() {

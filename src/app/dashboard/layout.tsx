@@ -43,7 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email={user.email ?? ''}
         role={profile?.role ?? 'viewer'}
       />
-      <main style={{ flex: 1, marginLeft: '220px' }}>{children}</main>
+      <main className="main-content" style={{ flex: 1 }}>{children}</main>
     </div>
   )
 }
