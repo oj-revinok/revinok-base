@@ -290,12 +290,22 @@ export async function saveLaunchChecklistToFiles(
 
   const fileName = `Go-Live Checklist — ${projectName} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}.json`
 
-  // Store as a file record (the JSON checklist data)
+  // Upload JSON to Supabase storage so it has a real public URL
+  const storagePath = `checklists/${projectId}/${Date.now()}.json`
+  const buffer = Buffer.from(checklistJson, 'utf-8')
+  const { error: storageError } = await supabase.storage
+    .from('project-files')
+    .upload(storagePath, buffer, { contentType: 'application/json' })
+
+  if (storageError) throw new Error(storageError.message)
+
+  const { data: { publicUrl } } = supabase.storage.from('project-files').getPublicUrl(storagePath)
+
   const { error } = await supabase.from('project_files').insert({
     project_id: projectId,
     name: fileName,
-    url: `data:application/json;base64,${btoa(checklistJson)}`,
-    storage_path: `checklists/${projectId}/${Date.now()}.json`,
+    url: publicUrl,
+    storage_path: storagePath,
     file_type: 'application/json',
     size_bytes: checklistJson.length,
     is_launch_checklist: true,

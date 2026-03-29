@@ -225,9 +225,27 @@ export default function ProjectFiles({
               <span style={{ fontSize: '18px', flexShrink: 0 }}>{fileIcon(file.file_type)}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <a
-                  href={file.url}
-                  target="_blank"
+                  href={file.url.startsWith('data:') ? '#' : file.url}
+                  target={file.url.startsWith('data:') ? undefined : '_blank'}
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (file.url.startsWith('data:')) {
+                      e.preventDefault()
+                      try {
+                        const [header, data] = file.url.split(',')
+                        const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream'
+                        const isBase64 = header.includes('base64')
+                        const byteStr = isBase64 ? atob(data) : decodeURIComponent(data)
+                        const ab = new Uint8Array(byteStr.length)
+                        for (let i = 0; i < byteStr.length; i++) ab[i] = byteStr.charCodeAt(i)
+                        const blob = new Blob([ab], { type: mime })
+                        const blobUrl = URL.createObjectURL(blob)
+                        const win = window.open(blobUrl, '_blank')
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+                        if (!win) URL.revokeObjectURL(blobUrl)
+                      } catch { /* ignore */ }
+                    }
+                  }}
                   style={{
                     display: 'block',
                     color: '#ffffff',
@@ -237,6 +255,7 @@ export default function ProjectFiles({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    cursor: 'pointer',
                   }}
                 >
                   {file.name}
