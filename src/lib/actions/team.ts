@@ -27,6 +27,17 @@ export async function updateMemberRole(profileId: string, role: string) {
   revalidatePath('/dashboard/team')
 }
 
+export async function updateMemberNotionId(profileId: string, notionPersonId: string | null) {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notion_person_id: notionPersonId || null } as never)
+    .eq('id', profileId)
+
+  if (error) throw error
+  revalidatePath('/dashboard/team')
+}
+
 export async function inviteMember(formData: FormData) {
   const supabase = createClient()
   const admin = createAdminClient()
@@ -37,6 +48,7 @@ export async function inviteMember(formData: FormData) {
   const email = (formData.get('email') as string)?.trim().toLowerCase()
   const role = formData.get('role') as string
   const fullName = (formData.get('full_name') as string)?.trim() || null
+  const notionPersonId = (formData.get('notion_person_id') as string)?.trim() || null
 
   if (!email || !role) {
     throw new Error('Email and role are required')
@@ -85,7 +97,7 @@ export async function inviteMember(formData: FormData) {
   if (inviteData?.user?.id) {
     await admin
       .from('profiles')
-      .update({ role, full_name: fullName, email })
+      .update({ role, full_name: fullName, email, notion_person_id: notionPersonId } as never)
       .eq('id', inviteData.user.id)
   }
 

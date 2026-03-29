@@ -181,36 +181,7 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Notion Profile Link — designers/devs */}
-        {isIndividual && (
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION PROFILE</h2>
-            </div>
-            <form onSubmit={handleSaveNotionPersonId}>
-              <div style={{ marginBottom: '8px' }}>
-                <label style={labelStyle}>YOUR NOTION PERSON ID</label>
-                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
-                  Link your Notion identity so your assigned tasks appear in the Tasks page.
-                  Find your ID by asking your admin or checking your Notion profile URL.
-                </p>
-                <input
-                  type="text"
-                  value={notionPersonId}
-                  onChange={(e) => setNotionPersonId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  style={inputStyle}
-                  disabled={loading}
-                  autoComplete="off"
-                />
-              </div>
-              <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#444444' }}>
-                {notionPersonId ? '● Notion profile linked' : '○ Not linked — Tasks page will be empty'}
-              </p>
-              <SaveButton loading={loading} label="LINK NOTION PROFILE" />
-            </form>
-          </div>
-        )}
+        {/* Notion Profile Link removed — admins/PMs set notion_person_id via Team page */}
 
         {/* Integrations — admin only */}
         {isAdmin && (

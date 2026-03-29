@@ -18,6 +18,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
+  const role = profile?.role ?? 'viewer'
+
   const userInitials = profile
     ? (profile.full_name || user.email || 'U')
         .split(' ')
@@ -34,11 +36,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userInitials={userInitials}
         fullName={profile?.full_name ?? null}
         email={user.email ?? ''}
-        role={profile?.role ?? 'viewer'}
+        role={role}
       />
 
       {/* Mobile: top logo bar + bottom nav */}
-      <MobileNav />
+      <MobileNav role={role} />
 
       {/* Main content */}
       <main className="main-content">

@@ -1,6 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
   userInitials: string
@@ -19,16 +21,30 @@ const ROLE_LABELS: Record<string, string> = {
   client: 'Client',
 }
 
-const navItems = [
-  { href: '/dashboard/projects', label: 'PROJECTS' },
-  { href: '/dashboard/tasks',    label: 'TASKS' },
-  { href: '/dashboard/clients',  label: 'CLIENTS' },
-  { href: '/dashboard/team',     label: 'TEAM' },
-  { href: '/dashboard/settings', label: 'SETTINGS' },
+// Roles that can't see Clients or Team tabs
+const RESTRICTED_ROLES = new Set(['designer', 'developer', 'designer_dev', 'viewer', 'client'])
+
+const ALL_NAV_ITEMS = [
+  { href: '/dashboard/projects', label: 'PROJECTS', restricted: false },
+  { href: '/dashboard/tasks',    label: 'TASKS',    restricted: false },
+  { href: '/dashboard/clients',  label: 'CLIENTS',  restricted: true  },
+  { href: '/dashboard/team',     label: 'TEAM',     restricted: true  },
+  { href: '/dashboard/settings', label: 'SETTINGS', restricted: false },
 ]
 
 export default function Sidebar({ userInitials, fullName, email, role }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+
+  const isRestricted = RESTRICTED_ROLES.has(role)
+  const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside className="desktop-sidebar">
@@ -44,9 +60,10 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href)
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               style={{
                 display: 'block',
                 padding: '14px 16px',
@@ -58,33 +75,34 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.5px',
                 marginBottom: '4px',
-                transition: 'all 0.2s ease',
+                transition: 'color 0.15s, background-color 0.15s',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  (e.currentTarget).style.backgroundColor = '#1a1a1a'
-                  ;(e.currentTarget).style.color = '#BDD630'
+                  e.currentTarget.style.backgroundColor = '#1a1a1a'
+                  e.currentTarget.style.color = '#BDD630'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  (e.currentTarget).style.backgroundColor = 'transparent'
-                  ;(e.currentTarget).style.color = '#999999'
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#999999'
                 }
               }}
             >
               {item.label}
-            </a>
+            </Link>
           )
         })}
       </nav>
 
-      <div style={{ padding: '24px', borderTop: '1px solid #1a1a1a' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* User info + Sign Out */}
+      <div style={{ padding: '16px 24px', borderTop: '1px solid #1a1a1a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
           <div
             className="avatar"
             style={{
-              width: '40px', height: '40px', backgroundColor: '#BDD630',
+              width: '38px', height: '38px', backgroundColor: '#BDD630',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#080808', fontWeight: 700, fontSize: '13px', flexShrink: 0,
             }}
@@ -95,11 +113,39 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
             <p style={{ margin: 0, color: '#ffffff', fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {fullName || email}
             </p>
-            <p style={{ margin: '4px 0 0 0', color: '#666666', fontSize: '11px', textTransform: 'uppercase' as const, fontWeight: 500 }}>
+            <p style={{ margin: '3px 0 0 0', color: '#666666', fontSize: '10px', textTransform: 'uppercase' as const, fontWeight: 500 }}>
               {ROLE_LABELS[role] || role}
             </p>
           </div>
         </div>
+
+        <button
+          onClick={handleSignOut}
+          style={{
+            width: '100%', padding: '9px 12px',
+            backgroundColor: 'transparent',
+            border: '1px solid #222222',
+            color: '#555555', cursor: 'pointer',
+            fontSize: '10px', fontWeight: 700,
+            textTransform: 'uppercase' as const, letterSpacing: '0.5px',
+            fontFamily: 'Montserrat, sans-serif',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#BDD630'
+            e.currentTarget.style.color = '#BDD630'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#222222'
+            e.currentTarget.style.color = '#555555'
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          SIGN OUT
+        </button>
       </div>
     </aside>
   )

@@ -43,10 +43,11 @@ interface Props {
 }
 
 export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Props) {
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban')
   const [search, setSearch] = useState('')
   const [showSecondary, setShowSecondary] = useState(false)
   const [loadMoreCount, setLoadMoreCount] = useState<Record<string, number>>({})
+  const [selectedTask, setSelectedTask] = useState<NotionTask | null>(null)
 
   const INITIAL_VISIBLE = 15
 
@@ -85,15 +86,9 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px dashed #333' }}>
         <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>No tasks assigned to you yet</p>
-        <p style={{ color: '#555555', fontSize: '13px', margin: '0 0 16px 0' }}>
-          To see your Notion tasks here, link your Notion profile in Settings.
+        <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>
+          Ask your admin to link your Notion profile so your tasks appear here.
         </p>
-        <a href="/dashboard/settings" style={{
-          display: 'inline-block', padding: '8px 20px', backgroundColor: '#BDD630', color: '#080808',
-          textDecoration: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
-        }}>
-          Go to Settings
-        </a>
       </div>
     )
   }
@@ -114,25 +109,23 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
             fontFamily: 'Montserrat, sans-serif', outline: 'none',
           }}
         />
-        {/* View toggle — list/kanban for admin/PM */}
-        {isAdminOrPM && (
-          <div style={{ display: 'flex', border: '1px solid #222' }}>
-            {(['list', 'kanban'] as ViewMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                style={{
-                  padding: '8px 16px', backgroundColor: viewMode === mode ? '#BDD630' : 'transparent',
-                  border: 'none', color: viewMode === mode ? '#080808' : '#555555',
-                  fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
-                  cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-                }}
-              >
-                {mode === 'list' ? '≡ List' : '⊞ Kanban'}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* View toggle — available to all users */}
+        <div style={{ display: 'flex', border: '1px solid #222' }}>
+          {(['list', 'kanban'] as ViewMode[]).map(mode => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              style={{
+                padding: '8px 16px', backgroundColor: viewMode === mode ? '#BDD630' : 'transparent',
+                border: 'none', color: viewMode === mode ? '#080808' : '#555555',
+                fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+                cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+              }}
+            >
+              {mode === 'list' ? '≡ List' : '⊞ Kanban'}
+            </button>
+          ))}
+        </div>
         <span style={{ color: '#444444', fontSize: '11px', whiteSpace: 'nowrap' }}>
           {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
         </span>
@@ -142,8 +135,8 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
         <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a' }}>
           <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
         </div>
-      ) : viewMode === 'kanban' && isAdminOrPM ? (
-        <KanbanView groupedByStatus={groupedByStatus} />
+      ) : viewMode === 'kanban' ? (
+        <KanbanView groupedByStatus={groupedByStatus} onTaskClick={setSelectedTask} />
       ) : (
         <ListView
           primaryTasks={primaryTasks}
@@ -153,13 +146,160 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
           groupedByStatus={groupedByStatus}
           getVisible={getVisible}
           loadMore={loadMore}
+          onTaskClick={setSelectedTask}
         />
+      )}
+
+      {/* Task detail modal */}
+      {selectedTask && (
+        <TaskDetailModal task={selectedTask} onClose={() => setSelectedTask(null)} />
       )}
     </div>
   )
 }
 
-function KanbanView({ groupedByStatus }: { groupedByStatus: Record<string, NotionTask[]> }) {
+/* ── Task Detail Modal ─────────────────────────────────────── */
+
+function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => void }) {
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      style={{
+        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 2000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+      }}
+    >
+      <div style={{
+        backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
+        width: '100%', maxWidth: '520px', padding: '28px 24px', position: 'relative',
+        maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: '16px', right: '16px',
+            background: 'none', border: 'none', color: '#555555', fontSize: '18px',
+            cursor: 'pointer', lineHeight: 1, padding: '4px 8px', minHeight: '32px', minWidth: '32px',
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Status + Priority row */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <span style={{
+            display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.5px',
+            backgroundColor: '#1a1a1a', color: STATUS_COLORS[task.status] || '#666',
+            border: `1px solid ${STATUS_COLORS[task.status] || '#333'}22`,
+          }}>
+            {task.status}
+          </span>
+          {task.priority && (
+            <span style={{
+              display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.5px',
+              backgroundColor: '#1a1a1a', color: PRIORITY_COLORS[task.priority] || '#555',
+            }}>
+              ● {task.priority}
+            </span>
+          )}
+        </div>
+
+        {/* Task name */}
+        <h2 style={{
+          fontSize: '18px', fontWeight: 800, color: '#ffffff',
+          margin: '0 0 20px 0', lineHeight: 1.4, textTransform: 'uppercase', letterSpacing: '-0.3px',
+          paddingRight: '32px',
+        }}>
+          {task.name}
+        </h2>
+
+        {/* Details grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+          {task.dueDate && (
+            <DetailRow label="Due Date">
+              <span style={{ color: '#ffffff', fontSize: '13px' }}>
+                {new Date(task.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </DetailRow>
+          )}
+
+          {task.tags.length > 0 && (
+            <DetailRow label="Tags">
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {task.tags.map(tag => (
+                  <span key={tag} style={{
+                    fontSize: '9px', fontWeight: 700, color: '#aaaaaa',
+                    backgroundColor: '#1a1a1a', padding: '3px 8px',
+                    textTransform: 'uppercase', letterSpacing: '0.5px',
+                    border: '1px solid #2a2a2a',
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </DetailRow>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />
+
+        {/* Open in Notion */}
+        <a
+          href={task.notionUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '10px 20px', backgroundColor: 'transparent',
+            border: '1px solid #333', color: '#888888',
+            textDecoration: 'none', fontSize: '11px', fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.5px',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#BDD630'
+            e.currentTarget.style.color = '#BDD630'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#333'
+            e.currentTarget.style.color = '#888888'
+          }}
+        >
+          Open in Notion ↗
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <span style={{
+        fontSize: '10px', fontWeight: 700, color: '#555555',
+        textTransform: 'uppercase', letterSpacing: '0.5px',
+        minWidth: '80px', paddingTop: '2px', flexShrink: 0,
+      }}>
+        {label}
+      </span>
+      <div style={{ flex: 1 }}>{children}</div>
+    </div>
+  )
+}
+
+/* ── Kanban View ───────────────────────────────────────────── */
+
+function KanbanView({
+  groupedByStatus,
+  onTaskClick,
+}: {
+  groupedByStatus: Record<string, NotionTask[]>
+  onTaskClick: (t: NotionTask) => void
+}) {
   return (
     <div style={{ overflowX: 'auto', paddingBottom: '20px' }}>
       <div style={{ display: 'flex', gap: '12px', minWidth: `${STATUS_COLUMNS.length * 240}px` }}>
@@ -181,7 +321,7 @@ function KanbanView({ groupedByStatus }: { groupedByStatus: Record<string, Notio
               {/* Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {tasks.map(task => (
-                  <KanbanCard key={task.id} task={task} />
+                  <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
                 ))}
                 {tasks.length === 0 && (
                   <div style={{ padding: '20px', textAlign: 'center', border: '1px dashed #1a1a1a' }}>
@@ -197,13 +337,18 @@ function KanbanView({ groupedByStatus }: { groupedByStatus: Record<string, Notio
   )
 }
 
-function KanbanCard({ task }: { task: NotionTask }) {
+function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }) {
   return (
-    <a
-      href={task.notionUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ display: 'block', padding: '12px', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', textDecoration: 'none' }}
+    <button
+      onClick={onClick}
+      style={{
+        display: 'block', width: '100%', textAlign: 'left',
+        padding: '12px', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
+        cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+        transition: 'border-color 0.15s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1a1a1a' }}
     >
       <p style={{ fontSize: '12px', color: '#ffffff', margin: '0 0 8px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -223,13 +368,15 @@ function KanbanCard({ task }: { task: NotionTask }) {
           </span>
         ))}
       </div>
-    </a>
+    </button>
   )
 }
 
+/* ── List View ─────────────────────────────────────────────── */
+
 function ListView({
   primaryTasks, secondaryTasks, showSecondary, setShowSecondary,
-  groupedByStatus, getVisible, loadMore,
+  groupedByStatus, getVisible, loadMore, onTaskClick,
 }: {
   primaryTasks: NotionTask[]
   secondaryTasks: NotionTask[]
@@ -238,6 +385,7 @@ function ListView({
   groupedByStatus: Record<string, NotionTask[]>
   getVisible: (s: string) => number
   loadMore: (s: string) => void
+  onTaskClick: (t: NotionTask) => void
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -257,7 +405,7 @@ function ListView({
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
               <span style={{ fontSize: '10px', color: '#444444', marginLeft: 'auto' }}>{tasks.length}</span>
             </div>
-            {shown.map(task => <TaskListRow key={task.id} task={task} />)}
+            {shown.map(task => <TaskListRow key={task.id} task={task} onClick={() => onTaskClick(task)} />)}
             {tasks.length > visible && (
               <button
                 onClick={() => loadMore(status)}
@@ -303,7 +451,7 @@ function ListView({
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
                       <span style={{ fontSize: '10px', color: '#333333', marginLeft: 'auto' }}>{tasks.length}</span>
                     </div>
-                    {shown.map(task => <TaskListRow key={task.id} task={task} faded />)}
+                    {shown.map(task => <TaskListRow key={task.id} task={task} faded onClick={() => onTaskClick(task)} />)}
                     {tasks.length > visible && (
                       <button onClick={() => loadMore(status)} style={{ width: '100%', padding: '10px', backgroundColor: 'transparent', border: 'none', borderTop: '1px solid #1a1a1a', color: '#444444', cursor: 'pointer', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif' }}>
                         Load more ({tasks.length - visible} remaining)
@@ -320,16 +468,15 @@ function ListView({
   )
 }
 
-function TaskListRow({ task, faded = false }: { task: NotionTask; faded?: boolean }) {
+function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
   return (
-    <a
-      href={task.notionUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-        textDecoration: 'none', borderBottom: '1px solid #111111',
-        backgroundColor: 'transparent',
+        width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+        borderBottom: '1px solid #111111', cursor: 'pointer',
+        fontFamily: 'Montserrat, sans-serif',
         opacity: faded ? 0.5 : 1,
       }}
     >
@@ -352,8 +499,8 @@ function TaskListRow({ task, faded = false }: { task: NotionTask; faded?: boolea
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
-        <span style={{ fontSize: '10px', color: '#333333' }}>↗</span>
+        <span style={{ fontSize: '10px', color: '#333333' }}>›</span>
       </div>
-    </a>
+    </button>
   )
 }

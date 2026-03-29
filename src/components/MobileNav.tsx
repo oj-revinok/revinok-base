@@ -1,11 +1,20 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const navItems = [
+interface MobileNavProps {
+  role?: string
+}
+
+// Roles that can't see Clients or Team tabs
+const RESTRICTED_ROLES = new Set(['designer', 'developer', 'designer_dev', 'viewer', 'client'])
+
+const ALL_NAV_ITEMS = [
   {
     href: '/dashboard/projects',
     label: 'Projects',
+    restricted: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="8" height="8" stroke="currentColor" strokeWidth="1.5"/>
@@ -18,6 +27,7 @@ const navItems = [
   {
     href: '/dashboard/tasks',
     label: 'Tasks',
+    restricted: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="18" height="18" stroke="currentColor" strokeWidth="1.5"/>
@@ -28,6 +38,7 @@ const navItems = [
   {
     href: '/dashboard/clients',
     label: 'Clients',
+    restricted: true,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="10" width="18" height="10" stroke="currentColor" strokeWidth="1.5"/>
@@ -39,6 +50,7 @@ const navItems = [
   {
     href: '/dashboard/team',
     label: 'Team',
+    restricted: true,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="8" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -51,6 +63,7 @@ const navItems = [
   {
     href: '/dashboard/settings',
     label: 'Settings',
+    restricted: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -60,8 +73,10 @@ const navItems = [
   },
 ]
 
-export default function MobileNav({ logoUrl }: { logoUrl?: string }) {
+export default function MobileNav({ role }: MobileNavProps) {
   const pathname = usePathname()
+  const isRestricted = RESTRICTED_ROLES.has(role || '')
+  const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
 
   return (
     <>
@@ -78,16 +93,17 @@ export default function MobileNav({ logoUrl }: { logoUrl?: string }) {
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`mobile-nav-item${isActive ? ' active' : ''}`}
                 style={{ color: isActive ? '#BDD630' : '#555555' }}
                 aria-current={isActive ? 'page' : undefined}
               >
                 {item.icon}
                 {item.label}
-              </a>
+              </Link>
             )
           })}
         </div>
