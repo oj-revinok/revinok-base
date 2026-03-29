@@ -61,7 +61,7 @@ export default function MobileNav({ logoUrl }: { logoUrl?: string }) {
         <img
           src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
           alt="Revinok"
-          style={{ height: '32px', width: 'auto' }}
+          style={{ height: '40px', width: 'auto' }}
         />
       </div>
 

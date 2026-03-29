@@ -6,36 +6,56 @@ import { redirect } from 'next/navigation'
 
 const BUCKET = 'project-files'
 
-export async function saveFileRecord(
-  projectId: string,
-  fileName: string,
-  storagePath: string,
-  fileSize: number,
-  mimeType: string,
-) {
+export async function uploadFile(formData: FormData) {
   const supabase = createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const file = formData.get('file') as File
+  const projectId = formData.get('projectId') as string
+
+  if (!file || !projectId) throw new Error('Missing file or projectId')
+
+  const MAX_BYTES = 50 * 1024 * 1024
+  if (file.size > MAX_BYTES) throw new Error('File too large. Max size is 50 MB.')
+
+  const ext = file.name.split('.').pop()
+  const path = `${projectId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+  const bytes = await file.arrayBuffer()
+  const buffer = Buffer.from(bytes)
+
+  const { error: storageError } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, buffer, { contentType: file.type })
+
+  if (storageError) throw new Error(storageError.message)
+
   const {
     data: { publicUrl },
-  } = supabase.storage.from(BUCKET).getPublicUrl(storagePath)
+  } = supabase.storage.from(BUCKET).getPublicUrl(path)
 
-  const { error } = await supabase.from('project_files').insert({
+  const { error: dbError } = await supabase.from('project_files').insert({
     project_id: projectId,
-    name: fileName,
+    name: file.name,
     url: publicUrl,
-    storage_path: storagePath,
-    size_bytes: fileSize,
-    file_type: mimeType,
+    storage_path: path,
+    size_bytes: file.size,
+    file_type: file.type,
     uploaded_by: user.id,
   })
 
-  if (error) throw error
+  if (dbError) {
+    // Clean up the uploaded file if DB insert fails
+    await supabase.storage.from(BUCKET).remove([path])
+    throw new Error(dbError.message)
+  }
 
   revalidatePath(`/dashboard/projects/${projectId}`)
+
+  return { publicUrl, path, name: file.name, size: file.size, type: file.type }
 }
 
 export async function deleteFile(projectId: string, fileId: string, storagePath: string) {

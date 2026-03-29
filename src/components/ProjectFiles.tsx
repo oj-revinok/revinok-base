@@ -1,11 +1,7 @@
 'use client'
 
 import { useState, useRef, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { saveFileRecord, deleteFile } from '@/lib/actions/files'
-
-const BUCKET = 'project-files'
-const MAX_SIZE_MB = 50
+import { uploadFile, deleteFile } from '@/lib/actions/files'
 
 interface ProjectFile {
   id: string
@@ -50,52 +46,35 @@ export default function ProjectFiles({
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      setUploadError(`File too large. Max size is ${MAX_SIZE_MB} MB.`)
-      return
-    }
-
     setUploading(true)
     setUploadError(null)
 
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${projectId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-    const { error: storageError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, { contentType: file.type })
-
-    if (storageError) {
-      setUploadError(storageError.message)
-      setUploading(false)
-      return
-    }
-
     try {
-      await saveFileRecord(projectId, file.name, path, file.size, file.type)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
 
-      // Optimistic update
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+      const result = await uploadFile(formData)
+
+      // Optimistic update with returned data
       setFiles((prev) => [
         {
           id: Date.now().toString(),
-          name: file.name,
-          url: data.publicUrl,
-          storage_path: path,
-          size_bytes: file.size,
-          file_type: file.type,
+          name: result.name,
+          url: result.publicUrl,
+          storage_path: result.path,
+          size_bytes: result.size,
+          file_type: result.type,
           created_at: new Date().toISOString(),
         },
         ...prev,
       ])
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Failed to save file record')
+      setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
-
-    setUploading(false)
-    // Reset input so the same file can be re-uploaded
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   function handleDelete(file: ProjectFile) {

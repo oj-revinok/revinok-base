@@ -120,7 +120,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '12px',
         }}
       >
