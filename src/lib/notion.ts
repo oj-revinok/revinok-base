@@ -1,7 +1,6 @@
 import { Client } from '@notionhq/client'
 
 // Notion collection (data source) IDs for Voxal | Revinok Workspace
-// These are the collection IDs, NOT the database page IDs
 export const NOTION_DB = {
   projects: '24c391cd-225f-8038-8d80-000bacadc183',
   workload: '24d391cd-225f-805a-b6f1-000b483af790',
@@ -20,9 +19,15 @@ export interface NotionTask {
   priority: string | null
   dueDate: string | null
   assignedTo: string[]
+  assignedNames: string[]
   tags: string[]
   notionUrl: string
+  projectIds: string[]
 }
+
+export const ACTIVE_STATUSES = ['Not started', 'In progress', 'Inhouse Review', 'Feedback', 'Waiting for info', 'On Hold']
+export const DONE_STATUSES = ['Complete']
+export const PRIORITY_STATUSES_ORDER = ['Not started', 'In progress', 'Waiting for info', 'Inhouse Review', 'Feedback', 'On Hold', 'Complete']
 
 export async function getTasksForProject(
   notionProjectPageId: string,
@@ -46,40 +51,81 @@ export async function getTasksForProject(
       ],
     } as any)
 
-    return response.results.map((page: any) => {
-      const props = page.properties
-
-      const name =
-        props['Task Name']?.title?.[0]?.plain_text ||
-        props['Name']?.title?.[0]?.plain_text ||
-        'Untitled'
-
-      const status = props['Status ']?.status?.name || 'Not started'
-
-      const priority = props['Priority Level']?.select?.name || null
-
-      const dueDate = props['Due Date']?.date?.start || null
-
-      const assignedTo = (props['🎨 Assigned to']?.relation || []).map(
-        (r: any) => r.id
-      )
-
-      const tags = (props['Tags']?.multi_select || []).map((t: any) => t.name)
-
-      return {
-        id: page.id,
-        name,
-        status,
-        priority,
-        dueDate,
-        assignedTo,
-        tags,
-        notionUrl: page.url,
-      }
-    })
+    return response.results.map((page: any) => parseNotionTask(page))
   } catch (err) {
     console.error('Notion fetch error:', err)
     return []
+  }
+}
+
+export async function getAllTasks(
+  apiKey?: string,
+  notionPersonId?: string | null
+): Promise<NotionTask[]> {
+  const notion = getNotionClient(apiKey)
+  if (!notion) return []
+
+  try {
+    const queryOptions: any = {
+      data_source_id: NOTION_DB.workload,
+      sorts: [
+        { property: 'Status ', direction: 'ascending' },
+        { property: 'Due Date', direction: 'ascending' },
+      ],
+    }
+
+    // If a notion person ID is provided, filter to their tasks only
+    if (notionPersonId) {
+      queryOptions.filter = {
+        property: '🎨 Assigned to',
+        relation: {
+          contains: notionPersonId,
+        },
+      }
+    }
+
+    const response = await notion.dataSources.query(queryOptions)
+    return response.results.map((page: any) => parseNotionTask(page))
+  } catch (err) {
+    console.error('Notion getAllTasks error:', err)
+    return []
+  }
+}
+
+function parseNotionTask(page: any): NotionTask {
+  const props = page.properties
+
+  const name =
+    props['Task Name']?.title?.[0]?.plain_text ||
+    props['Name']?.title?.[0]?.plain_text ||
+    'Untitled'
+
+  const status = props['Status ']?.status?.name || 'Not started'
+  const priority = props['Priority Level']?.select?.name || null
+  const dueDate = props['Due Date']?.date?.start || null
+
+  const assignedTo = (props['🎨 Assigned to']?.relation || []).map(
+    (r: any) => r.id
+  )
+
+  // Try to get assigned person names if available
+  const assignedNames: string[] = []
+
+  const tags = (props['Tags']?.multi_select || []).map((t: any) => t.name)
+
+  const projectIds = (props['🏆 Projects ']?.relation || []).map((r: any) => r.id)
+
+  return {
+    id: page.id,
+    name,
+    status,
+    priority,
+    dueDate,
+    assignedTo,
+    assignedNames,
+    tags,
+    notionUrl: page.url,
+    projectIds,
   }
 }
 

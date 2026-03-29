@@ -4,20 +4,58 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// ── Fetch all projects (respects RLS — clients see only theirs) ──
+// ── Fetch all projects (admin/PM see all; others see only their assigned projects) ──
 export async function getProjects() {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('projects')
-    .select(`
-      *,
-      clients ( id, name, brand_name ),
-      project_members ( id, profile_id, role, profiles ( id, full_name, initials, avatar_url ) )
-    `)
-    .order('created_at', { ascending: false })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
 
-  if (error) throw error
-  return data
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = profile?.role
+  const isAdminOrPM = role === 'admin' || role === 'project_manager'
+
+  if (isAdminOrPM) {
+    // See all projects
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        clients ( id, name, brand_name ),
+        project_members ( id, profile_id, role, profiles ( id, full_name, initials, avatar_url ) )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  } else {
+    // See only projects they're a member of
+    const { data: memberships } = await supabase
+      .from('project_members')
+      .select('project_id')
+      .eq('profile_id', user.id)
+
+    const projectIds = (memberships || []).map((m: any) => m.project_id)
+
+    if (projectIds.length === 0) return []
+
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        clients ( id, name, brand_name ),
+        project_members ( id, profile_id, role, profiles ( id, full_name, initials, avatar_url ) )
+      `)
+      .in('id', projectIds)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  }
 }
 
 // ── Fetch single project ──
@@ -42,11 +80,17 @@ export async function getProject(id: string) {
   return data
 }
 
-// ── Create project ──
+// ── Create project (admin/PM only — enforced in UI and here) ──
 export async function createProject(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Role check
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can create projects')
+  }
 
   const values = {
     name: formData.get('name') as string,
@@ -67,7 +111,6 @@ export async function createProject(formData: FormData) {
   const { data, error } = await supabase.from('projects').insert(values).select().single()
   if (error) throw error
 
-  // Log activity
   await supabase.from('activity_log').insert({
     project_id: data.id,
     actor_id: user.id,
@@ -126,4 +169,175 @@ export async function updateProjectStatus(id: string, status: string) {
 
   revalidatePath(`/dashboard/projects/${id}`)
   revalidatePath('/dashboard/projects')
+}
+
+// ── Get project members ──
+export async function getProjectMembers(projectId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('project_members')
+    .select('*, profiles ( id, full_name, email, role, initials, avatar_url )')
+    .eq('project_id', projectId)
+
+  if (error) throw error
+  return data || []
+}
+
+// ── Get all team members (for sharing modal) ──
+export async function getShareableTeamMembers() {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, role, initials, avatar_url')
+    .not('role', 'in', '("admin","project_manager","client")')
+    .order('full_name')
+
+  if (error) throw error
+  return data || []
+}
+
+// ── Add member to project ──
+export async function addProjectMember(projectId: string, profileId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Role check: only admin/PM can share
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can share projects')
+  }
+
+  // Check not already a member
+  const { data: existing } = await supabase
+    .from('project_members')
+    .select('id')
+    .eq('project_id', projectId)
+    .eq('profile_id', profileId)
+    .maybeSingle()
+
+  if (existing) return { success: true, alreadyExists: true }
+
+  const { error } = await supabase.from('project_members').insert({
+    project_id: projectId,
+    profile_id: profileId,
+  })
+
+  if (error) throw error
+
+  // Log activity
+  const { data: addedProfile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', profileId)
+    .single()
+
+  await supabase.from('activity_log').insert({
+    project_id: projectId,
+    actor_id: user.id,
+    activity_type: 'member_added',
+    description: `${addedProfile?.full_name || 'Team member'} added to project`,
+  })
+
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  return { success: true }
+}
+
+// ── Remove member from project ──
+export async function removeProjectMember(projectId: string, profileId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Role check
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can manage project members')
+  }
+
+  const { error } = await supabase
+    .from('project_members')
+    .delete()
+    .eq('project_id', projectId)
+    .eq('profile_id', profileId)
+
+  if (error) throw error
+
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  return { success: true }
+}
+
+// ── Save launch checklist to project files ──
+export async function saveLaunchChecklistToFiles(
+  projectId: string,
+  checklistJson: string,
+  projectName: string
+) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const fileName = `Go-Live Checklist — ${projectName} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}.json`
+
+  // Store as a file record (the JSON checklist data)
+  const { error } = await supabase.from('project_files').insert({
+    project_id: projectId,
+    name: fileName,
+    url: `data:application/json;base64,${btoa(checklistJson)}`,
+    storage_path: `checklists/${projectId}/${Date.now()}.json`,
+    file_type: 'application/json',
+    size_bytes: checklistJson.length,
+    is_launch_checklist: true,
+    uploaded_by: user.id,
+  })
+
+  if (error) throw error
+
+  // Log activity
+  await supabase.from('activity_log').insert({
+    project_id: projectId,
+    actor_id: user.id,
+    activity_type: 'launch',
+    description: 'Webflow Go-Live checklist completed and saved to project files',
+  })
+
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  return { success: true, fileName }
+}
+
+// ── Delete a project file (admin/PM only) ──
+export async function deleteProjectFile(fileId: string, projectId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Role check
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can delete files')
+  }
+
+  const { error } = await supabase.from('project_files').delete().eq('id', fileId)
+  if (error) throw error
+
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  return { success: true }
+}
+
+// ── Delete a note (admin/PM only) ──
+export async function deleteNote(noteId: string, projectId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can delete notes')
+  }
+
+  const { error } = await supabase.from('notes').delete().eq('id', noteId)
+  if (error) throw error
+
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  return { success: true }
 }

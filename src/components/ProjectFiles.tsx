@@ -31,9 +31,13 @@ function fileIcon(mimeType: string | null) {
 export default function ProjectFiles({
   projectId,
   initialFiles,
+  canDelete = true,
+  onDelete,
 }: {
   projectId: string
   initialFiles: ProjectFile[]
+  canDelete?: boolean
+  onDelete?: (fileId: string) => void
 }) {
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles)
   const [uploading, setUploading] = useState(false)
@@ -246,28 +250,30 @@ export default function ProjectFiles({
                   })}
                 </p>
               </div>
-              <button
-                onClick={() => handleDelete(file)}
-                disabled={deletingId === file.id}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#555555',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  padding: '8px',
-                  minHeight: '44px',
-                  minWidth: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-                title="Delete file"
-              >
-                ×
-              </button>
+              {canDelete && (
+                <button
+                  onClick={() => onDelete ? onDelete(file.id) : handleDelete(file)}
+                  disabled={deletingId === file.id}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#555555',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    minHeight: '44px',
+                    minWidth: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    fontFamily: 'Montserrat, sans-serif',
+                  }}
+                  title="Delete file"
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
         </div>

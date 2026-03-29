@@ -16,6 +16,16 @@ const navItems = [
     ),
   },
   {
+    href: '/dashboard/tasks',
+    label: 'Tasks',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="18" height="18" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M6 8h10M6 11h7M6 14h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/clients',
     label: 'Clients',
     icon: (
@@ -41,7 +51,6 @@ const navItems = [
   {
     href: '/dashboard/settings',
     label: 'Settings',
-    // Proper gear / cog icon — NOT a sun
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -56,7 +65,6 @@ export default function MobileNav({ logoUrl }: { logoUrl?: string }) {
 
   return (
     <>
-      {/* Mobile top bar — logo centred, larger */}
       <div className="mobile-topbar">
         <img
           src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
@@ -65,7 +73,6 @@ export default function MobileNav({ logoUrl }: { logoUrl?: string }) {
         />
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="mobile-bottomnav" aria-label="Main navigation">
         <div className="mobile-bottomnav-inner">
           {navItems.map((item) => {

@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateProjectStatus, updateProject } from '@/lib/actions/projects'
+import { updateProjectStatus, updateProject, deleteNote, deleteProjectFile } from '@/lib/actions/projects'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
 import EditProjectModal from './EditProjectModal'
+import ShareProjectModal from './ShareProjectModal'
+import LaunchChecklist from './LaunchChecklist'
 import type { NotionTask } from '@/lib/notion'
+import { isAdminOrPM, isDevRole, ROLE_LABELS } from '@/types'
 
 type Tab = 'overview' | 'tasks' | 'activity'
 
@@ -23,7 +26,7 @@ const ALL_STATUSES = ['discovery', 'design', 'development', 'review', 'live', 'p
 
 const NOTION_STATUS_COLORS: Record<string, string> = {
   'Waiting for info': '#ff9d4a',
-  'Not started':      '#444444',
+  'Not started':      '#333333',
   'In progress':      '#4a9eff',
   'On Hold':          '#6b7280',
   'Inhouse Review':   '#a78bfa',
@@ -34,18 +37,16 @@ const NOTION_STATUS_COLORS: Record<string, string> = {
 const NOTION_PRIORITY_COLORS: Record<string, string> = {
   'High':   '#ef4444',
   'Medium': '#ff9d4a',
-  'Low':    '#666666',
+  'Low':    '#555555',
 }
+
+// Status display order: active first, done last
+const TASK_STATUS_ORDER = [
+  'Not started', 'In progress', 'Waiting for info', 'Inhouse Review', 'Feedback', 'On Hold', 'Complete'
+]
+const SECONDARY_STATUSES = ['On Hold', 'Complete']
 
 interface Profile { full_name: string | null }
-
-interface Task {
-  id: string
-  title: string
-  status: string
-  priority: string | null
-  due_date: string | null
-}
 
 interface Note {
   id: string
@@ -76,6 +77,20 @@ interface ProjectFile {
   size_bytes: number | null
   file_type: string | null
   created_at: string
+  is_launch_checklist?: boolean
+}
+
+interface ProjectMember {
+  id: string
+  profile_id: string
+  profiles: {
+    id: string
+    full_name: string | null
+    email: string
+    role: string
+    initials?: string | null
+    avatar_url?: string | null
+  } | null
 }
 
 interface Project {
@@ -100,6 +115,8 @@ interface Props {
   links: ProjectLink[]
   projectFiles: ProjectFile[]
   notionTasks: NotionTask[]
+  projectMembers: ProjectMember[]
+  userRole: string
 }
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -113,30 +130,45 @@ function SectionCard({ title, children }: { title: string; children: React.React
   )
 }
 
-export default function ProjectDetail({ project: initialProject, notes, activity, links, projectFiles, notionTasks }: Props) {
+export default function ProjectDetail({
+  project: initialProject, notes: initialNotes, activity, links, projectFiles: initialFiles,
+  notionTasks, projectMembers: initialMembers, userRole
+}: Props) {
   const [tab, setTab] = useState<Tab>('overview')
   const [project, setProject] = useState(initialProject)
+  const [notes, setNotes] = useState(initialNotes)
+  const [projectFiles, setProjectFiles] = useState(initialFiles)
+  const [members, setMembers] = useState(initialMembers)
   const [editingDesc, setEditingDesc] = useState(false)
   const [descDraft, setDescDraft] = useState(initialProject.description || '')
   const [savingDesc, setSavingDesc] = useState(false)
   const [statusSaving, setStatusSaving] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [showLaunchChecklist, setShowLaunchChecklist] = useState(false)
+  const [showSecondaryTasks, setShowSecondaryTasks] = useState(false)
   const [, startTransition] = useTransition()
+
+  const canEdit = isAdminOrPM(userRole as any)
+  const canDelete = isAdminOrPM(userRole as any)
+  const canLaunch = isDevRole(userRole as any) || canEdit
+  const isDev = isDevRole(userRole as any)
 
   const client = project.clients
   const clientName = client?.brand_name || client?.name
 
-  const activeTasks = notionTasks.filter((t) => ['In progress', 'Inhouse Review', 'Feedback', 'Waiting for info'].includes(t.status))
-  const doneTasks = notionTasks.filter((t) => t.status === 'Complete')
+  const primaryTasks = notionTasks.filter(t => !SECONDARY_STATUSES.includes(t.status))
+  const secondaryTasks = notionTasks.filter(t => SECONDARY_STATUSES.includes(t.status))
 
   async function handleStatusChange(newStatus: string) {
+    if (!canEdit) return
     setStatusSaving(true)
     const prev = project.status
-    setProject((p) => ({ ...p, status: newStatus }))
+    setProject(p => ({ ...p, status: newStatus }))
     try {
       await updateProjectStatus(project.id, newStatus)
     } catch {
-      setProject((p) => ({ ...p, status: prev }))
+      setProject(p => ({ ...p, status: prev }))
     } finally {
       setStatusSaving(false)
     }
@@ -145,15 +177,37 @@ export default function ProjectDetail({ project: initialProject, notes, activity
   async function handleSaveDesc() {
     setSavingDesc(true)
     const prev = project.description
-    setProject((p) => ({ ...p, description: descDraft }))
+    setProject(p => ({ ...p, description: descDraft }))
     setEditingDesc(false)
     try {
       await updateProject(project.id, { description: descDraft })
     } catch {
-      setProject((p) => ({ ...p, description: prev }))
+      setProject(p => ({ ...p, description: prev }))
       setDescDraft(prev || '')
     } finally {
       setSavingDesc(false)
+    }
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    if (!canDelete) return
+    if (!confirm('Delete this note?')) return
+    try {
+      await deleteNote(noteId, project.id)
+      setNotes(prev => prev.filter(n => n.id !== noteId))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function handleDeleteFile(fileId: string) {
+    if (!canDelete) return
+    if (!confirm('Delete this file? This cannot be undone.')) return
+    try {
+      await deleteProjectFile(fileId, project.id)
+      setProjectFiles(prev => prev.filter(f => f.id !== fileId))
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -186,54 +240,108 @@ export default function ProjectDetail({ project: initialProject, notes, activity
           )}
         </div>
 
-        {/* Edit + Status */}
-        <div style={{ flexShrink: 0, alignSelf: 'flex-start', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            onClick={() => setShowEditModal(true)}
-            style={{ padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333', color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px' }}
-          >
-            EDIT
-          </button>
+        {/* Action buttons */}
+        <div style={{ flexShrink: 0, alignSelf: 'flex-start', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Launch checklist — devs and PMs/admins */}
+          {canLaunch && (
+            <button
+              onClick={() => setShowLaunchChecklist(true)}
+              style={{
+                padding: '3px 12px', backgroundColor: '#BDD630', border: 'none',
+                color: '#080808', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+              }}
+            >
+              🚀 LAUNCH
+            </button>
+          )}
+          {/* Share — admin/PM only */}
+          {canEdit && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              style={{
+                padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333',
+                color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+              }}
+            >
+              SHARE ({members.length})
+            </button>
+          )}
+          {/* Edit — admin/PM only */}
+          {canEdit && (
+            <button
+              onClick={() => setShowEditModal(true)}
+              style={{
+                padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333',
+                color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+              }}
+            >
+              EDIT
+            </button>
+          )}
         </div>
-        {/* Status dropdown */}
-        <div style={{ flexShrink: 0, alignSelf: 'flex-start', position: 'relative' }}>
-          <select
-            value={project.status}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            disabled={statusSaving}
-            style={{
-              padding: '3px 28px 3px 10px',
-              backgroundColor: STATUS_COLORS[project.status] || '#666666',
-              color: '#080808',
-              border: 'none',
-              fontSize: '10px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              fontFamily: 'Montserrat, sans-serif',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23080808'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 8px center',
-              opacity: statusSaving ? 0.6 : 1,
-            }}
-          >
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-            ))}
-          </select>
-        </div>
+
+        {/* Status dropdown — admin/PM only */}
+        {canEdit && (
+          <div style={{ flexShrink: 0, alignSelf: 'flex-start', position: 'relative' }}>
+            <select
+              value={project.status}
+              onChange={e => handleStatusChange(e.target.value)}
+              disabled={statusSaving}
+              style={{
+                padding: '3px 28px 3px 10px', backgroundColor: STATUS_COLORS[project.status] || '#666666',
+                color: '#080808', border: 'none', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                appearance: 'none', WebkitAppearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23080808'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+                opacity: statusSaving ? 0.6 : 1,
+              }}
+            >
+              {ALL_STATUSES.map(s => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {/* Status badge for non-editors */}
+        {!canEdit && (
+          <span style={{
+            padding: '3px 10px', backgroundColor: STATUS_COLORS[project.status] || '#666666',
+            color: '#080808', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+          }}>
+            {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+          </span>
+        )}
       </div>
+
+      {/* Members strip */}
+      {members.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '10px', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Team:</span>
+          {members.map(m => {
+            const p = m.profiles
+            if (!p) return null
+            const initials = p.initials || (p.full_name || p.email).slice(0, 2).toUpperCase()
+            return (
+              <div key={m.id} title={`${p.full_name || p.email} (${ROLE_LABELS[p.role as keyof typeof ROLE_LABELS] || p.role})`}
+                style={{ width: '28px', height: '28px', backgroundColor: '#1a1a1a', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#BDD630', cursor: 'default' }}>
+                {initials}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
         {[
           { label: 'Total Tasks', value: notionTasks.length, color: '#ffffff' },
-          { label: 'In Progress', value: activeTasks.length, color: '#4a9eff' },
-          { label: 'Completed', value: doneTasks.length, color: '#4ade80' },
-        ].map((stat) => (
+          { label: 'In Progress', value: notionTasks.filter(t => t.status === 'In progress').length, color: '#4a9eff' },
+          { label: 'Completed', value: notionTasks.filter(t => t.status === 'Complete').length, color: '#4ade80' },
+        ].map(stat => (
           <div key={stat.label} style={{ backgroundColor: '#0e0e0e', padding: '16px 20px', border: '1px solid #1a1a1a' }}>
             <p style={{ fontSize: '10px', color: '#666666', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.label}</p>
             <p style={{ fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800, color: stat.color, margin: 0 }}>{stat.value}</p>
@@ -242,27 +350,15 @@ export default function ProjectDetail({ project: initialProject, notes, activity
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid #1a1a1a', paddingBottom: '0' }}>
-        {(['overview', 'tasks', 'activity'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              padding: '10px 16px',
-              backgroundColor: 'transparent',
-              color: tab === t ? '#BDD630' : '#555555',
-              border: 'none',
-              borderBottom: tab === t ? '2px solid #BDD630' : '2px solid transparent',
-              fontSize: '11px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              fontFamily: 'Montserrat, sans-serif',
-              transition: 'all 0.15s ease',
-              marginBottom: '-1px',
-            }}
-          >
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid #1a1a1a' }}>
+        {(['overview', 'tasks', 'activity'] as Tab[]).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: '10px 16px', backgroundColor: 'transparent',
+            color: tab === t ? '#BDD630' : '#555555', border: 'none',
+            borderBottom: tab === t ? '2px solid #BDD630' : '2px solid transparent',
+            fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+            cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.15s ease', marginBottom: '-1px',
+          }}>
             {t === 'overview' ? 'Overview' : t === 'tasks' ? `Tasks (${notionTasks.length})` : 'Activity'}
           </button>
         ))}
@@ -271,19 +367,14 @@ export default function ProjectDetail({ project: initialProject, notes, activity
       {/* ── OVERVIEW TAB ── */}
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '20px', alignItems: 'start' }}>
-          {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
             {/* Description */}
             <SectionCard title="Description">
-              {editingDesc ? (
+              {editingDesc && canEdit ? (
                 <div>
-                  <textarea
-                    value={descDraft}
-                    onChange={(e) => setDescDraft(e.target.value)}
-                    rows={4}
+                  <textarea value={descDraft} onChange={e => setDescDraft(e.target.value)} rows={4} autoFocus
                     style={{ width: '100%', padding: '12px', backgroundColor: '#111111', border: '1px solid #333333', color: '#ffffff', fontSize: '13px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', lineHeight: '1.6', boxSizing: 'border-box' }}
-                    autoFocus
                   />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                     <button onClick={handleSaveDesc} disabled={savingDesc} style={{ padding: '8px 16px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
@@ -297,11 +388,11 @@ export default function ProjectDetail({ project: initialProject, notes, activity
               ) : (
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                   <p style={{ color: project.description ? '#999999' : '#444444', fontSize: '13px', lineHeight: 1.7, margin: 0, flex: 1 }}>
-                    {project.description || 'No description. Click to add one.'}
+                    {project.description || 'No description.'}
                   </p>
-                  <button onClick={() => setEditingDesc(true)} title="Edit description" style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>
-                    ✎
-                  </button>
+                  {canEdit && (
+                    <button onClick={() => setEditingDesc(true)} title="Edit description" style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>✎</button>
+                  )}
                 </div>
               )}
             </SectionCard>
@@ -309,45 +400,52 @@ export default function ProjectDetail({ project: initialProject, notes, activity
             {/* Notes */}
             <SectionCard title={`Notes${notes.length > 0 ? ` (${notes.length})` : ''}`}>
               <AddNoteForm projectId={project.id} />
-              {notes.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {notes.map((note) => {
+              {notes.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                  {notes.map(note => {
                     const author = note.profiles?.full_name
                     return (
-                      <div key={note.id} style={{ padding: '14px', backgroundColor: '#111111', borderLeft: '3px solid #333333' }}>
+                      <div key={note.id} style={{ padding: '14px', backgroundColor: '#111111', borderLeft: '3px solid #333333', position: 'relative' }}>
                         <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.6 }}>{note.content}</p>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          {author && <span style={{ fontSize: '11px', color: '#BDD630', fontWeight: 600 }}>{author}</span>}
-                          {author && <span style={{ fontSize: '11px', color: '#333333' }}>·</span>}
-                          <span style={{ fontSize: '11px', color: '#555555' }}>
-                            {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            {author && <span style={{ fontSize: '11px', color: '#BDD630', fontWeight: 600 }}>{author}</span>}
+                            {author && <span style={{ fontSize: '11px', color: '#333333' }}>·</span>}
+                            <span style={{ fontSize: '11px', color: '#555555' }}>
+                              {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteNote(note.id)}
+                              style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', fontSize: '12px', padding: '2px 6px' }}
+                              title="Delete note"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
                       </div>
                     )
                   })}
                 </div>
-              ) : (
-                <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No notes yet.</p>
               )}
             </SectionCard>
 
             {/* Files */}
             <SectionCard title={`Files${projectFiles.length > 0 ? ` (${projectFiles.length})` : ''}`}>
-              <ProjectFiles projectId={project.id} initialFiles={projectFiles} />
+              <ProjectFiles projectId={project.id} initialFiles={projectFiles} canDelete={canDelete} onDelete={handleDeleteFile} />
             </SectionCard>
           </div>
 
           {/* Right column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* Details */}
             <SectionCard title="Details">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
                   { label: 'Start', value: project.start_date ? new Date(project.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD' },
                   { label: 'Due', value: project.due_date ? new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD' },
-                ].map((item) => (
+                ].map(item => (
                   <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: '#666666', textTransform: 'uppercase' }}>{item.label}</span>
                     <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>{item.value}</span>
@@ -356,18 +454,12 @@ export default function ProjectDetail({ project: initialProject, notes, activity
               </div>
             </SectionCard>
 
-            {/* Links */}
             {allLinks.length > 0 && (
               <SectionCard title="Links">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {allLinks.map((link) => (
-                    <a
-                      key={link.url}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#111111', textDecoration: 'none', color: '#ffffff', fontSize: '12px', fontWeight: 600, minHeight: '44px' }}
-                    >
+                  {allLinks.map(link => (
+                    <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#111111', textDecoration: 'none', color: '#ffffff', fontSize: '12px', fontWeight: 600, minHeight: '44px' }}>
                       <span>{link.label}</span>
                       <span style={{ color: '#BDD630' }}>↗</span>
                     </a>
@@ -389,9 +481,9 @@ export default function ProjectDetail({ project: initialProject, notes, activity
               <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 20px 0' }}>
                 Link this project to a Notion page to pull tasks automatically from your Workload database.
               </p>
-              <p style={{ color: '#555555', fontSize: '12px', margin: 0 }}>
-                Go to project settings and add the Notion Project ID.
-              </p>
+              {canEdit && (
+                <p style={{ color: '#555555', fontSize: '12px', margin: 0 }}>Use the EDIT button to link a Notion project.</p>
+              )}
             </div>
           ) : notionTasks.length === 0 ? (
             <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '32px', textAlign: 'center' }}>
@@ -399,50 +491,51 @@ export default function ProjectDetail({ project: initialProject, notes, activity
             </div>
           ) : (
             <>
-              {/* Active */}
-              {(['In progress', 'Inhouse Review', 'Feedback', 'Waiting for info', 'Not started', 'On Hold', 'Complete'] as const).map((statusKey) => {
-                const group = notionTasks.filter((t) => t.status === statusKey)
+              {/* Primary task statuses */}
+              {TASK_STATUS_ORDER.filter(s => !SECONDARY_STATUSES.includes(s)).map(statusKey => {
+                const group = notionTasks.filter(t => t.status === statusKey)
                 if (group.length === 0) return null
-                const isDone = statusKey === 'Complete'
                 return (
                   <SectionCard key={statusKey} title={`${statusKey} (${group.length})`}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {group.map((task) => (
-                        <a
-                          key={task.id}
-                          href={task.notionUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#111111', border: '1px solid #1a1a1a', minHeight: '44px', textDecoration: 'none' }}
-                        >
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || '#666666', flexShrink: 0 }} />
-                          <p style={{ margin: 0, fontSize: '13px', color: isDone ? '#555555' : '#ffffff', flex: 1, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4 }}>
-                            {task.name}
-                          </p>
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-                            {task.tags.slice(0, 2).map((tag) => (
-                              <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: '#666666', backgroundColor: '#1a1a1a', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                                {tag}
-                              </span>
-                            ))}
-                            {task.priority && (
-                              <span style={{ fontSize: '10px', fontWeight: 700, color: NOTION_PRIORITY_COLORS[task.priority] || '#666666', textTransform: 'uppercase' }}>
-                                {task.priority}
-                              </span>
-                            )}
-                            {task.dueDate && (
-                              <span style={{ fontSize: '10px', color: '#555555' }}>
-                                {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                            )}
-                            <span style={{ fontSize: '10px', color: '#333333' }}>↗</span>
-                          </div>
-                        </a>
-                      ))}
+                      {group.map(task => <TaskRow key={task.id} task={task} />)}
                     </div>
                   </SectionCard>
                 )
               })}
+
+              {/* Secondary statuses (On Hold, Complete) */}
+              {secondaryTasks.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowSecondaryTasks(!showSecondaryTasks)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid #222',
+                      color: '#555555', cursor: 'pointer', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                      letterSpacing: '0.5px', padding: '8px 16px', fontFamily: 'Montserrat, sans-serif', width: '100%',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>{showSecondaryTasks ? 'Hide' : 'Show'} On Hold & Completed ({secondaryTasks.length})</span>
+                    <span>{showSecondaryTasks ? '▲' : '▼'}</span>
+                  </button>
+                  {showSecondaryTasks && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {SECONDARY_STATUSES.map(statusKey => {
+                        const group = secondaryTasks.filter(t => t.status === statusKey)
+                        if (group.length === 0) return null
+                        return (
+                          <SectionCard key={statusKey} title={`${statusKey} (${group.length})`}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {group.map(task => <TaskRow key={task.id} task={task} isDone={statusKey === 'Complete'} />)}
+                            </div>
+                          </SectionCard>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -452,10 +545,9 @@ export default function ProjectDetail({ project: initialProject, notes, activity
       {tab === 'activity' && (
         <SectionCard title="Activity Log">
           {activity.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {activity.map((entry, i) => (
                 <div key={entry.id} style={{ display: 'flex', gap: '14px', paddingBottom: '20px', position: 'relative' }}>
-                  {/* Timeline line */}
                   {i < activity.length - 1 && (
                     <div style={{ position: 'absolute', left: '5px', top: '14px', bottom: 0, width: '1px', backgroundColor: '#1a1a1a' }} />
                   )}
@@ -480,14 +572,68 @@ export default function ProjectDetail({ project: initialProject, notes, activity
         </SectionCard>
       )}
 
-      {/* Edit Project Modal */}
-      {showEditModal && (
+      {/* Modals */}
+      {showEditModal && canEdit && (
         <EditProjectModal
           project={project}
           onClose={() => setShowEditModal(false)}
-          onSave={(updates) => setProject((p) => ({ ...p, ...updates }))}
+          onSave={updates => setProject(p => ({ ...p, ...updates }))}
+        />
+      )}
+
+      {showShareModal && canEdit && (
+        <ShareProjectModal
+          projectId={project.id}
+          projectName={clientName || project.name}
+          currentMembers={members}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {showLaunchChecklist && (
+        <LaunchChecklist
+          projectId={project.id}
+          projectName={clientName || project.name}
+          onClose={() => setShowLaunchChecklist(false)}
         />
       )}
     </div>
+  )
+}
+
+function TaskRow({ task, isDone = false }: { task: NotionTask; isDone?: boolean }) {
+  return (
+    <a
+      href={task.notionUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+        backgroundColor: '#111111', border: '1px solid #1a1a1a', minHeight: '44px', textDecoration: 'none',
+      }}
+    >
+      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || '#444', flexShrink: 0 }} />
+      <p style={{ margin: 0, fontSize: '13px', color: isDone ? '#555555' : '#ffffff', flex: 1, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4 }}>
+        {task.name}
+      </p>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+        {task.tags.slice(0, 2).map(tag => (
+          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: '#555555', backgroundColor: '#1a1a1a', padding: '2px 6px', textTransform: 'uppercase' }}>
+            {tag}
+          </span>
+        ))}
+        {task.priority && (
+          <span style={{ fontSize: '10px', fontWeight: 700, color: NOTION_PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
+            {task.priority}
+          </span>
+        )}
+        {task.dueDate && (
+          <span style={{ fontSize: '10px', color: '#555555' }}>
+            {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        <span style={{ fontSize: '10px', color: '#333333' }}>↗</span>
+      </div>
+    </a>
   )
 }

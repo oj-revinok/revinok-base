@@ -38,6 +38,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [notionKey, setNotionKey] = useState('')
+  const [notionPersonId, setNotionPersonId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
@@ -47,11 +48,12 @@ export default function SettingsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: profile } = await supabase.from('profiles').select('full_name, role, notion_api_key').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('full_name, role, notion_api_key, notion_person_id').eq('id', user.id).single()
       if (profile) {
         setFullName(profile.full_name || '')
         setUserRole(profile.role || '')
-        setNotionKey((profile as { notion_api_key?: string }).notion_api_key || '')
+        setNotionKey((profile as any).notion_api_key || '')
+        setNotionPersonId((profile as any).notion_person_id || '')
       }
       setLoadingProfile(false)
     }
@@ -114,6 +116,23 @@ export default function SettingsPage() {
   }
 
   const isAdmin = userRole === 'admin'
+  const isAdminOrPM = userRole === 'admin' || userRole === 'project_manager'
+  const isIndividual = !isAdminOrPM
+
+  async function handleSaveNotionPersonId(e: React.FormEvent) {
+    e.preventDefault()
+    clearMessages()
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('Not logged in'); return }
+      const { error } = await supabase.from('profiles').update({ notion_person_id: notionPersonId || null } as never).eq('id', user.id)
+      if (error) setError(error.message)
+      else setSuccess('Notion profile linked — your tasks will now appear in the Tasks page.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div style={{ padding: '20px 16px 60px', maxWidth: '640px' }}>
@@ -161,6 +180,37 @@ export default function SettingsPage() {
             <SaveButton loading={loading} label="UPDATE PASSWORD" />
           </form>
         </div>
+
+        {/* Notion Profile Link — designers/devs */}
+        {isIndividual && (
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION PROFILE</h2>
+            </div>
+            <form onSubmit={handleSaveNotionPersonId}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={labelStyle}>YOUR NOTION PERSON ID</label>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
+                  Link your Notion identity so your assigned tasks appear in the Tasks page.
+                  Find your ID by asking your admin or checking your Notion profile URL.
+                </p>
+                <input
+                  type="text"
+                  value={notionPersonId}
+                  onChange={(e) => setNotionPersonId(e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  style={inputStyle}
+                  disabled={loading}
+                  autoComplete="off"
+                />
+              </div>
+              <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#444444' }}>
+                {notionPersonId ? '● Notion profile linked' : '○ Not linked — Tasks page will be empty'}
+              </p>
+              <SaveButton loading={loading} label="LINK NOTION PROFILE" />
+            </form>
+          </div>
+        )}
 
         {/* Integrations — admin only */}
         {isAdmin && (

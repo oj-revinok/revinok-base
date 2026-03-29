@@ -9,10 +9,21 @@ interface SidebarProps {
   role: string
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  project_manager: 'Project Manager',
+  designer: 'Designer',
+  developer: 'Developer',
+  designer_dev: 'Designer / Dev',
+  viewer: 'Viewer',
+  client: 'Client',
+}
+
 const navItems = [
   { href: '/dashboard/projects', label: 'PROJECTS' },
-  { href: '/dashboard/clients', label: 'CLIENTS' },
-  { href: '/dashboard/team', label: 'TEAM' },
+  { href: '/dashboard/tasks',    label: 'TASKS' },
+  { href: '/dashboard/clients',  label: 'CLIENTS' },
+  { href: '/dashboard/team',     label: 'TEAM' },
   { href: '/dashboard/settings', label: 'SETTINGS' },
 ]
 
@@ -73,16 +84,9 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
           <div
             className="avatar"
             style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: '#BDD630',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#080808',
-              fontWeight: 700,
-              fontSize: '13px',
-              flexShrink: 0,
+              width: '40px', height: '40px', backgroundColor: '#BDD630',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#080808', fontWeight: 700, fontSize: '13px', flexShrink: 0,
             }}
           >
             {userInitials}
@@ -92,7 +96,7 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
               {fullName || email}
             </p>
             <p style={{ margin: '4px 0 0 0', color: '#666666', fontSize: '11px', textTransform: 'uppercase' as const, fontWeight: 500 }}>
-              {role}
+              {ROLE_LABELS[role] || role}
             </p>
           </div>
         </div>

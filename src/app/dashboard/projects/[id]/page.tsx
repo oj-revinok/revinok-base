@@ -11,25 +11,31 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const { id } = await params
   const supabase = createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const [
     { data: project },
     { data: notes },
     { data: activity },
     { data: links },
     { data: projectFiles },
+    { data: projectMembers },
+    { data: profile },
   ] = await Promise.all([
     supabase.from('projects').select('*, clients ( id, name, brand_name )').eq('id', id).single(),
     supabase.from('notes').select('*, profiles!notes_author_id_fkey ( full_name )').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('activity_log').select('*, profiles!activity_log_actor_id_fkey ( full_name )').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('project_links').select('*').eq('project_id', id).order('sort_order'),
     supabase.from('project_files').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+    supabase.from('project_members').select('*, profiles ( id, full_name, email, role, initials, avatar_url )').eq('project_id', id),
+    supabase.from('profiles').select('role').eq('id', user?.id ?? '').single(),
   ])
 
   if (!project) notFound()
 
-  // Fetch Notion tasks if this project is linked to Notion
+  // Fetch Notion tasks if linked (non-blocking on error)
   const notionTasks = project.notion_project_id
-    ? await fetchNotionTasksForProject(id)
+    ? await fetchNotionTasksForProject(id).catch(() => [])
     : []
 
   return (
@@ -40,6 +46,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       links={links ?? []}
       projectFiles={projectFiles ?? []}
       notionTasks={notionTasks}
+      projectMembers={projectMembers ?? []}
+      userRole={profile?.role ?? 'viewer'}
     />
   )
 }

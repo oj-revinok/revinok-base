@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'project_manager' | 'designer_dev' | 'viewer' | 'client'
+export type Role = 'admin' | 'project_manager' | 'designer' | 'developer' | 'designer_dev' | 'viewer' | 'client'
 
 export type ProjectStatus = 'Designing' | 'Developing' | 'Reviewing' | 'Live'
 
@@ -8,13 +8,14 @@ export interface Profile {
   full_name: string
   role: Role
   avatar_initials: string
+  notion_person_id?: string | null
   created_at: string
 }
 
 export interface Project {
   id: string
-  name: string           // what we do: "Website Redesign"
-  client_name: string    // brand: "Paragon Capital Group"
+  name: string
+  client_name: string
   description: string
   status: ProjectStatus
   staging_url: string | null
@@ -41,7 +42,7 @@ export interface Client {
   email: string
   role_title: string
   status: 'active' | 'invited' | 'inactive'
-  user_id: string | null  // linked Supabase auth user
+  user_id: string | null
   created_at: string
 }
 
@@ -70,6 +71,8 @@ export interface ProjectFile {
   created_by: string
   created_at: string
   uploader?: Profile
+  is_launch_checklist?: boolean
+  protected?: boolean
 }
 
 export interface ProjectLink {
@@ -89,4 +92,39 @@ export interface ActivityLog {
   created_by: string
   created_at: string
   author?: Profile
+}
+
+// Role helpers
+export function canCreateProjects(role: Role): boolean {
+  return role === 'admin' || role === 'project_manager'
+}
+
+export function canDeleteContent(role: Role): boolean {
+  return role === 'admin' || role === 'project_manager'
+}
+
+export function canManageTeam(role: Role): boolean {
+  return role === 'admin' || role === 'project_manager'
+}
+
+export function isDevRole(role: Role): boolean {
+  return role === 'developer' || role === 'designer_dev'
+}
+
+export function isDesignerRole(role: Role): boolean {
+  return role === 'designer' || role === 'designer_dev'
+}
+
+export function isAdminOrPM(role: Role): boolean {
+  return role === 'admin' || role === 'project_manager'
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: 'Admin',
+  project_manager: 'Project Manager',
+  designer: 'Designer',
+  developer: 'Developer',
+  designer_dev: 'Designer / Dev',
+  viewer: 'Viewer',
+  client: 'Client',
 }
