@@ -1,11 +1,10 @@
 import { Client } from '@notionhq/client'
 
-// Notion database IDs for Voxal | Revinok Workspace
+// Notion collection (data source) IDs for Voxal | Revinok Workspace
+// These are the collection IDs, NOT the database page IDs
 export const NOTION_DB = {
-  clients:  '24c391cd-225f-8050-b7a1-df681237bc48',
-  projects: '24c391cd-225f-8004-b9fe-d7e31edccf82',
-  team:     '24d391cd-225f-80ff-8b27-ec902f0a07a0',
-  workload: '24d391cd-225f-80ee-93e8-e8ebdd978cb3',
+  projects: '24c391cd-225f-8038-8d80-000bacadc183',
+  workload: '24d391cd-225f-805a-b6f1-000b483af790',
 }
 
 export function getNotionClient(apiKey?: string) {
@@ -36,13 +35,13 @@ export async function getTasksForProject(
     const response = await notion.dataSources.query({
       data_source_id: NOTION_DB.workload,
       filter: {
-        property: 'Projects',
+        property: '🏆 Projects ',
         relation: {
           contains: notionProjectPageId,
         },
       },
       sorts: [
-        { property: 'Status', direction: 'ascending' },
+        { property: 'Status ', direction: 'ascending' },
         { property: 'Due Date', direction: 'ascending' },
       ],
     } as any)
@@ -55,13 +54,13 @@ export async function getTasksForProject(
         props['Name']?.title?.[0]?.plain_text ||
         'Untitled'
 
-      const status = props['Status']?.status?.name || 'Not started'
+      const status = props['Status ']?.status?.name || 'Not started'
 
       const priority = props['Priority Level']?.select?.name || null
 
       const dueDate = props['Due Date']?.date?.start || null
 
-      const assignedTo = (props['Assigned to']?.relation || []).map(
+      const assignedTo = (props['🎨 Assigned to']?.relation || []).map(
         (r: any) => r.id
       )
 
@@ -93,13 +92,13 @@ export async function getNotionProjectsPage(
   try {
     const response = await notion.dataSources.query({
       data_source_id: NOTION_DB.projects,
-      sorts: [{ property: 'Project Name', direction: 'ascending' }],
+      sorts: [{ property: ' Project Name ', direction: 'ascending' }],
     } as any)
 
     return response.results.map((page: any) => ({
       id: page.id,
       name:
-        page.properties['Project Name']?.title?.[0]?.plain_text ||
+        page.properties[' Project Name ']?.title?.[0]?.plain_text ||
         'Untitled',
     }))
   } catch (err) {
