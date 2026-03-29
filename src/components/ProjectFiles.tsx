@@ -11,6 +11,15 @@ interface ProjectFile {
   size_bytes: number | null
   file_type: string | null
   created_at: string
+  is_launch_checklist?: boolean
+}
+
+interface ChecklistData {
+  projectName?: string
+  reviewedBy?: string
+  sentAt?: string
+  progress?: { done: number; total: number }
+  items?: { id: string; sectionNum: string; section: string; title: string; done: boolean }[]
 }
 
 function formatBytes(bytes: number) {
@@ -19,13 +28,38 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function fileIcon(mimeType: string | null) {
-  if (!mimeType) return '📎'
-  if (mimeType.startsWith('image/')) return '🖼'
-  if (mimeType === 'application/pdf') return '📄'
-  if (mimeType.includes('word') || mimeType.includes('document')) return '📝'
-  if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊'
-  return '📎'
+// SVG file type indicator (no emojis)
+function FileTypeTag({ mimeType }: { mimeType: string | null }) {
+  let label = 'FILE'
+  let color = '#444444'
+  if (mimeType === 'checklist') { label = 'CHKLST'; color = '#BDD630' }
+  else if (mimeType?.startsWith('image/')) { label = 'IMG'; color = '#4a9eff' }
+  else if (mimeType === 'application/pdf') { label = 'PDF'; color = '#ef4444' }
+  else if (mimeType?.includes('word') || mimeType?.includes('document')) { label = 'DOC'; color = '#4a9eff' }
+  else if (mimeType?.includes('sheet') || mimeType?.includes('excel')) { label = 'XLS'; color = '#4ade80' }
+  else if (mimeType?.includes('presentation') || mimeType?.includes('powerpoint')) { label = 'PPT'; color = '#ff9d4a' }
+  else if (mimeType?.includes('zip')) { label = 'ZIP'; color = '#a78bfa' }
+  return (
+    <span style={{
+      fontSize: '8px', fontWeight: 800, color, backgroundColor: '#1a1a1a',
+      border: `1px solid ${color}33`, padding: '3px 5px', letterSpacing: '0.5px',
+      flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
+    }}>
+      {label}
+    </span>
+  )
+}
+
+async function parseChecklistFromUrl(url: string): Promise<ChecklistData> {
+  if (url.startsWith('data:')) {
+    const [header, data] = url.split(',')
+    const isBase64 = header.includes('base64')
+    const text = isBase64 ? atob(data) : decodeURIComponent(data)
+    return JSON.parse(text)
+  }
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Failed to load checklist')
+  return res.json()
 }
 
 export default function ProjectFiles({
@@ -41,21 +75,21 @@ export default function ProjectFiles({
 }) {
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles)
   const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [checklistModal, setChecklistModal] = useState<{ fileName: string; data: ChecklistData } | null>(null)
+  const [loadingChecklist, setLoadingChecklist] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [, startTransition] = useTransition()
 
-  // Animate progress bar while uploading
   useEffect(() => {
     if (uploading) {
-      setProgress(0)
+      setUploadProgress(0)
       progressRef.current = setInterval(() => {
-        setProgress((p) => {
-          // Ease toward 90% — never reaches 100 until done
+        setUploadProgress((p) => {
           if (p >= 90) return p
           return p + (90 - p) * 0.08
         })
@@ -63,43 +97,27 @@ export default function ProjectFiles({
     } else {
       if (progressRef.current) clearInterval(progressRef.current)
     }
-    return () => {
-      if (progressRef.current) clearInterval(progressRef.current)
-    }
+    return () => { if (progressRef.current) clearInterval(progressRef.current) }
   }, [uploading])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-
     setUploading(true)
     setUploadError(null)
     setUploadSuccess(null)
-
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('projectId', projectId)
-
       const result = await uploadFile(formData)
-
-      // Snap to 100%
-      setProgress(100)
-
-      setFiles((prev) => [
-        {
-          id: Date.now().toString(),
-          name: result.name,
-          url: result.publicUrl,
-          storage_path: result.path,
-          size_bytes: result.size,
-          file_type: result.type,
-          created_at: new Date().toISOString(),
-        },
-        ...prev,
-      ])
-
-      setUploadSuccess(`"${result.name}" uploaded successfully`)
+      setUploadProgress(100)
+      setFiles((prev) => [{
+        id: Date.now().toString(), name: result.name, url: result.publicUrl,
+        storage_path: result.path, size_bytes: result.size,
+        file_type: result.type, created_at: new Date().toISOString(),
+      }, ...prev])
+      setUploadSuccess(`"${result.name}" uploaded`)
       setTimeout(() => setUploadSuccess(null), 4000)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
@@ -112,7 +130,6 @@ export default function ProjectFiles({
   function handleDelete(file: ProjectFile) {
     if (!confirm(`Delete "${file.name}"?`)) return
     setDeletingId(file.id)
-
     startTransition(async () => {
       try {
         await deleteFile(projectId, file.id, file.storage_path)
@@ -125,9 +142,21 @@ export default function ProjectFiles({
     })
   }
 
+  async function handleChecklistClick(file: ProjectFile) {
+    setLoadingChecklist(file.id)
+    try {
+      const data = await parseChecklistFromUrl(file.url)
+      setChecklistModal({ fileName: file.name, data })
+    } catch {
+      setUploadError('Could not load checklist data')
+    } finally {
+      setLoadingChecklist(null)
+    }
+  }
+
   return (
     <div>
-      {/* Upload button */}
+      {/* Upload */}
       <input
         ref={fileInputRef}
         type="file"
@@ -140,154 +169,104 @@ export default function ProjectFiles({
       <label
         htmlFor={`file-upload-${projectId}`}
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
           padding: '10px 20px',
-          backgroundColor: uploading ? '#2a2a2a' : 'transparent',
-          color: uploading ? '#555555' : '#BDD630',
-          border: '1px solid',
-          borderColor: uploading ? '#2a2a2a' : '#BDD630',
-          fontSize: '11px',
-          fontWeight: 700,
-          textTransform: 'uppercase' as const,
-          letterSpacing: '0.5px',
-          cursor: uploading ? 'not-allowed' : 'pointer',
-          fontFamily: 'Montserrat, sans-serif',
-          minHeight: '44px',
-          marginBottom: uploading ? '0' : '16px',
-          transition: 'all 0.15s ease',
+          backgroundColor: uploading ? '#1a1a1a' : 'transparent',
+          color: uploading ? '#444444' : '#BDD630',
+          border: '1px solid', borderColor: uploading ? '#1a1a1a' : '#BDD630',
+          fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const,
+          letterSpacing: '0.5px', cursor: uploading ? 'not-allowed' : 'pointer',
+          fontFamily: 'Montserrat, sans-serif', minHeight: '44px',
+          marginBottom: uploading ? '0' : '16px', transition: 'all 0.15s ease',
         }}
       >
         {uploading ? 'Uploading…' : '↑ Upload File'}
       </label>
 
-      {/* Progress bar */}
       {uploading && (
         <div style={{ marginBottom: '16px', marginTop: '10px' }}>
-          <div style={{ height: '3px', backgroundColor: '#1a1a1a', width: '100%', overflow: 'hidden' }}>
-            <div
-              style={{
-                height: '100%',
-                width: `${progress}%`,
-                backgroundColor: '#BDD630',
-                transition: 'width 0.12s ease',
-              }}
-            />
+          <div style={{ height: '2px', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${uploadProgress}%`, backgroundColor: '#BDD630', transition: 'width 0.12s ease' }} />
           </div>
-          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#555555' }}>
-            {Math.round(progress)}%
-          </p>
+          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#444444' }}>{Math.round(uploadProgress)}%</p>
         </div>
       )}
 
-      {/* Success message */}
       {uploadSuccess && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          margin: '0 0 16px 0',
-          padding: '10px 14px',
-          backgroundColor: '#0d1f0d',
-          border: '1px solid #1a3a1a',
-          fontSize: '12px',
-          color: '#4ade80',
-          fontWeight: 600,
-        }}>
-          <span>✓</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 16px 0', padding: '10px 14px', backgroundColor: '#071a0c', border: '1px solid #1a3a1a', fontSize: '12px', color: '#4ade80', fontWeight: 600 }}>
+          <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 7.5L11 1" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
           {uploadSuccess}
         </div>
       )}
 
-      {/* Error message */}
       {uploadError && (
         <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#ef4444' }}>{uploadError}</p>
       )}
 
       {files.length === 0 ? (
-        <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No files yet. Upload a PDF, image, or doc.</p>
+        <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No files yet. Upload a PDF, image, or doc.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {files.map((file) => (
             <div
               key={file.id}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px',
-                backgroundColor: '#111111',
-                border: '1px solid #1a1a1a',
-                minHeight: '52px',
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '12px 14px', backgroundColor: '#0a0a0a',
+                border: '1px solid #1a1a1a', minHeight: '52px',
               }}
             >
-              <span style={{ fontSize: '18px', flexShrink: 0 }}>{fileIcon(file.file_type)}</span>
+              <FileTypeTag mimeType={file.is_launch_checklist ? 'checklist' : file.file_type} />
+
               <div style={{ flex: 1, minWidth: 0 }}>
-                <a
-                  href={file.url.startsWith('data:') ? '#' : file.url}
-                  target={file.url.startsWith('data:') ? undefined : '_blank'}
-                  rel="noopener noreferrer"
-                  onClick={(e) => {
-                    if (file.url.startsWith('data:')) {
-                      e.preventDefault()
-                      try {
-                        const [header, data] = file.url.split(',')
-                        const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream'
-                        const isBase64 = header.includes('base64')
-                        const byteStr = isBase64 ? atob(data) : decodeURIComponent(data)
-                        const ab = new Uint8Array(byteStr.length)
-                        for (let i = 0; i < byteStr.length; i++) ab[i] = byteStr.charCodeAt(i)
-                        const blob = new Blob([ab], { type: mime })
-                        const blobUrl = URL.createObjectURL(blob)
-                        const win = window.open(blobUrl, '_blank')
-                        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
-                        if (!win) URL.revokeObjectURL(blobUrl)
-                      } catch { /* ignore */ }
-                    }
-                  }}
-                  style={{
-                    display: 'block',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {file.name}
-                </a>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#555555' }}>
-                  {file.size_bytes ? formatBytes(file.size_bytes) : '—'} ·{' '}
-                  {new Date(file.created_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                {file.is_launch_checklist ? (
+                  <button
+                    onClick={() => handleChecklistClick(file)}
+                    disabled={loadingChecklist === file.id}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left',
+                      background: 'none', border: 'none', padding: 0,
+                      color: '#BDD630', fontSize: '13px', fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {loadingChecklist === file.id ? 'Loading…' : file.name}
+                  </button>
+                ) : (
+                  <a
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'block', color: '#ffffff', fontSize: '13px', fontWeight: 600,
+                      textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {file.name}
+                  </a>
+                )}
+                <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#444444' }}>
+                  {file.size_bytes ? formatBytes(file.size_bytes) : '—'}
+                  {' · '}
+                  {new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {file.is_launch_checklist && <span style={{ color: '#BDD630', marginLeft: '6px', fontWeight: 700 }}>Go-Live Checklist</span>}
                 </p>
               </div>
+
               {canDelete && (
                 <button
                   onClick={() => onDelete ? onDelete(file.id) : handleDelete(file)}
                   disabled={deletingId === file.id}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#555555',
-                    fontSize: '16px',
-                    cursor: 'pointer',
-                    padding: '8px',
-                    minHeight: '44px',
-                    minWidth: '44px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    fontFamily: 'Montserrat, sans-serif',
+                    background: 'none', border: 'none', color: '#333333', fontSize: '16px',
+                    cursor: 'pointer', padding: '8px', minHeight: '44px', minWidth: '44px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
+                    transition: 'color 0.15s',
                   }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#333333' }}
                   title="Delete file"
                 >
                   ×
@@ -297,6 +276,184 @@ export default function ProjectFiles({
           ))}
         </div>
       )}
+
+      {/* Checklist view modal */}
+      {checklistModal && (
+        <ChecklistViewModal
+          fileName={checklistModal.fileName}
+          data={checklistModal.data}
+          onClose={() => setChecklistModal(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ── Checklist View Modal ──────────────────────────────── */
+
+function ChecklistViewModal({
+  fileName,
+  data,
+  onClose,
+}: {
+  fileName: string
+  data: ChecklistData
+  onClose: () => void
+}) {
+  const items = data.items ?? []
+  const progress = data.progress ?? { done: items.filter(i => i.done).length, total: items.length }
+  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0
+
+  // Group by section
+  const sections: Record<string, typeof items> = {}
+  items.forEach(item => {
+    const key = `${item.sectionNum}|${item.section}`
+    if (!sections[key]) sections[key] = []
+    sections[key].push(item)
+  })
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      style={{
+        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+        zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+      }}
+    >
+      <div style={{
+        backgroundColor: '#0a0a0a', border: '1px solid #222222',
+        width: '100%', maxWidth: '680px', maxHeight: '90vh',
+        overflowY: 'auto', display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '24px 28px 20px', borderBottom: '1px solid #1a1a1a',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px',
+          position: 'sticky', top: 0, backgroundColor: '#0a0a0a', zIndex: 1,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: '0 0 4px 0', fontSize: '9px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              Go-Live Checklist
+            </p>
+            <h2 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: 800, color: '#ffffff', lineHeight: 1.3 }}>
+              {data.projectName || fileName}
+            </h2>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              {data.reviewedBy && (
+                <span style={{ fontSize: '11px', color: '#555555' }}>
+                  Submitted by <span style={{ color: '#888888' }}>{data.reviewedBy}</span>
+                </span>
+              )}
+              {data.sentAt && (
+                <span style={{ fontSize: '11px', color: '#555555' }}>
+                  {new Date(data.sentAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: '1px solid #222', color: '#555555',
+              fontSize: '14px', cursor: 'pointer', padding: '6px 10px', lineHeight: 1,
+              fontFamily: 'Montserrat, sans-serif', flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Progress */}
+        <div style={{ padding: '16px 28px', borderBottom: '1px solid #1a1a1a', backgroundColor: '#0d0d0d' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {progress.done} / {progress.total} completed
+            </span>
+            <span style={{
+              fontSize: '12px', fontWeight: 700,
+              color: pct === 100 ? '#4ade80' : pct >= 80 ? '#BDD630' : '#ff9d4a',
+            }}>
+              {pct}%
+            </span>
+          </div>
+          <div style={{ height: '4px', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', transition: 'width 0.4s ease',
+              backgroundColor: pct === 100 ? '#4ade80' : '#BDD630',
+              width: `${pct}%`,
+            }} />
+          </div>
+        </div>
+
+        {/* Sections */}
+        <div style={{ padding: '8px 0 24px' }}>
+          {Object.entries(sections).map(([key, sectionItems]) => {
+            const [sectionNum, sectionName] = key.split('|')
+            const doneSec = sectionItems.filter(i => i.done).length
+            return (
+              <div key={key} style={{ marginBottom: '2px' }}>
+                {/* Section header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 28px', backgroundColor: '#0d0d0d',
+                  borderTop: '1px solid #141414', borderBottom: '1px solid #141414',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{
+                      fontSize: '9px', fontWeight: 700, color: '#444444',
+                      backgroundColor: '#1a1a1a', padding: '3px 7px', letterSpacing: '0.5px',
+                      fontFamily: 'Montserrat, sans-serif', flexShrink: 0,
+                    }}>
+                      {sectionNum}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      {sectionName}
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: '10px', color: doneSec === sectionItems.length ? '#4ade80' : '#444444',
+                    fontWeight: 600,
+                  }}>
+                    {doneSec}/{sectionItems.length}
+                  </span>
+                </div>
+
+                {/* Items */}
+                {sectionItems.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '10px 28px', borderBottom: '1px solid #0d0d0d',
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <div style={{
+                      width: '14px', height: '14px', flexShrink: 0,
+                      border: `1.5px solid ${item.done ? '#4ade80' : '#2a2a2a'}`,
+                      backgroundColor: item.done ? '#4ade80' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {item.done && (
+                        <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                          <path d="M1 2.5L2.5 4L6 1" stroke="#080808" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize: '12px', lineHeight: 1.5, flex: 1,
+                      color: item.done ? '#3a3a3a' : '#cccccc',
+                      textDecoration: item.done ? 'line-through' : 'none',
+                    }}>
+                      {item.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
