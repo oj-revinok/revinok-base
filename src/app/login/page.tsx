@@ -50,11 +50,8 @@ export default function LoginPage() {
           <img
             src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
             alt="Revinok"
-            style={{ height: '48px', width: 'auto', marginBottom: '8px' }}
+            style={{ height: '48px', width: 'auto' }}
           />
-          <p style={{ color: '#999999', fontSize: '14px', margin: '8px 0 0 0', fontWeight: 500 }}>
-            Project Management
-          </p>
         </div>
 
         <form onSubmit={handleSignIn}>
