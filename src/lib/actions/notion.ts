@@ -61,6 +61,28 @@ export async function fetchAllNotionTasks(): Promise<NotionTask[]> {
   }
 }
 
+// Fetch Notion-native comments for a task
+export async function getTaskNotionComments(taskId: string): Promise<{ author: string; text: string; date: string }[]> {
+  const notionKey = await getAdminNotionKey()
+  const notion = getNotionClient(notionKey)
+  if (!notion) return []
+
+  try {
+    const response = await (notion as any).comments.list({ block_id: taskId })
+    return (response.results as any[])
+      .map((c: any) => {
+        const richText = c.rich_text ?? []
+        const text = richText.map((t: any) => t.plain_text).join('')
+        const author = c.created_by?.name || 'Notion User'
+        const date = c.created_time || ''
+        return { author, text, date }
+      })
+      .filter((c: { author: string; text: string; date: string }) => c.text.trim())
+  } catch {
+    return []
+  }
+}
+
 // Fetch the page body (description) for a single Notion task
 export async function getTaskDescription(taskId: string): Promise<string> {
   const notionKey = await getAdminNotionKey()

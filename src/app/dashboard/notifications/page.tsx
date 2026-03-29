@@ -84,7 +84,7 @@ export default function NotificationsPage() {
     if (type === 'launch_approved') return '✅'
     if (type === 'launch_declined') return '❌'
     if (type === 'project_added') return '📁'
-    return '🔔'
+    return '📩'
   }
 
   function notifTitle(n: Notification) {
@@ -119,7 +119,6 @@ export default function NotificationsPage() {
 
       {notifications.length === 0 ? (
         <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '60px 40px', textAlign: 'center' }}>
-          <p style={{ fontSize: '32px', margin: '0 0 12px 0' }}>🔔</p>
           <p style={{ color: '#555555', fontSize: '14px', margin: 0 }}>No notifications yet</p>
         </div>
       ) : (

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
 import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
-import { getTaskDescription } from '@/lib/actions/notion'
+import { getTaskDescription, getTaskNotionComments } from '@/lib/actions/notion'
 
 type ViewMode = 'list' | 'kanban'
 
@@ -169,6 +169,8 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
   const [isPending, startTransition] = useTransition()
   const [description, setDescription] = useState<string | null>(null)
   const [loadingDesc, setLoadingDesc] = useState(true)
+  const [notionComments, setNotionComments] = useState<{ author: string; text: string; date: string }[]>([])
+  const [loadingNotionComments, setLoadingNotionComments] = useState(true)
 
   useEffect(() => {
     getTaskComments(task.id)
@@ -182,6 +184,10 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
       .then(setDescription)
       .catch(() => setDescription(''))
       .finally(() => setLoadingDesc(false))
+    getTaskNotionComments(task.id)
+      .then(setNotionComments)
+      .catch(() => setNotionComments([]))
+      .finally(() => setLoadingNotionComments(false))
   }, [task.id])
 
   function handleAddComment(e: React.FormEvent) {
@@ -305,6 +311,34 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
 
         {/* Divider */}
         <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />
+
+        {/* Notion Comments section */}
+        {(loadingNotionComments || notionComments.length > 0) && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Notion Comments {notionComments.length > 0 ? `(${notionComments.length})` : ''}
+            </p>
+            {loadingNotionComments ? (
+              <p style={{ fontSize: '12px', color: '#444444' }}>Loading…</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {notionComments.map((c, i) => (
+                  <div key={i} style={{ padding: '10px 14px', backgroundColor: '#111111', borderLeft: '3px solid #2d2040' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.5 }}>
+                      <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
+                      {c.text}
+                    </p>
+                    {c.date && (
+                      <p style={{ margin: 0, fontSize: '10px', color: '#444444' }}>
+                        {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Comments section */}
         <div style={{ marginBottom: '20px' }}>
