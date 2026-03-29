@@ -148,10 +148,10 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           <span
             className="tag"
             style={{
-              padding: '8px 14px',
+              padding: '3px 10px',
               backgroundColor: STATUS_COLORS[project.status] || '#666666',
               color: '#080808',
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
