@@ -116,7 +116,7 @@ export default async function ClientsPage() {
                             .toUpperCase()}
                         </div>
                         <div>
-                          <p style={{ margin: 0, fontWeight: 600, color: '#ffffff', fontSize: '14px' }}>
+                          <p style={{ margin: 0, fontWeight: 800, color: '#ffffff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                             {client.brand_name || client.name}
                           </p>
                           {client.website && (
@@ -190,7 +190,7 @@ export default async function ClientsPage() {
                       .toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 700, color: '#ffffff', fontSize: '16px', lineHeight: 1.2, wordBreak: 'break-word' }}>
+                    <p style={{ margin: 0, fontWeight: 800, color: '#ffffff', fontSize: '16px', lineHeight: 1.2, wordBreak: 'break-word', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                       {client.brand_name || client.name}
                     </p>
                     {client.website && (
