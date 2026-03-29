@@ -14,7 +14,7 @@ interface Project {
   staging_url: string | null
   live_url: string | null
   notion_url: string | null
-  clients?: { id: string; name: string; brand_name: string | null } | null
+  clients?: { id: string; name: string; brand_name: string | null } | { id: string; name: string; brand_name: string | null }[] | null
 }
 
 interface ProjectGridProps {
@@ -116,7 +116,8 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
       <div className="project-grid">
         {filtered && filtered.length > 0 ? (
           filtered.map((project) => {
-            const clientName = project.clients?.brand_name || project.clients?.name
+            const clientObj = Array.isArray(project.clients) ? project.clients[0] : project.clients
+            const clientName = clientObj?.brand_name || clientObj?.name
             const quickLinks = [
               project.live_url && { href: project.live_url, label: '↗ Live' },
               project.staging_url && { href: project.staging_url, label: '⚙ Staging' },
