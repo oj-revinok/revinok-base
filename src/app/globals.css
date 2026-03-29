@@ -190,6 +190,19 @@ input:focus, textarea:focus, select:focus {
   width: 100%;
 }
 
+/* ── Project grid ────────────────────────────────────────────── */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Clients: table/card toggle ─────────────────────────────── */
 .clients-mobile-list { display: none; }
 .clients-table-wrap  { display: block; }

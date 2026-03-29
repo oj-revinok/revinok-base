@@ -117,13 +117,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
       </div>
 
       {/* Project grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px',
-        }}
-      >
+      <div className="project-grid">
         {filtered && filtered.length > 0 ? (
           filtered.map((project) => {
             const clientName = project.clients?.brand_name || project.clients?.name
