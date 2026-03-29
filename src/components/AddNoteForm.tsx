@@ -3,7 +3,12 @@
 import { useState, useTransition } from 'react'
 import { addNote } from '@/lib/actions/notes'
 
-export default function AddNoteForm({ projectId }: { projectId: string }) {
+interface Props {
+  projectId: string
+  onNoteAdded?: (note: any) => void
+}
+
+export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -15,8 +20,9 @@ export default function AddNoteForm({ projectId }: { projectId: string }) {
 
     startTransition(async () => {
       try {
-        await addNote(projectId, content)
+        const note = await addNote(projectId, content)
         setContent('')
+        onNoteAdded?.(note)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to add note')
       }

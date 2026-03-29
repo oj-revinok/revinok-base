@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 interface MobileNavProps {
   role?: string
+  unreadNotifications?: number
 }
 
 // Roles that can't see Clients or Team tabs
@@ -15,6 +16,7 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/projects',
     label: 'Projects',
     restricted: false,
+    isBell: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="8" height="8" stroke="currentColor" strokeWidth="1.5"/>
@@ -28,6 +30,7 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/tasks',
     label: 'Tasks',
     restricted: false,
+    isBell: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="18" height="18" stroke="currentColor" strokeWidth="1.5"/>
@@ -39,6 +42,7 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/clients',
     label: 'Clients',
     restricted: true,
+    isBell: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="10" width="18" height="10" stroke="currentColor" strokeWidth="1.5"/>
@@ -51,6 +55,7 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/team',
     label: 'Team',
     restricted: true,
+    isBell: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="8" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -61,9 +66,21 @@ const ALL_NAV_ITEMS = [
     ),
   },
   {
+    href: '/dashboard/notifications',
+    label: 'Alerts',
+    restricted: false,
+    isBell: true,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/settings',
     label: 'Settings',
     restricted: false,
+    isBell: false,
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -73,7 +90,7 @@ const ALL_NAV_ITEMS = [
   },
 ]
 
-export default function MobileNav({ role }: MobileNavProps) {
+export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavProps) {
   const pathname = usePathname()
   const isRestricted = RESTRICTED_ROLES.has(role || '')
   const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
@@ -92,16 +109,29 @@ export default function MobileNav({ role }: MobileNavProps) {
         <div className="mobile-bottomnav-inner">
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
+            const showBadge = item.isBell && unreadNotifications > 0
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch={true}
                 className={`mobile-nav-item${isActive ? ' active' : ''}`}
-                style={{ color: isActive ? '#BDD630' : '#555555' }}
+                style={{ color: isActive ? '#BDD630' : '#555555', position: 'relative' }}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {item.icon}
+                <span style={{ position: 'relative', display: 'inline-block' }}>
+                  {item.icon}
+                  {showBadge && (
+                    <span style={{
+                      position: 'absolute', top: '-4px', right: '-6px',
+                      backgroundColor: '#BDD630', color: '#080808',
+                      fontSize: '8px', fontWeight: 800,
+                      borderRadius: '10px', padding: '1px 4px', minWidth: '14px', textAlign: 'center',
+                    }}>
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             )

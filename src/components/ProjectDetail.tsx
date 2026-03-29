@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { updateProjectStatus, updateProject, deleteNote, deleteProjectFile } from '@/lib/actions/projects'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
@@ -117,6 +118,7 @@ interface Props {
   notionTasks: NotionTask[]
   projectMembers: ProjectMember[]
   userRole: string
+  userFullName: string
 }
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -132,7 +134,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 export default function ProjectDetail({
   project: initialProject, notes: initialNotes, activity, links, projectFiles: initialFiles,
-  notionTasks, projectMembers: initialMembers, userRole
+  notionTasks, projectMembers: initialMembers, userRole, userFullName
 }: Props) {
   const [tab, setTab] = useState<Tab>('overview')
   const [project, setProject] = useState(initialProject)
@@ -223,9 +225,9 @@ export default function ProjectDetail({
   return (
     <div style={{ padding: '20px 16px 80px', maxWidth: '100%', overflowX: 'hidden' }}>
       {/* Back */}
-      <a href="/dashboard/projects" style={{ color: '#666666', textDecoration: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-block', marginBottom: '20px', minHeight: '44px', lineHeight: '44px' }}>
+      <Link href="/dashboard/projects" prefetch={true} style={{ color: '#666666', textDecoration: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-block', marginBottom: '20px', minHeight: '44px', lineHeight: '44px' }}>
         ← BACK TO PROJECTS
-      </a>
+      </Link>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
@@ -399,7 +401,10 @@ export default function ProjectDetail({
 
             {/* Notes */}
             <SectionCard title={`Notes${notes.length > 0 ? ` (${notes.length})` : ''}`}>
-              <AddNoteForm projectId={project.id} />
+              <AddNoteForm
+                projectId={project.id}
+                onNoteAdded={(note) => setNotes(prev => [note, ...prev])}
+              />
               {notes.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
                   {notes.map(note => {
@@ -594,6 +599,8 @@ export default function ProjectDetail({
         <LaunchChecklist
           projectId={project.id}
           projectName={clientName || project.name}
+          currentUserName={userFullName}
+          projectMembers={members}
           onClose={() => setShowLaunchChecklist(false)}
         />
       )}

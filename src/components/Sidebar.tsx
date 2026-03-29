@@ -9,6 +9,7 @@ interface SidebarProps {
   fullName: string | null
   email: string
   role: string
+  unreadNotifications?: number
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -24,15 +25,23 @@ const ROLE_LABELS: Record<string, string> = {
 // Roles that can't see Clients or Team tabs
 const RESTRICTED_ROLES = new Set(['designer', 'developer', 'designer_dev', 'viewer', 'client'])
 
-const ALL_NAV_ITEMS = [
-  { href: '/dashboard/projects', label: 'PROJECTS', restricted: false },
-  { href: '/dashboard/tasks',    label: 'TASKS',    restricted: false },
-  { href: '/dashboard/clients',  label: 'CLIENTS',  restricted: true  },
-  { href: '/dashboard/team',     label: 'TEAM',     restricted: true  },
-  { href: '/dashboard/settings', label: 'SETTINGS', restricted: false },
+interface NavItem {
+  href: string
+  label: string
+  restricted: boolean
+  isBell?: boolean
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard/projects',      label: 'PROJECTS',      restricted: false },
+  { href: '/dashboard/tasks',         label: 'TASKS',         restricted: false },
+  { href: '/dashboard/clients',       label: 'CLIENTS',       restricted: true  },
+  { href: '/dashboard/team',          label: 'TEAM',          restricted: true  },
+  { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false },
+  { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false, isBell: true },
 ]
 
-export default function Sidebar({ userInitials, fullName, email, role }: SidebarProps) {
+export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -59,13 +68,16 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
       <nav style={{ flex: 1, padding: '0 12px' }}>
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href)
+          const showBadge = item.isBell && unreadNotifications > 0
           return (
             <Link
               key={item.href}
               href={item.href}
               prefetch={true}
               style={{
-                display: 'block',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 padding: '14px 16px',
                 color: isActive ? '#BDD630' : '#999999',
                 backgroundColor: isActive ? '#1a1a1a' : 'transparent',
@@ -90,7 +102,23 @@ export default function Sidebar({ userInitials, fullName, email, role }: Sidebar
                 }
               }}
             >
-              {item.label}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {item.isBell && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+                  </svg>
+                )}
+                {item.label}
+              </span>
+              {showBadge && (
+                <span style={{
+                  backgroundColor: '#BDD630', color: '#080808',
+                  fontSize: '9px', fontWeight: 800,
+                  borderRadius: '10px', padding: '2px 6px', minWidth: '18px', textAlign: 'center',
+                }}>
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </span>
+              )}
             </Link>
           )
         })}

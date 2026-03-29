@@ -28,7 +28,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     supabase.from('project_links').select('*').eq('project_id', id).order('sort_order'),
     supabase.from('project_files').select('*').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('project_members').select('*, profiles ( id, full_name, email, role, initials, avatar_url )').eq('project_id', id),
-    supabase.from('profiles').select('role').eq('id', user?.id ?? '').single(),
+    supabase.from('profiles').select('role, full_name').eq('id', user?.id ?? '').single(),
   ])
 
   if (!project) notFound()
@@ -48,6 +48,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       notionTasks={notionTasks}
       projectMembers={projectMembers ?? []}
       userRole={profile?.role ?? 'viewer'}
+      userFullName={(profile as any)?.full_name ?? ''}
     />
   )
 }

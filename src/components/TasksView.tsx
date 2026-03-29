@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
+import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
 
 type ViewMode = 'list' | 'kanban'
 
@@ -161,6 +162,32 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
 /* ── Task Detail Modal ─────────────────────────────────────── */
 
 function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => void }) {
+  const [comments, setComments] = useState<TaskComment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [loadingComments, setLoadingComments] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    getTaskComments(task.id)
+      .then(setComments)
+      .catch(() => {})
+      .finally(() => setLoadingComments(false))
+  }, [task.id])
+
+  function handleAddComment(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newComment.trim()) return
+    startTransition(async () => {
+      try {
+        const comment = await addTaskComment(task.id, newComment.trim())
+        setComments(prev => [...prev, comment])
+        setNewComment('')
+      } catch (err) {
+        console.error(err)
+      }
+    })
+  }
+
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
@@ -171,7 +198,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
     >
       <div style={{
         backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
-        width: '100%', maxWidth: '520px', padding: '28px 24px', position: 'relative',
+        width: '100%', maxWidth: '580px', padding: '28px 24px', position: 'relative',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
         {/* Close button */}
@@ -217,7 +244,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
         </h2>
 
         {/* Details grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           {task.dueDate && (
             <DetailRow label="Due Date">
               <span style={{ color: '#ffffff', fontSize: '13px' }}>
@@ -225,7 +252,13 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               </span>
             </DetailRow>
           )}
-
+          {task.assignedNames.length > 0 && (
+            <DetailRow label="Assigned To">
+              <span style={{ color: '#BDD630', fontSize: '13px', fontWeight: 600 }}>
+                {task.assignedNames.join(', ')}
+              </span>
+            </DetailRow>
+          )}
           {task.tags.length > 0 && (
             <DetailRow label="Tags">
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -242,6 +275,66 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               </div>
             </DetailRow>
           )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />
+
+        {/* Comments section */}
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Comments {comments.length > 0 ? `(${comments.length})` : ''}
+          </p>
+
+          {loadingComments ? (
+            <p style={{ fontSize: '12px', color: '#444444' }}>Loading…</p>
+          ) : comments.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
+              {comments.map(c => (
+                <div key={c.id} style={{ padding: '10px 14px', backgroundColor: '#111111', borderLeft: '3px solid #1a1a1a' }}>
+                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.5 }}>
+                    <span style={{ color: '#BDD630', fontWeight: 700 }}>{c.author_name}:</span>{' '}
+                    {c.content}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '10px', color: '#444444' }}>
+                    {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: '12px', color: '#444444', marginBottom: '14px' }}>No comments yet.</p>
+          )}
+
+          {/* Add comment form */}
+          <form onSubmit={handleAddComment}>
+            <textarea
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              placeholder="Add a comment…"
+              rows={2}
+              style={{
+                width: '100%', backgroundColor: '#111111', border: '1px solid #1a1a1a',
+                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                fontFamily: 'Montserrat, sans-serif', resize: 'none',
+                display: 'block', boxSizing: 'border-box', lineHeight: 1.5,
+              }}
+            />
+            <button
+              type="submit"
+              disabled={isPending || !newComment.trim()}
+              style={{
+                marginTop: '8px', padding: '8px 18px',
+                backgroundColor: newComment.trim() ? '#BDD630' : '#1a1a1a',
+                color: newComment.trim() ? '#080808' : '#444444',
+                border: 'none', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: newComment.trim() ? 'pointer' : 'not-allowed',
+                fontFamily: 'Montserrat, sans-serif', opacity: isPending ? 0.7 : 1,
+              }}
+            >
+              {isPending ? 'Posting…' : 'POST COMMENT'}
+            </button>
+          </form>
         </div>
 
         {/* Divider */}
