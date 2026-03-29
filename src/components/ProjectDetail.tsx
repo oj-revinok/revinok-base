@@ -9,7 +9,7 @@ import EditProjectModal from './EditProjectModal'
 import ShareProjectModal from './ShareProjectModal'
 import LaunchChecklist from './LaunchChecklist'
 import type { NotionTask } from '@/lib/notion'
-import { isAdminOrPM, isDevRole, ROLE_LABELS } from '@/types'
+import { isAdminOrPM, isDevRole, isDesignerRole, ROLE_LABELS } from '@/types'
 
 type Tab = 'overview' | 'tasks' | 'activity'
 
@@ -153,7 +153,7 @@ export default function ProjectDetail({
 
   const canEdit = isAdminOrPM(userRole as any)
   const canDelete = isAdminOrPM(userRole as any)
-  const canLaunch = isDevRole(userRole as any) || canEdit
+  const canLaunch = isDevRole(userRole as any) || isDesignerRole(userRole as any) || canEdit
   const isDev = isDevRole(userRole as any)
 
   const client = project.clients
