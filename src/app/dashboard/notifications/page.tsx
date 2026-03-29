@@ -13,6 +13,39 @@ import {
   type Notification,
 } from '@/lib/actions/notifications'
 
+function notifAccent(type: string) {
+  if (type === 'launch_review_request') return '#BDD630'
+  if (type === 'launch_approved') return '#4ade80'
+  if (type === 'launch_declined') return '#ef4444'
+  if (type === 'project_added') return '#4a9eff'
+  return '#333333'
+}
+
+function notifTypeLabel(type: string) {
+  if (type === 'launch_review_request') return 'Review Request'
+  if (type === 'launch_approved') return 'Approved'
+  if (type === 'launch_declined') return 'Declined'
+  if (type === 'project_added') return 'Project'
+  return 'Notification'
+}
+
+function notifTitle(n: Notification) {
+  const project = n.data?.project_name || n.project?.name || 'a project'
+  const sender = n.data?.submitted_by_name || n.data?.reviewer_name || n.sender?.full_name || 'Someone'
+  if (n.type === 'launch_review_request') return `${sender} sent a Go-Live checklist for ${project}`
+  if (n.type === 'launch_approved') return `${sender} approved the Go-Live checklist for ${project}`
+  if (n.type === 'launch_declined') return `${sender} declined the Go-Live checklist for ${project}`
+  if (n.type === 'project_added') return `${sender} added you to ${project}`
+  return 'New notification'
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
 export default function NotificationsPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -79,220 +112,340 @@ export default function NotificationsPage() {
 
   const unread = notifications.filter(n => !n.is_read).length
 
-  function notifIcon(type: string) {
-    if (type === 'launch_review_request') return '🚀'
-    if (type === 'launch_approved') return '✅'
-    if (type === 'launch_declined') return '❌'
-    if (type === 'project_added') return '📁'
-    return '📩'
-  }
-
-  function notifTitle(n: Notification) {
-    const project = n.data?.project_name || n.project?.name || 'a project'
-    const sender = n.data?.submitted_by_name || n.data?.reviewer_name || n.sender?.full_name || 'Someone'
-    if (n.type === 'launch_review_request') return `${sender} sent you a Go-Live checklist for ${project}`
-    if (n.type === 'launch_approved') return `${sender} approved the Go-Live checklist for ${project}`
-    if (n.type === 'launch_declined') return `${sender} declined the Go-Live checklist for ${project}`
-    if (n.type === 'project_added') return `${sender} added you to ${project}`
-    return 'New notification'
-  }
-
   if (loading) {
-    return <div style={{ padding: '40px 20px', color: '#666666', fontSize: '13px' }}>Loading…</div>
+    return <div style={{ padding: '40px 20px', color: '#555555', fontSize: '13px' }}>Loading…</div>
   }
 
   return (
-    <div style={{ padding: '20px 16px 80px', maxWidth: '720px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', gap: '12px', flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px' }}>
-          NOTIFICATIONS {unread > 0 && <span style={{ fontSize: '14px', color: '#BDD630', fontWeight: 700 }}>({unread})</span>}
-        </h1>
+    <div style={{ padding: '20px 16px 80px', maxWidth: '700px' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', gap: '12px', flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: 'clamp(22px, 5vw, 30px)', fontWeight: 900, color: '#ffffff', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+            Notifications
+          </h1>
+          <p style={{ margin: 0, fontSize: '12px', color: '#444444' }}>
+            {unread > 0 ? `${unread} unread` : 'All caught up'}
+          </p>
+        </div>
         {unread > 0 && (
           <button
             onClick={handleMarkAllRead}
-            style={{ padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #222', color: '#666666', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+            style={{
+              padding: '8px 18px', backgroundColor: 'transparent',
+              border: '1px solid #2a2a2a', color: '#666666',
+              fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#999' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#666666' }}
           >
             Mark all read
           </button>
         )}
       </div>
 
+      {/* Empty state */}
       {notifications.length === 0 ? (
-        <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '60px 40px', textAlign: 'center' }}>
-          <p style={{ color: '#555555', fontSize: '14px', margin: 0 }}>No notifications yet</p>
+        <div style={{
+          border: '1px solid #1a1a1a', padding: '60px 40px',
+          textAlign: 'center', backgroundColor: '#0a0a0a',
+        }}>
+          <p style={{ color: '#333333', fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            No notifications yet
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {notifications.map(n => (
-            <div
-              key={n.id}
-              style={{
-                backgroundColor: n.is_read ? '#0e0e0e' : '#0d1a0d',
-                border: n.is_read ? '1px solid #1a1a1a' : '1px solid #1a3a1a',
-                padding: '16px 20px',
-                cursor: n.type === 'launch_review_request' ? 'pointer' : 'default',
-                transition: 'border-color 0.15s',
-              }}
-              onClick={() => { if (n.type === 'launch_review_request') handleOpenReview(n) }}
-            >
-              <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '20px', flexShrink: 0, marginTop: '2px' }}>{notifIcon(n.type)}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: n.is_read ? '#999999' : '#ffffff', fontWeight: n.is_read ? 400 : 600, lineHeight: 1.5 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {notifications.map(n => {
+            const accent = notifAccent(n.type)
+            const isReview = n.type === 'launch_review_request'
+            return (
+              <div
+                key={n.id}
+                onClick={() => { if (isReview) handleOpenReview(n) }}
+                style={{
+                  display: 'flex',
+                  backgroundColor: n.is_read ? '#0a0a0a' : '#0d0d0d',
+                  borderLeft: `3px solid ${n.is_read ? '#1a1a1a' : accent}`,
+                  borderRight: '1px solid #1a1a1a',
+                  borderTop: '1px solid #1a1a1a',
+                  borderBottom: '1px solid #1a1a1a',
+                  cursor: isReview ? 'pointer' : 'default',
+                  transition: 'background-color 0.15s',
+                }}
+                onMouseEnter={e => { if (isReview) (e.currentTarget as HTMLDivElement).style.backgroundColor = '#111111' }}
+                onMouseLeave={e => { if (isReview) (e.currentTarget as HTMLDivElement).style.backgroundColor = n.is_read ? '#0a0a0a' : '#0d0d0d' }}
+              >
+                <div style={{ flex: 1, padding: '16px 18px' }}>
+                  {/* Type tag + timestamp row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '12px' }}>
+                    <span style={{
+                      fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
+                      letterSpacing: '0.8px', color: accent,
+                    }}>
+                      {notifTypeLabel(n.type)}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#333333', flexShrink: 0 }}>
+                      {formatDate(n.created_at)}
+                    </span>
+                  </div>
+
+                  {/* Main text */}
+                  <p style={{
+                    margin: 0, fontSize: '13px', lineHeight: 1.55,
+                    color: n.is_read ? '#666666' : '#e0e0e0',
+                    fontWeight: n.is_read ? 400 : 500,
+                  }}>
                     {notifTitle(n)}
                   </p>
+
+                  {/* Decline message */}
                   {n.type === 'launch_declined' && n.data?.message && (
-                    <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#ef4444', lineHeight: 1.5, fontStyle: 'italic' }}>
-                      "{n.data.message}"
+                    <p style={{
+                      margin: '8px 0 0 0', fontSize: '12px', color: '#ef4444',
+                      lineHeight: 1.5, fontStyle: 'italic', borderLeft: '2px solid #3a1010',
+                      paddingLeft: '10px',
+                    }}>
+                      {n.data.message}
                     </p>
                   )}
-                  <p style={{ margin: 0, fontSize: '11px', color: '#444444' }}>
-                    {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </p>
+
+                  {/* Review CTA */}
+                  {isReview && (
+                    <p style={{
+                      margin: '10px 0 0 0', fontSize: '10px', fontWeight: 700,
+                      color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px',
+                    }}>
+                      Open review →
+                    </p>
+                  )}
                 </div>
+
+                {/* Unread dot */}
                 {!n.is_read && (
-                  <div style={{ width: '8px', height: '8px', backgroundColor: '#BDD630', borderRadius: '50%', flexShrink: 0, marginTop: '6px' }} />
+                  <div style={{
+                    width: '6px', alignSelf: 'stretch', backgroundColor: accent,
+                    opacity: 0.4, flexShrink: 0,
+                  }} />
                 )}
               </div>
-              {n.type === 'launch_review_request' && (
-                <p style={{ margin: '10px 0 0 34px', fontSize: '11px', color: '#4ade80', fontWeight: 600 }}>
-                  Click to review →
-                </p>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* Review modal */}
       {(loadingReview || activeReview) && (
         <div
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          style={{
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+          }}
           onClick={(e) => { if (e.target === e.currentTarget && !actionPending) { setActiveReview(null); setActionDone(null); setDeclineMsg('') } }}
         >
-          <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', padding: '32px 28px' }}>
+          <div style={{
+            backgroundColor: '#0a0a0a', border: '1px solid #222222',
+            width: '100%', maxWidth: '660px', maxHeight: '90vh', overflowY: 'auto',
+          }}>
             {loadingReview ? (
-              <p style={{ color: '#666666', fontSize: '13px' }}>Loading review…</p>
+              <div style={{ padding: '40px', color: '#555555', fontSize: '13px' }}>Loading…</div>
             ) : actionDone ? (
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <p style={{ fontSize: '40px', margin: '0 0 16px 0' }}>{actionDone === 'approved' ? '✅' : '❌'}</p>
-                <h2 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase' }}>
-                  {actionDone === 'approved' ? 'Checklist Approved' : 'Checklist Declined'}
+              /* Action done state */
+              <div style={{ padding: '48px 40px', textAlign: 'center' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: '48px', height: '48px', marginBottom: '20px',
+                  border: `2px solid ${actionDone === 'approved' ? '#4ade80' : '#ef4444'}`,
+                }}>
+                  {actionDone === 'approved' ? (
+                    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+                      <path d="M2 7L7.5 12.5L18 2" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 2L14 14M14 2L2 14" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                </div>
+                <h2 style={{ color: '#ffffff', fontSize: '16px', fontWeight: 800, margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Checklist {actionDone === 'approved' ? 'Approved' : 'Declined'}
                 </h2>
-                <p style={{ color: '#999999', fontSize: '13px', margin: '0 0 24px 0' }}>
+                <p style={{ color: '#555555', fontSize: '13px', margin: '0 0 28px 0', lineHeight: 1.6 }}>
                   {actionDone === 'approved'
-                    ? 'The checklist has been saved to the project files. The submitter has been notified.'
+                    ? 'Saved to project files. The submitter has been notified.'
                     : 'The submitter has been notified with your message.'}
                 </p>
                 <button
                   onClick={() => { setActiveReview(null); setActionDone(null) }}
-                  style={{ padding: '12px 28px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                  style={{
+                    padding: '12px 32px', backgroundColor: '#BDD630', color: '#080808',
+                    border: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                    letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                  }}
                 >
-                  CLOSE
+                  Close
                 </button>
               </div>
             ) : activeReview ? (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', gap: '16px' }}>
+                {/* Modal header */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                  padding: '24px 28px 20px', borderBottom: '1px solid #1a1a1a',
+                }}>
                   <div>
-                    <p style={{ margin: '0 0 6px 0', fontSize: '10px', color: '#BDD630', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Go-Live Checklist Review</p>
-                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>{activeReview.project?.name}</h2>
-                    <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#666666' }}>
-                      Submitted by {activeReview.submitter?.full_name || activeReview.submitter?.email} ·{' '}
+                    <p style={{ margin: '0 0 6px 0', fontSize: '9px', color: '#BDD630', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                      Go-Live Checklist Review
+                    </p>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: '#ffffff' }}>
+                      {activeReview.project?.name}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#555555' }}>
+                      Submitted by {activeReview.submitter?.full_name || activeReview.submitter?.email}
+                      {' · '}
                       {new Date(activeReview.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                   <button
                     onClick={() => { setActiveReview(null); setDeclineMsg('') }}
-                    style={{ background: 'none', border: 'none', color: '#555555', fontSize: '20px', cursor: 'pointer', padding: '4px', lineHeight: 1 }}
-                  >✕</button>
+                    style={{
+                      background: 'none', border: '1px solid #222', color: '#555555',
+                      fontSize: '14px', cursor: 'pointer', padding: '6px 10px', lineHeight: 1,
+                      fontFamily: 'Montserrat, sans-serif', flexShrink: 0,
+                    }}
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                {/* Progress */}
-                {activeReview.checklist_data?.progress && (
-                  <div style={{ backgroundColor: '#111111', padding: '12px 16px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', color: '#BDD630', fontWeight: 700 }}>
-                      {activeReview.checklist_data.progress.done} / {activeReview.checklist_data.progress.total} completed
-                    </span>
-                    <div style={{ flex: 1, height: '3px', backgroundColor: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', backgroundColor: '#BDD630',
-                        width: `${Math.round((activeReview.checklist_data.progress.done / activeReview.checklist_data.progress.total) * 100)}%`
-                      }} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Checklist items grouped */}
-                {activeReview.checklist_data?.items && (
-                  <div style={{ marginBottom: '28px', maxHeight: '320px', overflowY: 'auto', border: '1px solid #1a1a1a' }}>
-                    {(activeReview.checklist_data.items as any[]).map((item: any) => (
-                      <div key={item.id} style={{ display: 'flex', gap: '12px', padding: '10px 14px', borderBottom: '1px solid #111111', alignItems: 'center' }}>
-                        <div style={{
-                          width: '14px', height: '14px', border: '1.5px solid',
-                          borderColor: item.done ? '#4ade80' : '#333333',
-                          backgroundColor: item.done ? '#4ade80' : 'transparent',
-                          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          {item.done && <svg width="7" height="5" viewBox="0 0 7 5" fill="none"><path d="M1 2.5L2.5 4L6 1" stroke="#080808" strokeWidth="1.5" strokeLinecap="round"/></svg>}
-                        </div>
-                        <span style={{ fontSize: '12px', color: item.done ? '#666666' : '#cccccc', textDecoration: item.done ? 'line-through' : 'none', flex: 1 }}>
-                          {item.title}
+                <div style={{ padding: '24px 28px' }}>
+                  {/* Progress bar */}
+                  {activeReview.checklist_data?.progress && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Completion
                         </span>
-                        <span style={{ fontSize: '10px', color: '#444444' }}>{item.sectionNum}</span>
+                        <span style={{ fontSize: '12px', color: '#888888' }}>
+                          {activeReview.checklist_data.progress.done} / {activeReview.checklist_data.progress.total}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div style={{ height: '4px', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', backgroundColor: '#BDD630',
+                          width: `${Math.round((activeReview.checklist_data.progress.done / activeReview.checklist_data.progress.total) * 100)}%`,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )}
 
-                {activeReview.status !== 'pending' ? (
-                  <div style={{ padding: '16px', backgroundColor: activeReview.status === 'approved' ? '#051a0a' : '#1a0505', border: `1px solid ${activeReview.status === 'approved' ? '#4ade80' : '#ef4444'}` }}>
-                    <p style={{ margin: 0, color: activeReview.status === 'approved' ? '#4ade80' : '#ef4444', fontSize: '13px', fontWeight: 600 }}>
-                      {activeReview.status === 'approved' ? '✓ Approved' : '✕ Declined'}
-                      {activeReview.decline_message && `: ${activeReview.decline_message}`}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ marginBottom: '16px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#BDD630', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Decline message (required to decline)
-                      </label>
-                      <textarea
-                        value={declineMsg}
-                        onChange={e => setDeclineMsg(e.target.value)}
-                        placeholder="Explain what needs to be fixed before launch…"
-                        rows={3}
-                        style={{ width: '100%', backgroundColor: '#111111', border: '1px solid #1a1a1a', color: '#ffffff', fontSize: '13px', padding: '12px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5 }}
-                      />
+                  {/* Checklist items */}
+                  {activeReview.checklist_data?.items && (
+                    <div style={{ marginBottom: '24px', maxHeight: '300px', overflowY: 'auto', border: '1px solid #1a1a1a' }}>
+                      {(activeReview.checklist_data.items as any[]).map((item: any) => (
+                        <div key={item.id} style={{
+                          display: 'flex', gap: '12px', padding: '10px 14px',
+                          borderBottom: '1px solid #111111', alignItems: 'center',
+                        }}>
+                          <div style={{
+                            width: '14px', height: '14px', border: '1.5px solid',
+                            borderColor: item.done ? '#4ade80' : '#2a2a2a',
+                            backgroundColor: item.done ? '#4ade80' : 'transparent',
+                            flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {item.done && (
+                              <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                                <path d="M1 2.5L2.5 4L6 1" stroke="#080808" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                            )}
+                          </div>
+                          <span style={{
+                            fontSize: '12px', flex: 1, lineHeight: 1.5,
+                            color: item.done ? '#444444' : '#cccccc',
+                            textDecoration: item.done ? 'line-through' : 'none',
+                          }}>
+                            {item.title}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#333333' }}>{item.sectionNum}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        onClick={handleDecline}
-                        disabled={!declineMsg.trim() || actionPending}
-                        style={{
-                          flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #ef4444',
-                          color: declineMsg.trim() ? '#ef4444' : '#555555', fontSize: '12px', fontWeight: 700,
-                          textTransform: 'uppercase', cursor: declineMsg.trim() ? 'pointer' : 'not-allowed',
-                          fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.7 : 1,
-                        }}
-                      >
-                        DECLINE
-                      </button>
-                      <button
-                        onClick={handleApprove}
-                        disabled={actionPending}
-                        style={{
-                          flex: 2, padding: '14px', backgroundColor: '#BDD630', color: '#080808', border: 'none',
-                          fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer',
-                          fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.7 : 1,
-                        }}
-                      >
-                        {actionPending ? 'PROCESSING…' : '✓ APPROVE & SAVE TO FILES'}
-                      </button>
+                  )}
+
+                  {/* Status / actions */}
+                  {activeReview.status !== 'pending' ? (
+                    <div style={{
+                      padding: '14px 16px',
+                      backgroundColor: activeReview.status === 'approved' ? '#071a0c' : '#1a0707',
+                      border: `1px solid ${activeReview.status === 'approved' ? '#1a4a2a' : '#4a1a1a'}`,
+                    }}>
+                      <p style={{
+                        margin: 0, fontSize: '13px', fontWeight: 600,
+                        color: activeReview.status === 'approved' ? '#4ade80' : '#ef4444',
+                      }}>
+                        {activeReview.status === 'approved' ? 'Approved' : 'Declined'}
+                        {activeReview.decline_message && ` — ${activeReview.decline_message}`}
+                      </p>
                     </div>
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{
+                          display: 'block', fontSize: '10px', fontWeight: 700,
+                          color: '#555555', marginBottom: '8px',
+                          textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>
+                          Decline message <span style={{ color: '#333333' }}>(required to decline)</span>
+                        </label>
+                        <textarea
+                          value={declineMsg}
+                          onChange={e => setDeclineMsg(e.target.value)}
+                          placeholder="Explain what needs to be fixed before launch…"
+                          rows={3}
+                          style={{
+                            width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
+                            color: '#ffffff', fontSize: '13px', padding: '12px',
+                            fontFamily: 'Montserrat, sans-serif', resize: 'vertical',
+                            boxSizing: 'border-box', lineHeight: 1.5, outline: 'none',
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                          onClick={handleDecline}
+                          disabled={!declineMsg.trim() || actionPending}
+                          style={{
+                            flex: 1, padding: '13px', backgroundColor: 'transparent',
+                            border: `1px solid ${declineMsg.trim() ? '#ef4444' : '#222222'}`,
+                            color: declineMsg.trim() ? '#ef4444' : '#444444',
+                            fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                            letterSpacing: '0.5px', cursor: declineMsg.trim() ? 'pointer' : 'not-allowed',
+                            fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.6 : 1,
+                            transition: 'border-color 0.15s, color 0.15s',
+                          }}
+                        >
+                          Decline
+                        </button>
+                        <button
+                          onClick={handleApprove}
+                          disabled={actionPending}
+                          style={{
+                            flex: 2, padding: '13px', backgroundColor: '#BDD630', color: '#080808',
+                            border: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                            letterSpacing: '0.5px', cursor: 'pointer',
+                            fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.7 : 1,
+                          }}
+                        >
+                          {actionPending ? 'Processing…' : 'Approve & Save to Files'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             ) : null}
           </div>
