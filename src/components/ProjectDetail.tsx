@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { updateProjectStatus, updateProject } from '@/lib/actions/projects'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
+import EditProjectModal from './EditProjectModal'
 import type { NotionTask } from '@/lib/notion'
 
 type Tab = 'overview' | 'tasks' | 'activity'
@@ -119,6 +120,7 @@ export default function ProjectDetail({ project: initialProject, notes, activity
   const [descDraft, setDescDraft] = useState(initialProject.description || '')
   const [savingDesc, setSavingDesc] = useState(false)
   const [statusSaving, setStatusSaving] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [, startTransition] = useTransition()
 
   const client = project.clients
@@ -184,6 +186,15 @@ export default function ProjectDetail({ project: initialProject, notes, activity
           )}
         </div>
 
+        {/* Edit + Status */}
+        <div style={{ flexShrink: 0, alignSelf: 'flex-start', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={() => setShowEditModal(true)}
+            style={{ padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333', color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px' }}
+          >
+            EDIT
+          </button>
+        </div>
         {/* Status dropdown */}
         <div style={{ flexShrink: 0, alignSelf: 'flex-start', position: 'relative' }}>
           <select
@@ -467,6 +478,15 @@ export default function ProjectDetail({ project: initialProject, notes, activity
             <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No activity yet.</p>
           )}
         </SectionCard>
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditModal && (
+        <EditProjectModal
+          project={project}
+          onClose={() => setShowEditModal(false)}
+          onSave={(updates) => setProject((p) => ({ ...p, ...updates }))}
+        />
       )}
     </div>
   )
