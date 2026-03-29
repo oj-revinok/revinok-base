@@ -167,12 +167,7 @@ input:focus, textarea:focus, select:focus {
   }
   .filter-tabs::-webkit-scrollbar { display: none; }
 
-  /* Compact filter tab buttons on mobile */
-  .filter-tab-btn {
-    padding: 6px 10px !important;
-    font-size: 9px !important;
-    min-height: 32px !important;
-  }
+  /* Filter tab buttons — already small, no override needed on mobile */
 
   /* Page content — reduced padding for mobile */
   .page-content {

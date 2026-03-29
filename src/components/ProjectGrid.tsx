@@ -95,19 +95,19 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
               onClick={() => setActiveFilter(status)}
               className="tag filter-tab-btn"
               style={{
-                padding: '7px 12px',
+                padding: '4px 9px',
                 backgroundColor: isActive ? '#BDD630' : 'transparent',
-                color: isActive ? '#080808' : '#999999',
-                border: isActive ? 'none' : '1px solid #1a1a1a',
-                fontSize: '10px',
+                color: isActive ? '#080808' : '#888888',
+                border: isActive ? 'none' : '1px solid #222222',
+                fontSize: '9px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 cursor: 'pointer',
                 fontFamily: 'Montserrat, sans-serif',
                 transition: 'all 0.15s ease',
-                minHeight: '36px',
                 flexShrink: 0,
+                lineHeight: '1.4',
               }}
             >
               {status}
@@ -162,6 +162,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                             lineHeight: 1.2,
                             letterSpacing: '-0.3px',
                             wordBreak: 'break-word',
+                            textTransform: 'uppercase',
                           }}
                         >
                           {clientName}
@@ -192,6 +193,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                           lineHeight: 1.2,
                           letterSpacing: '-0.3px',
                           wordBreak: 'break-word',
+                          textTransform: 'uppercase',
                         }}
                       >
                         {project.name}
