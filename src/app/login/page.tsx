@@ -47,18 +47,11 @@ export default function LoginPage() {
     >
       <div style={{ width: '100%', maxWidth: '420px' }}>
         <div style={{ marginBottom: '56px', textAlign: 'center' }}>
-          <h1
-            style={{
-              fontSize: '32px',
-              fontWeight: 900,
-              color: '#ffffff',
-              margin: 0,
-              letterSpacing: '-1px',
-              textTransform: 'uppercase',
-            }}
-          >
-            REVINOK
-          </h1>
+          <img
+            src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
+            alt="Revinok"
+            style={{ height: '48px', width: 'auto', marginBottom: '8px' }}
+          />
           <p style={{ color: '#999999', fontSize: '14px', margin: '8px 0 0 0', fontWeight: 500 }}>
             Project Management
           </p>
