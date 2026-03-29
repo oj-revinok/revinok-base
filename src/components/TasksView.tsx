@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
 import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
+import { getTaskDescription } from '@/lib/actions/notion'
 
 type ViewMode = 'list' | 'kanban'
 
@@ -166,12 +167,21 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
   const [newComment, setNewComment] = useState('')
   const [loadingComments, setLoadingComments] = useState(true)
   const [isPending, startTransition] = useTransition()
+  const [description, setDescription] = useState<string | null>(null)
+  const [loadingDesc, setLoadingDesc] = useState(true)
 
   useEffect(() => {
     getTaskComments(task.id)
       .then(setComments)
       .catch(() => {})
       .finally(() => setLoadingComments(false))
+  }, [task.id])
+
+  useEffect(() => {
+    getTaskDescription(task.id)
+      .then(setDescription)
+      .catch(() => setDescription(''))
+      .finally(() => setLoadingDesc(false))
   }, [task.id])
 
   function handleAddComment(e: React.FormEvent) {
@@ -276,6 +286,22 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
             </DetailRow>
           )}
         </div>
+
+        {/* Description */}
+        {(loadingDesc || description) && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Description
+            </p>
+            {loadingDesc ? (
+              <p style={{ fontSize: '12px', color: '#444444', margin: 0 }}>Loading…</p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#cccccc', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+                {description}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Divider */}
         <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />

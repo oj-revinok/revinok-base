@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getTasksForProject, getNotionProjectsPage, getAllTasks, NotionTask } from '@/lib/notion'
+import { getTasksForProject, getNotionProjectsPage, getAllTasks, NotionTask, getNotionClient } from '@/lib/notion'
 
 async function getAdminNotionKey(): Promise<string | undefined> {
   const supabase = createClient()
@@ -58,5 +58,30 @@ export async function fetchAllNotionTasks(): Promise<NotionTask[]> {
     // For individual contributors, filter by their notion_person_id if set
     const notionPersonId = profile?.notion_person_id || null
     return getAllTasks(notionKey, notionPersonId)
+  }
+}
+
+// Fetch the page body (description) for a single Notion task
+export async function getTaskDescription(taskId: string): Promise<string> {
+  const notionKey = await getAdminNotionKey()
+  const notion = getNotionClient(notionKey)
+  if (!notion) return ''
+
+  try {
+    const response = await (notion as any).blocks.children.list({ block_id: taskId })
+    const text = (response.results as any[])
+      .filter((b: any) => b.type === 'paragraph' || b.type === 'bulleted_list_item' || b.type === 'numbered_list_item' || b.type === 'heading_1' || b.type === 'heading_2' || b.type === 'heading_3')
+      .map((b: any) => {
+        const richText = b[b.type]?.rich_text ?? []
+        const line = richText.map((t: any) => t.plain_text).join('')
+        if (b.type === 'bulleted_list_item') return `• ${line}`
+        if (b.type === 'numbered_list_item') return `  ${line}`
+        return line
+      })
+      .filter((t: string) => t.trim())
+      .join('\n')
+    return text
+  } catch {
+    return ''
   }
 }
