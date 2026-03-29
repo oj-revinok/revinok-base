@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { inviteMember, updateMemberRole, updateMemberNotionId } from '@/lib/actions/team'
+import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, NotionPerson } from '@/lib/actions/team'
 
 interface TeamMember {
   id: string
@@ -40,6 +40,7 @@ export default function TeamPage() {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [notionPersons, setNotionPersons] = useState<NotionPerson[]>([])
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('designer')
@@ -79,6 +80,9 @@ export default function TeamPage() {
 
       setTeamMembers(members || [])
       setLoading(false)
+
+      // Load Notion persons for the picker (non-blocking)
+      getNotionPersons().then(setNotionPersons).catch(() => {})
     }
     load()
   }, [])
@@ -245,19 +249,24 @@ export default function TeamPage() {
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '16px 20px', minWidth: '180px' }}>
+                      <td style={{ padding: '16px 20px', minWidth: '200px' }}>
                         {isEditing ? (
-                          <input
-                            type="text"
+                          <select
                             value={editNotionPersonId}
                             onChange={(e) => setEditNotionPersonId(e.target.value)}
-                            placeholder="Notion person UUID"
-                            style={{ ...inlineInputStyle, minWidth: '160px' }}
-                          />
+                            style={{ ...inlineInputStyle, minWidth: '180px', cursor: 'pointer' }}
+                          >
+                            <option value="">— Not linked —</option>
+                            {notionPersons.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}{p.email ? ` (${p.email})` : ''}
+                              </option>
+                            ))}
+                          </select>
                         ) : (
-                          <span style={{ fontSize: '12px', color: (member as any).notion_person_id ? '#999999' : '#333333', fontFamily: 'monospace' }}>
+                          <span style={{ fontSize: '12px', color: (member as any).notion_person_id ? '#999999' : '#333333' }}>
                             {(member as any).notion_person_id
-                              ? (member as any).notion_person_id.slice(0, 8) + '…'
+                              ? (notionPersons.find(p => p.id === (member as any).notion_person_id)?.name || (member as any).notion_person_id.slice(0, 8) + '…')
                               : '—'}
                           </span>
                         )}
@@ -335,16 +344,21 @@ export default function TeamPage() {
                         </select>
                       </div>
                       <div>
-                        <label style={labelStyle}>NOTION PERSON ID</label>
-                        <input
-                          type="text"
+                        <label style={labelStyle}>NOTION PERSON</label>
+                        <select
                           value={editNotionPersonId}
                           onChange={(e) => setEditNotionPersonId(e.target.value)}
-                          placeholder="UUID from Notion (e.g. abc123…)"
-                          style={inputStyle}
-                        />
+                          style={{ ...inputStyle, cursor: 'pointer' }}
+                        >
+                          <option value="">— Not linked —</option>
+                          {notionPersons.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}{p.email ? ` (${p.email})` : ''}
+                            </option>
+                          ))}
+                        </select>
                         <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#444444' }}>
-                          Find in Notion: People page → copy person ID from URL
+                          Links this member to Notion so their tasks appear in the Tasks page.
                         </p>
                       </div>
                       {saveError && <p style={{ margin: 0, fontSize: '12px', color: '#ff6b6b' }}>{saveError}</p>}
@@ -374,10 +388,10 @@ export default function TeamPage() {
                           </p>
                         </div>
                         <div>
-                          <p style={{ margin: 0, fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Notion ID</p>
-                          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: (member as any).notion_person_id ? '#999999' : '#333333', fontFamily: 'monospace' }}>
+                          <p style={{ margin: 0, fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Notion</p>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: (member as any).notion_person_id ? '#999999' : '#333333' }}>
                             {(member as any).notion_person_id
-                              ? (member as any).notion_person_id.slice(0, 8) + '…'
+                              ? (notionPersons.find(p => p.id === (member as any).notion_person_id)?.name || 'Linked')
                               : 'Not linked'}
                           </p>
                         </div>
@@ -445,14 +459,19 @@ export default function TeamPage() {
                   </select>
                 </div>
                 <div style={{ marginBottom: '28px' }}>
-                  <label style={labelStyle}>NOTION PERSON ID (optional)</label>
-                  <input
-                    type="text"
+                  <label style={labelStyle}>NOTION PERSON (optional)</label>
+                  <select
                     value={inviteNotionPersonId}
                     onChange={(e) => setInviteNotionPersonId(e.target.value)}
-                    placeholder="UUID from Notion (e.g. abc12345-…)"
-                    style={inputStyle}
-                  />
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                  >
+                    <option value="">— Not linked —</option>
+                    {notionPersons.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.email ? ` (${p.email})` : ''}
+                      </option>
+                    ))}
+                  </select>
                   <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#444444' }}>
                     Links this member to Notion so their tasks appear in the Tasks page.
                   </p>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getAppSetting, saveAppSetting } from '@/lib/actions/settings'
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -30,6 +31,14 @@ const cardStyle: React.CSSProperties = {
   padding: '28px',
 }
 
+const SYNC_INTERVALS = [
+  { value: '1',  label: 'Every 1 hour' },
+  { value: '3',  label: 'Every 3 hours' },
+  { value: '6',  label: 'Every 6 hours' },
+  { value: '12', label: 'Every 12 hours' },
+  { value: '24', label: 'Every 24 hours' },
+]
+
 export default function SettingsPage() {
   const supabase = createClient()
 
@@ -38,23 +47,38 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [notionKey, setNotionKey] = useState('')
-  const [notionPersonId, setNotionPersonId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
 
+  // Sync interval state
+  const [syncInterval, setSyncInterval] = useState('1')
+  const [savingSyncInterval, setSavingSyncInterval] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: profile } = await supabase.from('profiles').select('full_name, role, notion_api_key, notion_person_id').eq('id', user.id).single()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role, notion_api_key')
+        .eq('id', user.id)
+        .single()
+
       if (profile) {
         setFullName(profile.full_name || '')
         setUserRole(profile.role || '')
         setNotionKey((profile as any).notion_api_key || '')
-        setNotionPersonId((profile as any).notion_person_id || '')
       }
+
+      // Load sync interval if admin
+      if (profile?.role === 'admin') {
+        getAppSetting('notion_sync_interval_hours')
+          .then((val) => { if (val) setSyncInterval(val) })
+          .catch(() => {})
+      }
+
       setLoadingProfile(false)
     }
     load()
@@ -111,28 +135,25 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleSaveSyncInterval(e: React.FormEvent) {
+    e.preventDefault()
+    clearMessages()
+    setSavingSyncInterval(true)
+    try {
+      await saveAppSetting('notion_sync_interval_hours', syncInterval)
+      setSuccess(`Notion sync interval set to ${SYNC_INTERVALS.find(i => i.value === syncInterval)?.label?.toLowerCase()}.`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save sync interval')
+    } finally {
+      setSavingSyncInterval(false)
+    }
+  }
+
   if (loadingProfile) {
     return <div style={{ padding: '40px 20px', color: '#666666', fontSize: '13px' }}>Loading...</div>
   }
 
   const isAdmin = userRole === 'admin'
-  const isAdminOrPM = userRole === 'admin' || userRole === 'project_manager'
-  const isIndividual = !isAdminOrPM
-
-  async function handleSaveNotionPersonId(e: React.FormEvent) {
-    e.preventDefault()
-    clearMessages()
-    setLoading(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setError('Not logged in'); return }
-      const { error } = await supabase.from('profiles').update({ notion_person_id: notionPersonId || null } as never).eq('id', user.id)
-      if (error) setError(error.message)
-      else setSuccess('Notion profile linked — your tasks will now appear in the Tasks page.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div style={{ padding: '20px 16px 60px', maxWidth: '640px' }}>
@@ -181,38 +202,82 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Notion Profile Link removed — admins/PMs set notion_person_id via Team page */}
-
-        {/* Integrations — admin only */}
+        {/* Integrations + Sync — admin only */}
         {isAdmin && (
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTEGRATIONS</h2>
-              <span className="tag" style={{ padding: '2px 8px', backgroundColor: '#1a1a1a', color: '#BDD630', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
+          <>
+            {/* Notion API Key */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTEGRATIONS</h2>
+                <span className="tag" style={{ padding: '2px 8px', backgroundColor: '#1a1a1a', color: '#BDD630', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
+              </div>
+
+              <form onSubmit={handleSaveNotionKey}>
+                <div style={{ marginBottom: '8px' }}>
+                  <label style={labelStyle}>NOTION API KEY</label>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
+                    Required to sync project notes and tasks from Notion. Get your key at notion.so/my-integrations.
+                  </p>
+                  <input
+                    type="password"
+                    value={notionKey}
+                    onChange={(e) => setNotionKey(e.target.value)}
+                    placeholder="secret_xxxxxxxxxxxxxxxx"
+                    style={inputStyle}
+                    disabled={loading}
+                    autoComplete="off"
+                  />
+                </div>
+                <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#444444' }}>
+                  {notionKey ? '● Key saved' : '○ No key set'}
+                </p>
+                <SaveButton loading={loading} label="SAVE API KEY" />
+              </form>
             </div>
 
-            <form onSubmit={handleSaveNotionKey}>
-              <div style={{ marginBottom: '8px' }}>
-                <label style={labelStyle}>NOTION API KEY</label>
-                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
-                  Required to sync project notes and pages with Notion. Get your key at notion.so/my-integrations.
-                </p>
-                <input
-                  type="password"
-                  value={notionKey}
-                  onChange={(e) => setNotionKey(e.target.value)}
-                  placeholder="secret_xxxxxxxxxxxxxxxx"
-                  style={inputStyle}
-                  disabled={loading}
-                  autoComplete="off"
-                />
+            {/* Notion Sync Interval */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION SYNC</h2>
+                <span className="tag" style={{ padding: '2px 8px', backgroundColor: '#1a1a1a', color: '#BDD630', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
               </div>
-              <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#444444' }}>
-                {notionKey ? '● Key saved' : '○ No key set'}
+              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
+                How often the Tasks page pulls fresh data from Notion. Lower intervals mean more up-to-date tasks but slightly more API usage.
               </p>
-              <SaveButton loading={loading} label="SAVE API KEY" />
-            </form>
-          </div>
+
+              <form onSubmit={handleSaveSyncInterval}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={labelStyle}>SYNC INTERVAL</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
+                    {SYNC_INTERVALS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setSyncInterval(opt.value)}
+                        style={{
+                          padding: '12px 16px',
+                          backgroundColor: syncInterval === opt.value ? '#BDD630' : '#111111',
+                          color: syncInterval === opt.value ? '#080808' : '#666666',
+                          border: syncInterval === opt.value ? '1px solid #BDD630' : '1px solid #1a1a1a',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.3px',
+                          cursor: 'pointer',
+                          fontFamily: 'Montserrat, sans-serif',
+                          textAlign: 'left',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <SaveButton loading={savingSyncInterval} label="SAVE SYNC INTERVAL" />
+              </form>
+            </div>
+          </>
         )}
       </div>
     </div>

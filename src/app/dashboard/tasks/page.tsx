@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { fetchAllNotionTasks } from '@/lib/actions/notion'
+import { getAppSetting } from '@/lib/actions/settings'
 import TasksView from '@/components/TasksView'
 
 export const dynamic = 'force-dynamic'
@@ -17,6 +18,10 @@ export default async function TasksPage() {
   const role = profile?.role ?? 'viewer'
   const adminOrPM = role === 'admin' || role === 'project_manager'
   const hasNotionPersonId = !!profile?.notion_person_id
+
+  // Read sync interval from app_settings (defaults to 1 hour)
+  const syncIntervalHours = parseInt(await getAppSetting('notion_sync_interval_hours').catch(() => '1') ?? '1', 10)
+  const revalidateSeconds = syncIntervalHours * 3600
 
   // Fetch tasks — non-blocking on error
   const tasks = await fetchAllNotionTasks().catch(() => [])

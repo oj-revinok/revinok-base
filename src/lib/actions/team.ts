@@ -2,8 +2,45 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getNotionClient } from '@/lib/notion'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+
+export interface NotionPerson {
+  id: string
+  name: string
+  email: string | null
+}
+
+async function getAdminNotionKey(): Promise<string | undefined> {
+  const supabase = createClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('notion_api_key')
+    .eq('role', 'admin')
+    .limit(1)
+    .single()
+  return profile?.notion_api_key || undefined
+}
+
+export async function getNotionPersons(): Promise<NotionPerson[]> {
+  const key = await getAdminNotionKey()
+  const notion = getNotionClient(key)
+  if (!notion) return []
+
+  try {
+    const response = await notion.users.list({ page_size: 100 })
+    return response.results
+      .filter((u: any) => u.type === 'person')
+      .map((u: any) => ({
+        id: u.id,
+        name: u.name || u.person?.email || u.id,
+        email: u.person?.email || null,
+      }))
+  } catch {
+    return []
+  }
+}
 
 export async function getTeamMembers() {
   const supabase = createClient()
