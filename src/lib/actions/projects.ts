@@ -57,6 +57,7 @@ export async function createProject(formData: FormData) {
     due_date: (formData.get('due_date') as string) || null,
     budget: formData.get('budget') ? Number(formData.get('budget')) : null,
     notion_url: (formData.get('notion_url') as string) || null,
+    notion_project_id: (formData.get('notion_project_id') as string) || null,
     figma_url: (formData.get('figma_url') as string) || null,
     staging_url: (formData.get('staging_url') as string) || null,
     live_url: (formData.get('live_url') as string) || null,

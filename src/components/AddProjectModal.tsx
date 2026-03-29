@@ -29,6 +29,8 @@ const inputStyle: React.CSSProperties = {
 
 export default function AddProjectModal({ onClose }: { onClose: () => void }) {
   const [clients, setClients] = useState<{ id: string; name: string; brand_name: string | null }[]>([])
+  const [notionProjects, setNotionProjects] = useState<{ id: string; name: string }[]>([])
+  const [loadingNotion, setLoadingNotion] = useState(false)
   const [error, setError] = useState('')
   const [, startTransition] = useTransition()
 
@@ -38,6 +40,14 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
       .select('id, name, brand_name')
       .order('name')
       .then(({ data }) => setClients(data || []))
+
+    // Load Notion projects
+    setLoadingNotion(true)
+    fetch('/api/notion/projects')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setNotionProjects(data) })
+      .catch(() => {})
+      .finally(() => setLoadingNotion(false))
   }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -110,6 +120,21 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
               <label style={labelStyle}>DUE DATE</label>
               <input name="due_date" type="date" style={inputStyle} />
             </div>
+          </div>
+
+          {/* Notion project link */}
+          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #1a1a1a' }}>
+            <label style={labelStyle}>☰ NOTION PROJECT</label>
+            <select name="notion_project_id" style={{ ...inputStyle, cursor: 'pointer' }}>
+              <option value="">— Not linked —</option>
+              {loadingNotion && <option disabled>Loading Notion projects…</option>}
+              {notionProjects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <p style={{ fontSize: '11px', color: '#555555', marginTop: '6px', marginBottom: 0 }}>
+              Link to pull tasks automatically from Notion Workload
+            </p>
           </div>
 
           {/* Links */}

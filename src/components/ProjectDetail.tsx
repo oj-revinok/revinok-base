@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { updateProjectStatus, updateProject } from '@/lib/actions/projects'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
+import type { NotionTask } from '@/lib/notion'
 
 type Tab = 'overview' | 'tasks' | 'activity'
 
@@ -19,10 +20,20 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_STATUSES = ['discovery', 'design', 'development', 'review', 'live', 'paused', 'cancelled']
 
-const TASK_STATUS_COLORS: Record<string, string> = {
-  todo: '#666666',
-  in_progress: '#4a9eff',
-  done: '#4ade80',
+const NOTION_STATUS_COLORS: Record<string, string> = {
+  'Waiting for info': '#ff9d4a',
+  'Not started':      '#444444',
+  'In progress':      '#4a9eff',
+  'On Hold':          '#6b7280',
+  'Inhouse Review':   '#a78bfa',
+  'Feedback':         '#38bdf8',
+  'Complete':         '#4ade80',
+}
+
+const NOTION_PRIORITY_COLORS: Record<string, string> = {
+  'High':   '#ef4444',
+  'Medium': '#ff9d4a',
+  'Low':    '#666666',
 }
 
 interface Profile { full_name: string | null }
@@ -77,16 +88,17 @@ interface Project {
   staging_url: string | null
   live_url: string | null
   notion_url: string | null
+  notion_project_id: string | null
   clients?: { id: string; name: string; brand_name: string | null } | null
 }
 
 interface Props {
   project: Project
-  tasks: Task[]
   notes: Note[]
   activity: ActivityEntry[]
   links: ProjectLink[]
   projectFiles: ProjectFile[]
+  notionTasks: NotionTask[]
 }
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -100,7 +112,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   )
 }
 
-export default function ProjectDetail({ project: initialProject, tasks, notes, activity, links, projectFiles }: Props) {
+export default function ProjectDetail({ project: initialProject, notes, activity, links, projectFiles, notionTasks }: Props) {
   const [tab, setTab] = useState<Tab>('overview')
   const [project, setProject] = useState(initialProject)
   const [editingDesc, setEditingDesc] = useState(false)
@@ -112,8 +124,8 @@ export default function ProjectDetail({ project: initialProject, tasks, notes, a
   const client = project.clients
   const clientName = client?.brand_name || client?.name
 
-  const inProgressTasks = tasks.filter((t) => t.status === 'in_progress')
-  const doneTasks = tasks.filter((t) => t.status === 'done')
+  const activeTasks = notionTasks.filter((t) => ['In progress', 'Inhouse Review', 'Feedback', 'Waiting for info'].includes(t.status))
+  const doneTasks = notionTasks.filter((t) => t.status === 'Complete')
 
   async function handleStatusChange(newStatus: string) {
     setStatusSaving(true)
@@ -207,8 +219,8 @@ export default function ProjectDetail({ project: initialProject, tasks, notes, a
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Tasks', value: tasks.length, color: '#ffffff' },
-          { label: 'In Progress', value: inProgressTasks.length, color: '#4a9eff' },
+          { label: 'Total Tasks', value: notionTasks.length, color: '#ffffff' },
+          { label: 'In Progress', value: activeTasks.length, color: '#4a9eff' },
           { label: 'Completed', value: doneTasks.length, color: '#4ade80' },
         ].map((stat) => (
           <div key={stat.label} style={{ backgroundColor: '#0e0e0e', padding: '16px 20px', border: '1px solid #1a1a1a' }}>
@@ -240,7 +252,7 @@ export default function ProjectDetail({ project: initialProject, tasks, notes, a
               marginBottom: '-1px',
             }}
           >
-            {t === 'overview' ? 'Overview' : t === 'tasks' ? `Tasks (${tasks.length})` : 'Activity'}
+            {t === 'overview' ? 'Overview' : t === 'tasks' ? `Tasks (${notionTasks.length})` : 'Activity'}
           </button>
         ))}
       </div>
@@ -359,38 +371,68 @@ export default function ProjectDetail({ project: initialProject, tasks, notes, a
       {/* ── TASKS TAB ── */}
       {tab === 'tasks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Group by status */}
-          {(['in_progress', 'todo', 'done'] as const).map((statusKey) => {
-            const group = tasks.filter((t) => t.status === statusKey)
-            if (group.length === 0) return null
-            const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }
-            return (
-              <SectionCard key={statusKey} title={`${labels[statusKey]} (${group.length})`}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {group.map((task) => (
-                    <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#111111', border: '1px solid #1a1a1a', minHeight: '44px' }}>
-                      <div style={{ width: '8px', height: '8px', backgroundColor: TASK_STATUS_COLORS[task.status] || '#666666', flexShrink: 0 }} />
-                      <p style={{ margin: 0, fontSize: '13px', color: task.status === 'done' ? '#666666' : '#ffffff', flex: 1, textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>
-                        {task.title}
-                      </p>
-                      {task.priority && (
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: task.priority === 'urgent' ? '#ef4444' : task.priority === 'high' ? '#ff9d4a' : '#666666', textTransform: 'uppercase', flexShrink: 0 }}>
-                          {task.priority}
-                        </span>
-                      )}
-                      {task.due_date && (
-                        <span style={{ fontSize: '10px', color: '#555555', flexShrink: 0 }}>
-                          {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      )}
+          {!project.notion_project_id ? (
+            <div style={{ backgroundColor: '#0e0e0e', border: '1px dashed #333333', padding: '32px', textAlign: 'center' }}>
+              <p style={{ fontSize: '24px', margin: '0 0 12px 0' }}>☰</p>
+              <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>Not linked to Notion</p>
+              <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 20px 0' }}>
+                Link this project to a Notion page to pull tasks automatically from your Workload database.
+              </p>
+              <p style={{ color: '#555555', fontSize: '12px', margin: 0 }}>
+                Go to project settings and add the Notion Project ID.
+              </p>
+            </div>
+          ) : notionTasks.length === 0 ? (
+            <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '32px', textAlign: 'center' }}>
+              <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No tasks found in Notion for this project.</p>
+            </div>
+          ) : (
+            <>
+              {/* Active */}
+              {(['In progress', 'Inhouse Review', 'Feedback', 'Waiting for info', 'Not started', 'On Hold', 'Complete'] as const).map((statusKey) => {
+                const group = notionTasks.filter((t) => t.status === statusKey)
+                if (group.length === 0) return null
+                const isDone = statusKey === 'Complete'
+                return (
+                  <SectionCard key={statusKey} title={`${statusKey} (${group.length})`}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {group.map((task) => (
+                        <a
+                          key={task.id}
+                          href={task.notionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#111111', border: '1px solid #1a1a1a', minHeight: '44px', textDecoration: 'none' }}
+                        >
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || '#666666', flexShrink: 0 }} />
+                          <p style={{ margin: 0, fontSize: '13px', color: isDone ? '#555555' : '#ffffff', flex: 1, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4 }}>
+                            {task.name}
+                          </p>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                            {task.tags.slice(0, 2).map((tag) => (
+                              <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: '#666666', backgroundColor: '#1a1a1a', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                {tag}
+                              </span>
+                            ))}
+                            {task.priority && (
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: NOTION_PRIORITY_COLORS[task.priority] || '#666666', textTransform: 'uppercase' }}>
+                                {task.priority}
+                              </span>
+                            )}
+                            {task.dueDate && (
+                              <span style={{ fontSize: '10px', color: '#555555' }}>
+                                {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '10px', color: '#333333' }}>↗</span>
+                          </div>
+                        </a>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </SectionCard>
-            )
-          })}
-          {tasks.length === 0 && (
-            <p style={{ color: '#555555', fontSize: '13px' }}>No tasks yet.</p>
+                  </SectionCard>
+                )
+              })}
+            </>
           )}
         </div>
       )}
