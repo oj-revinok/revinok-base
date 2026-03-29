@@ -225,18 +225,29 @@ export async function addProjectMember(projectId: string, profileId: string) {
 
   if (error) throw error
 
-  // Log activity
-  const { data: addedProfile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', profileId)
-    .single()
+  // Fetch project name + added profile name for notification
+  const [{ data: addedProfile }, { data: projectData }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', profileId).single(),
+    supabase.from('projects').select('name').eq('id', projectId).single(),
+  ])
 
+  // Log activity
   await supabase.from('activity_log').insert({
     project_id: projectId,
     actor_id: user.id,
     activity_type: 'member_added',
     description: `${addedProfile?.full_name || 'Team member'} added to project`,
+  })
+
+  // Notify the added person
+  await supabase.from('notifications').insert({
+    recipient_id: profileId,
+    sender_id: user.id,
+    type: 'project_added',
+    project_id: projectId,
+    data: {
+      project_name: projectData?.name || 'a project',
+    },
   })
 
   revalidatePath(`/dashboard/projects/${projectId}`)

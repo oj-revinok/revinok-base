@@ -83,6 +83,7 @@ export default function NotificationsPage() {
     if (type === 'launch_review_request') return '🚀'
     if (type === 'launch_approved') return '✅'
     if (type === 'launch_declined') return '❌'
+    if (type === 'project_added') return '📁'
     return '🔔'
   }
 
@@ -92,6 +93,7 @@ export default function NotificationsPage() {
     if (n.type === 'launch_review_request') return `${sender} sent you a Go-Live checklist for ${project}`
     if (n.type === 'launch_approved') return `${sender} approved the Go-Live checklist for ${project}`
     if (n.type === 'launch_declined') return `${sender} declined the Go-Live checklist for ${project}`
+    if (n.type === 'project_added') return `${sender} added you to ${project}`
     return 'New notification'
   }
 
