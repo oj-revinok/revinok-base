@@ -4,3 +4,7 @@ node_modules/
 .env*.local
 *.log
 .DS_Store
+
+# Untrack specific next paths we want included
+!.next/standalone/
+!.next/standalone/**
