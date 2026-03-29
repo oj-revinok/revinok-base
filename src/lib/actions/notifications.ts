@@ -170,7 +170,7 @@ export async function approveLaunchReview(reviewId: string): Promise<void> {
     actor_id: user.id,
     activity_type: 'launch',
     description: `Go-Live checklist approved and saved for ${projectName}`,
-  }).catch(() => {})
+  })
 
   // Notify submitter of approval
   if (review.submitted_by) {
