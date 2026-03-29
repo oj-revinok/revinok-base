@@ -24,7 +24,7 @@
   border-radius: 0 !important;
 }
 
-.tag { border-radius: 100px !important; }
+.tag { border-radius: 0 !important; }
 .avatar { border-radius: 50% !important; }
 
 html {

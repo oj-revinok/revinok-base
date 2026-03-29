@@ -254,7 +254,7 @@ export default function ProjectDetail({
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
               }}
             >
-              🚀 LAUNCH
+              LAUNCH
             </button>
           )}
           {/* Share — admin/PM only */}
