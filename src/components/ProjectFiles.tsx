@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useEffect } from 'react'
 import { uploadFile, deleteFile } from '@/lib/actions/files'
 
 interface ProjectFile {
@@ -37,10 +37,32 @@ export default function ProjectFiles({
 }) {
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles)
   const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [, startTransition] = useTransition()
+
+  // Animate progress bar while uploading
+  useEffect(() => {
+    if (uploading) {
+      setProgress(0)
+      progressRef.current = setInterval(() => {
+        setProgress((p) => {
+          // Ease toward 90% — never reaches 100 until done
+          if (p >= 90) return p
+          return p + (90 - p) * 0.08
+        })
+      }, 120)
+    } else {
+      if (progressRef.current) clearInterval(progressRef.current)
+    }
+    return () => {
+      if (progressRef.current) clearInterval(progressRef.current)
+    }
+  }, [uploading])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -48,6 +70,7 @@ export default function ProjectFiles({
 
     setUploading(true)
     setUploadError(null)
+    setUploadSuccess(null)
 
     try {
       const formData = new FormData()
@@ -56,7 +79,9 @@ export default function ProjectFiles({
 
       const result = await uploadFile(formData)
 
-      // Optimistic update with returned data
+      // Snap to 100%
+      setProgress(100)
+
       setFiles((prev) => [
         {
           id: Date.now().toString(),
@@ -69,6 +94,9 @@ export default function ProjectFiles({
         },
         ...prev,
       ])
+
+      setUploadSuccess(`"${result.name}" uploaded successfully`)
+      setTimeout(() => setUploadSuccess(null), 4000)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
     } finally {
@@ -103,6 +131,7 @@ export default function ProjectFiles({
         onChange={handleUpload}
         style={{ display: 'none' }}
         id={`file-upload-${projectId}`}
+        disabled={uploading}
       />
       <label
         htmlFor={`file-upload-${projectId}`}
@@ -122,15 +151,54 @@ export default function ProjectFiles({
           cursor: uploading ? 'not-allowed' : 'pointer',
           fontFamily: 'Montserrat, sans-serif',
           minHeight: '44px',
-          marginBottom: '16px',
+          marginBottom: uploading ? '0' : '16px',
           transition: 'all 0.15s ease',
         }}
       >
         {uploading ? 'Uploading…' : '↑ Upload File'}
       </label>
 
+      {/* Progress bar */}
+      {uploading && (
+        <div style={{ marginBottom: '16px', marginTop: '10px' }}>
+          <div style={{ height: '3px', backgroundColor: '#1a1a1a', width: '100%', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${progress}%`,
+                backgroundColor: '#BDD630',
+                transition: 'width 0.12s ease',
+              }}
+            />
+          </div>
+          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#555555' }}>
+            {Math.round(progress)}%
+          </p>
+        </div>
+      )}
+
+      {/* Success message */}
+      {uploadSuccess && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          margin: '0 0 16px 0',
+          padding: '10px 14px',
+          backgroundColor: '#0d1f0d',
+          border: '1px solid #1a3a1a',
+          fontSize: '12px',
+          color: '#4ade80',
+          fontWeight: 600,
+        }}>
+          <span>✓</span>
+          {uploadSuccess}
+        </div>
+      )}
+
+      {/* Error message */}
       {uploadError && (
-        <p style={{ margin: '-8px 0 12px 0', fontSize: '12px', color: '#ef4444' }}>{uploadError}</p>
+        <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#ef4444' }}>{uploadError}</p>
       )}
 
       {files.length === 0 ? (
