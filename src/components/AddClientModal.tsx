@@ -101,6 +101,7 @@ export default function AddClientModal() {
             style={{
               backgroundColor: colors.bgSecondary,
               border: `1px solid ${colors.border}`,
+              borderRadius: 16,
               padding: '28px 24px',
               width: '100%',
               maxWidth: '480px',

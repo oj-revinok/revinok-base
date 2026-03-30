@@ -163,6 +163,7 @@ export default function LoginPage() {
                 color: colors.bg === '#080808' ? '#ff6b6b' : '#c41e3a',
                 fontSize: '13px',
                 marginBottom: '20px',
+                borderRadius: 12,
               }}
             >
               {error}

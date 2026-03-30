@@ -211,7 +211,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       style={{
-        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 2000,
+        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 2000,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
       }}
     >

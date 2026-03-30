@@ -257,7 +257,7 @@ export default function NotesPage() {
               style={{
                 width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgTertiary}`,
                 color: colors.text, fontSize: '12px', padding: '8px 10px 8px 30px',
-                fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box',
+                fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box', borderRadius: 12,
               }}
             />
           </div>
@@ -328,6 +328,7 @@ export default function NotesPage() {
                     borderLeft: `2px solid ${isActive ? colors.accent : 'transparent'}`,
                     cursor: 'pointer',
                     transition: 'background-color 0.1s',
+                    borderRadius: 8,
                   }}
                   onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = colors.bgHover }}
                   onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent' }}
@@ -550,14 +551,14 @@ export default function NotesPage() {
       {shareModalOpen && selected && (
         <div
           style={{
-            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)',
             zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
           }}
           onClick={e => { if (e.target === e.currentTarget) setShareModalOpen(false) }}
         >
           <div style={{
             backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgHover}`,
-            width: '100%', maxWidth: '500px', maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+            width: '100%', maxWidth: '500px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', borderRadius: 16,
           }}>
             {/* Modal header */}
             <div style={{ padding: '22px 24px 18px', borderBottom: `1px solid ${colors.bgTertiary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
@@ -640,7 +641,7 @@ export default function NotesPage() {
                     width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgTertiary}`,
                     color: colors.text, fontSize: '12px', padding: '9px 12px',
                     fontFamily: 'Montserrat, sans-serif', outline: 'none',
-                    boxSizing: 'border-box', marginBottom: '8px',
+                    boxSizing: 'border-box', marginBottom: '8px', borderRadius: 12,
                   }}
                 />
                 {shareLoading ? (

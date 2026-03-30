@@ -159,7 +159,7 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {error && (
-            <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
+            <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', borderRadius: 12, color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
               {error}
             </div>
           )}

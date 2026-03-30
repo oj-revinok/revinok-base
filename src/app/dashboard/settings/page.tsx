@@ -23,6 +23,7 @@ function getInputStyle(colors: any): React.CSSProperties {
     padding: '12px 16px',
     backgroundColor: colors.bgSecondary,
     border: `1px solid ${colors.bgTertiary}`,
+    borderRadius: 12,
     color: colors.text,
     fontSize: '14px',
     fontFamily: 'Montserrat, sans-serif',
@@ -34,6 +35,7 @@ function getCardStyle(colors: any): React.CSSProperties {
   return {
     backgroundColor: colors.bgSecondary,
     border: `1px solid ${colors.bgTertiary}`,
+    borderRadius: 16,
     padding: '28px',
   }
 }
@@ -172,12 +174,12 @@ export default function SettingsPage() {
 
       {/* Global messages */}
       {error && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
+        <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', borderRadius: 12, color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
           {error}
         </div>
       )}
       {success && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#0d1f0d', border: '1px solid #1a3a1a', color: '#4ade80', fontSize: '13px', marginBottom: '20px' }}>
+        <div style={{ padding: '12px 16px', backgroundColor: '#0d1f0d', border: '1px solid #1a3a1a', borderRadius: 12, color: '#4ade80', fontSize: '13px', marginBottom: '20px' }}>
           {success}
         </div>
       )}

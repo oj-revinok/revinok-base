@@ -51,7 +51,7 @@ export default async function ClientsPage() {
       {clients && clients.length > 0 ? (
         <>
           {/* Desktop table — hidden on mobile */}
-          <div className="clients-table-wrap" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+          <div className="clients-table-wrap" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflowX: 'auto' }}>
             <table
               style={{
                 width: '100%',
@@ -106,6 +106,7 @@ export default async function ClientsPage() {
                             fontWeight: 700,
                             fontSize: '13px',
                             flexShrink: 0,
+                            borderRadius: '50%',
                           }}
                         >
                           {(client.brand_name || client.name)
@@ -143,6 +144,7 @@ export default async function ClientsPage() {
                           color: 'var(--brand)',
                           fontWeight: 700,
                           fontSize: '13px',
+                          borderRadius: 10000,
                         }}
                       >
                         {(client as { projects?: { id: string }[] }).projects?.length ?? 0}
@@ -164,6 +166,7 @@ export default async function ClientsPage() {
                   border: '1px solid var(--border)',
                   padding: '16px',
                   marginBottom: '12px',
+                  borderRadius: 12,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
@@ -180,6 +183,7 @@ export default async function ClientsPage() {
                       fontWeight: 700,
                       fontSize: '15px',
                       flexShrink: 0,
+                      borderRadius: '50%',
                     }}
                   >
                     {(client.brand_name || client.name)
@@ -208,6 +212,7 @@ export default async function ClientsPage() {
                       fontWeight: 700,
                       fontSize: '13px',
                       flexShrink: 0,
+                      borderRadius: 10000,
                     }}
                   >
                     {(client as { projects?: { id: string }[] }).projects?.length ?? 0}
@@ -239,6 +244,7 @@ export default async function ClientsPage() {
             padding: '80px 40px',
             backgroundColor: 'var(--surface)',
             border: '1px solid var(--border)',
+            borderRadius: 16,
             color: 'var(--text-muted)',
             fontSize: '14px',
           }}

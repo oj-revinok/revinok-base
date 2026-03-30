@@ -686,7 +686,7 @@ export default function TeamPage() {
       {/* Invite Modal */}
       {showInviteModal && (
         <div
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
           onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
         >
           <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '480px', padding: '32px 24px', maxHeight: '90vh', overflowY: 'auto', borderRadius: 16 }}>
@@ -745,7 +745,7 @@ export default function TeamPage() {
                   </p>
                 </div>
                 {inviteError && (
-                  <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
+                  <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', borderRadius: 12, color: '#ff6b6b', fontSize: '13px', marginBottom: '20px' }}>
                     {inviteError}
                   </div>
                 )}
@@ -769,7 +769,7 @@ export default function TeamPage() {
         if (!member) return null
         return (
           <div
-            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
             onClick={(e) => { if (e.target === e.currentTarget) closePasswordPanel() }}
           >
             <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '420px', padding: '32px 24px', borderRadius: 16 }}>
@@ -803,7 +803,7 @@ export default function TeamPage() {
                 GENERATE NEW PASSWORD
               </button>
               {pwError && (
-                <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', color: '#ff6b6b', fontSize: '13px', marginBottom: '16px' }}>
+                <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', borderRadius: 12, color: '#ff6b6b', fontSize: '13px', marginBottom: '16px' }}>
                   {pwError}
                 </div>
               )}

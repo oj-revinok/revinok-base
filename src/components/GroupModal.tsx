@@ -90,7 +90,7 @@ export default function GroupModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.75)',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
@@ -290,6 +290,7 @@ export default function GroupModal({
               padding: '12px 16px',
               backgroundColor: '#2a1515',
               border: '1px solid #8b3a3a',
+              borderRadius: 12,
               color: '#ff6b6b',
               fontSize: '13px',
               marginBottom: '20px',

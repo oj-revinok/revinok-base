@@ -295,7 +295,7 @@ export default function NotificationsPage() {
       {(loadingReview || activeReview) && (
         <div
           style={{
-            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)',
             zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
           }}
           onClick={(e) => { if (e.target === e.currentTarget && !actionPending) { setActiveReview(null); setActionDone(null); setDeclineMsg('') } }}
