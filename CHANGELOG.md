@@ -6,6 +6,22 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-03-31] — 99f99e1
+
+### Fixed
+- Message delete now works — `softDeleteMessage` nulls content and verifies update via `.select()`
+- Fixed broken `startDeleteTimer` function (renamed to `clearDeleteTimer`, was clearing timers instead of starting them)
+
+### Changed
+- Conversations now sorted by latest message time (newest first) — both server-side and after sending
+- Active conversation moves to top immediately after sending a message
+
+### Added
+- Navigation loading bar (thin accent-colored progress bar at top of screen during page transitions)
+- CSS transitions for smoother button/link hover states and page fade-in animation
+
+---
+
 ## [2026-03-31] — ab6436a
 
 ### Fixed
