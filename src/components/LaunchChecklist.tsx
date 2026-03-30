@@ -334,7 +334,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
 
   // ── CHECKLIST ──────────────────────────────────────────────────────────────
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.bg, zIndex: 1000, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       {/* Top toolbar */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10, backgroundColor: colors.bg,

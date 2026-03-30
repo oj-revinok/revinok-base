@@ -356,7 +356,7 @@ export default function NotesPage() {
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     lineHeight: 1.4,
                   }}>
-                    {note.content.replace(/\n/g, ' ') || <em style={{ color: colors.textMuted }}>empty</em>}
+                    {note.content.replace(/<[^>]*>/g, '').replace(/\n/g, ' ').trim() || <em style={{ color: colors.textMuted }}>empty</em>}
                   </p>
                   <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
                     {timeAgo(note.updated_at)}
