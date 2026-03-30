@@ -140,6 +140,7 @@ export interface Message {
   created_at: string
   deleted_at: string | null
   deleted_by: string | null
+  read_at: string | null
   sender?: Profile
 }
 

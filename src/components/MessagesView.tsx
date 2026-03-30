@@ -8,6 +8,7 @@ import {
   sendMessage,
   softDeleteMessage,
   getConversations,
+  markMessagesAsRead,
 } from '@/lib/actions/messages'
 import type { Message, Conversation, Profile } from '@/types'
 
@@ -69,7 +70,7 @@ export default function MessagesView({
     }, 50)
   }, [])
 
-  // Load messages for selected user
+  // Load messages for selected user + mark as read
   useEffect(() => {
     async function loadMessages() {
       if (!selectedUserId) return
@@ -78,6 +79,12 @@ export default function MessagesView({
       setMessages(msgs)
       setLoading(false)
       scrollToBottom()
+
+      // Mark their messages as read & clear unread badge
+      await markMessagesAsRead(selectedUserId)
+      setConversations((prev) =>
+        prev.map((c) => c.user.id === selectedUserId ? { ...c, unreadCount: 0 } : c)
+      )
     }
     loadMessages()
   }, [selectedUserId, scrollToBottom])
@@ -187,6 +194,7 @@ export default function MessagesView({
       created_at: new Date().toISOString(),
       deleted_at: null,
       deleted_by: null,
+      read_at: null,
       sender: {
         id: currentUserId,
         email: 'current@user.local',
@@ -777,11 +785,16 @@ export default function MessagesView({
                           )}
                         </div>
 
-                        {/* Timestamp & Delete Button */}
+                        {/* Timestamp, Read Receipt & Delete Button */}
                         <div style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', alignItems: 'center', gap: '6px' }}>
                           <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted, fontFamily: 'Montserrat, sans-serif' }}>
                             {formatTime(msg.created_at)}
                           </p>
+                          {isOwn && !isDeleted && msg.read_at && (
+                            <span style={{ fontSize: '10px', color: colors.accent, fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                              Read
+                            </span>
+                          )}
                           {isOwn && !isDeleted && (
                             <button
                               onClick={() => handleDeleteMessage(msg.id)}
@@ -799,7 +812,7 @@ export default function MessagesView({
                               }}
                               onMouseEnter={(e) => {
                                 (e.currentTarget as HTMLButtonElement).style.opacity = '1'
-                                ;(e.currentTarget as HTMLButtonElement).style.color = colors.danger
+                                ;(e.currentTarget as HTMLButtonElement).style.color = '#ef4444'
                               }}
                               onMouseLeave={(e) => {
                                 (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'

@@ -6,6 +6,20 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-03-31] — (read receipts)
+
+### Added
+- Read receipts for messages — sent messages show "Read" label in accent color when receiver opens the conversation
+- `markMessagesAsRead` server action — marks all unread messages from a sender as read when opening their conversation
+- SQL migration file at `supabase/migrations/20260331_add_read_at_to_messages.sql` — **must be run in Supabase SQL Editor**
+
+### Fixed
+- Message deletion now uses admin client to bypass RLS policies (was silently failing)
+- Nav menu unread message count now only counts messages where `read_at IS NULL` (was counting ALL received messages)
+- Delete button hover now uses explicit `#ef4444` red instead of `colors.danger` (which may be undefined)
+
+---
+
 ## [2026-03-31] — 99f99e1
 
 ### Fixed

@@ -21,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .from('messages')
       .select('*', { count: 'exact', head: true })
       .eq('receiver_id', user.id)
+      .is('read_at', null)
       .is('deleted_at', null),
   ])
 

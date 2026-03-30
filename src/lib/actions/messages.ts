@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { Message, Conversation, Profile } from '@/types'
 
@@ -12,7 +13,7 @@ export async function getConversations(): Promise<Conversation[]> {
   // Get all unique users the current user has conversations with
   const { data: rawMessages, error } = await supabase
     .from('messages')
-    .select('sender_id, receiver_id, content, created_at, deleted_at')
+    .select('sender_id, receiver_id, content, created_at, deleted_at, read_at')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
     .order('created_at', { ascending: false })
 
@@ -35,8 +36,14 @@ export async function getConversations(): Promise<Conversation[]> {
       convMap.set(otherUserId, {
         lastMsg,
         lastTime: msg.created_at,
-        unreadCount: msg.sender_id !== user.id ? 1 : 0,
+        unreadCount: 0,
       })
+    }
+
+    // Count unread: messages sent TO me that have no read_at and aren't deleted
+    if (msg.receiver_id === user.id && msg.sender_id === otherUserId && !msg.read_at && !msg.deleted_at) {
+      const conv = convMap.get(otherUserId)!
+      conv.unreadCount++
     }
   }
 
@@ -143,7 +150,9 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
-  const { data, error } = await supabase
+  // Use admin client to bypass RLS — we verify ownership via sender_id check
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('messages')
     .update({
       content: null,
@@ -151,7 +160,7 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
       deleted_by: user.id,
     })
     .eq('id', messageId)
-    .eq('sender_id', user.id)
+    .eq('sender_id', user.id) // Only delete own messages
     .select('id')
 
   if (error) {
@@ -159,14 +168,29 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
     return false
   }
 
-  // If no rows returned, update didn't match (RLS or wrong sender)
   if (!data || data.length === 0) {
-    console.error('softDeleteMessage: no rows updated — check RLS policies on messages table')
+    console.error('softDeleteMessage: no rows matched — message not found or not owned by user')
     return false
   }
 
   revalidatePath(`/dashboard/messages`)
   return true
+}
+
+export async function markMessagesAsRead(senderUserId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  // Use admin client to bypass RLS
+  const admin = createAdminClient()
+  await admin
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('sender_id', senderUserId)
+    .eq('receiver_id', user.id)
+    .is('read_at', null)
+    .is('deleted_at', null)
 }
 
 export async function getTeamMembersForMessaging(): Promise<Profile[]> {
