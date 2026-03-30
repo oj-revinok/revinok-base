@@ -39,10 +39,10 @@ export default function ThemeToggle() {
     >
       {theme === 'dark' ? (
         // Sun icon — switch to light
-        <i className="lni lni-sun" />
+        <i className="lni lni-sun-" />
       ) : (
         // Moon icon — switch to dark
-        <i className="lni lni-night" />
+        <i className="lni lni-moon-half-right-" />
       )}
     </button>
   );
