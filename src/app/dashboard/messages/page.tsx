@@ -8,17 +8,27 @@ export default async function MessagesPage() {
     const supabase = await createClient()
     debugInfo = 'supabase created'
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
+    if (!user) {
+      debugInfo += ' | no user'
+      return <div style={{ color: 'white', padding: '40px' }}>Debug: {debugInfo}</div>
+    }
     debugInfo = 'user found: ' + user.id
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, avatar_initials, role')
+      .select('id, full_name, role')
       .eq('id', user.id)
       .single()
 
-    if (!profile) redirect('/login')
-    debugInfo = 'profile found: ' + JSON.stringify(profile)
+    debugInfo += ' | profile query done'
+    if (profileError) {
+      debugInfo += ' | profile error: ' + profileError.message
+    }
+    if (!profile) {
+      debugInfo += ' | no profile'
+      return <div style={{ color: 'white', padding: '40px' }}>Debug: {debugInfo}</div>
+    }
+    debugInfo += ' | profile: ' + JSON.stringify(profile)
 
     let conversations: any[] = []
     let teamMembers: any[] = []
@@ -38,13 +48,11 @@ export default async function MessagesPage() {
     return (
       <div style={{ color: 'white', padding: '40px' }}>
         <h1>Messages Data Debug</h1>
-        <p>Debug: {debugInfo}</p>
-        <p>Conversations: {conversations.length}</p>
-        <p>Team Members: {teamMembers.length}</p>
+        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{debugInfo}</pre>
       </div>
     )
   } catch (e: any) {
     if (e?.digest?.startsWith?.('NEXT_REDIRECT')) throw e
-    return <div style={{ color: 'white', padding: '40px' }}>Error: {e.message} | Debug: {debugInfo}</div>
+    return <div style={{ color: 'white', padding: '40px' }}>Caught Error: {e.message} | Debug: {debugInfo}</div>
   }
 }
