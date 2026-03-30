@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useTheme } from '@/context/ThemeContext'
 
 export default function LoginPage() {
+  const { colors } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -38,7 +40,7 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#080808',
+        backgroundColor: colors.bg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -62,7 +64,7 @@ export default function LoginPage() {
                 display: 'block',
                 fontSize: '11px',
                 fontWeight: 600,
-                color: '#BDD630',
+                color: colors.accent,
                 marginBottom: '8px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
@@ -78,9 +80,9 @@ export default function LoginPage() {
               style={{
                 width: '100%',
                 padding: '14px 16px',
-                backgroundColor: '#0e0e0e',
-                border: '1px solid #1a1a1a',
-                color: '#ffffff',
+                backgroundColor: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
                 fontSize: '14px',
                 fontFamily: 'Montserrat, sans-serif',
                 boxSizing: 'border-box',
@@ -95,7 +97,7 @@ export default function LoginPage() {
                 display: 'block',
                 fontSize: '11px',
                 fontWeight: 600,
-                color: '#BDD630',
+                color: colors.accent,
                 marginBottom: '8px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
@@ -112,9 +114,9 @@ export default function LoginPage() {
                 style={{
                   width: '100%',
                   padding: '14px 48px 14px 16px',
-                  backgroundColor: '#0e0e0e',
-                  border: '1px solid #1a1a1a',
-                  color: '#ffffff',
+                  backgroundColor: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
                   fontSize: '14px',
                   fontFamily: 'Montserrat, sans-serif',
                   boxSizing: 'border-box',
@@ -127,7 +129,7 @@ export default function LoginPage() {
                 style={{
                   position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', padding: '4px', cursor: 'pointer',
-                  color: '#555555', display: 'flex', alignItems: 'center', lineHeight: 1,
+                  color: colors.textMuted, display: 'flex', alignItems: 'center', lineHeight: 1,
                 }}
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -154,9 +156,9 @@ export default function LoginPage() {
             <div
               style={{
                 padding: '12px 16px',
-                backgroundColor: '#2a1515',
-                border: '1px solid #8b3a3a',
-                color: '#ff6b6b',
+                backgroundColor: colors.bg === '#080808' ? '#2a1515' : '#fde8e8',
+                border: `1px solid ${colors.bg === '#080808' ? '#8b3a3a' : '#f5a8a8'}`,
+                color: colors.bg === '#080808' ? '#ff6b6b' : '#c41e3a',
                 fontSize: '13px',
                 marginBottom: '20px',
               }}
@@ -172,8 +174,8 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '16px 24px',
-              backgroundColor: '#BDD630',
-              color: '#080808',
+              backgroundColor: colors.accent,
+              color: colors.bg,
               border: 'none',
               fontSize: '12px',
               fontWeight: 700,
@@ -184,6 +186,7 @@ export default function LoginPage() {
               transition: 'all 0.2s ease',
               opacity: loading ? 0.7 : 1,
               minHeight: '52px',
+              borderRadius: 10000,
             }}
           >
             {loading ? 'SIGNING IN...' : 'SIGN IN'}
@@ -193,7 +196,7 @@ export default function LoginPage() {
         <p
           style={{
             textAlign: 'center',
-            color: '#666666',
+            color: colors.textSecondary,
             fontSize: '13px',
             marginTop: '24px',
             fontWeight: 500,
@@ -202,7 +205,7 @@ export default function LoginPage() {
           Need an account?{' '}
           <a
             href="mailto:hello@revinok.com"
-            style={{ color: '#BDD630', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: colors.accent, textDecoration: 'none', fontWeight: 600 }}
           >
             CONTACT SUPPORT
           </a>

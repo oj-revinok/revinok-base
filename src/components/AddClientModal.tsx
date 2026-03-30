@@ -1,32 +1,37 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 import { createClientRecord } from '@/lib/actions/clients'
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  backgroundColor: '#111111',
-  border: '1px solid #2a2a2a',
-  color: '#ffffff',
-  fontSize: '13px',
-  padding: '12px',
-  fontFamily: 'Montserrat, sans-serif',
-  display: 'block',
-  boxSizing: 'border-box',
-  outline: 'none',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '10px',
-  fontWeight: 700,
-  color: '#666666',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  marginBottom: '6px',
-}
+const createStyles = (colors: any) => ({
+  inputStyle: {
+    width: '100%',
+    backgroundColor: colors.bgTertiary,
+    border: `1px solid ${colors.bgTertiary}`,
+    color: colors.text,
+    fontSize: '13px',
+    padding: '12px',
+    fontFamily: 'Montserrat, sans-serif',
+    display: 'block',
+    boxSizing: 'border-box',
+    outline: 'none',
+  } as React.CSSProperties,
+  labelStyle: {
+    display: 'block',
+    fontSize: '10px',
+    fontWeight: 700,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: '6px',
+  } as React.CSSProperties,
+})
 
 export default function AddClientModal() {
+  const { colors } = useTheme()
+  const styles = createStyles(colors)
+  const { inputStyle, labelStyle } = styles
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -60,17 +65,18 @@ export default function AddClientModal() {
         onClick={() => setOpen(true)}
         style={{
           padding: '12px 20px',
-          backgroundColor: '#BDD630',
-          color: '#080808',
+          backgroundColor: colors.accent,
+          color: colors.bg,
           border: 'none',
-          fontSize: '11px',
-          fontWeight: 700,
+          fontSize: 13,
+          fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
           cursor: 'pointer',
           fontFamily: 'Montserrat, sans-serif',
           minHeight: '44px',
           whiteSpace: 'nowrap',
+          borderRadius: 10000,
         }}
       >
         + ADD CLIENT
@@ -83,7 +89,7 @@ export default function AddClientModal() {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.75)',
+            backgroundColor: colors.modalOverlay,
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
@@ -93,8 +99,8 @@ export default function AddClientModal() {
         >
           <div
             style={{
-              backgroundColor: '#0e0e0e',
-              border: '1px solid #222222',
+              backgroundColor: colors.bgSecondary,
+              border: `1px solid ${colors.border}`,
               padding: '28px 24px',
               width: '100%',
               maxWidth: '480px',
@@ -104,19 +110,19 @@ export default function AddClientModal() {
           >
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: colors.text, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
                 Add Client
               </h2>
               <button
                 onClick={() => setOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#666666', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '4px 8px', minHeight: '44px', minWidth: '44px', fontFamily: 'Montserrat, sans-serif' }}
+                style={{ background: 'none', border: 'none', color: colors.textSecondary, fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '4px 8px', minHeight: '44px', minWidth: '44px', fontFamily: 'Montserrat, sans-serif' }}
               >
                 ×
               </button>
             </div>
 
             {success ? (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: '#4ade80', fontSize: '14px', fontWeight: 600 }}>
+              <div style={{ textAlign: 'center', padding: '20px 0', color: colors.accent, fontSize: '14px', fontWeight: 600 }}>
                 ✓ Client added!
               </div>
             ) : (
@@ -171,7 +177,7 @@ export default function AddClientModal() {
                 </div>
 
                 {error && (
-                  <p style={{ margin: 0, fontSize: '12px', color: '#ef4444' }}>{error}</p>
+                  <p style={{ margin: 0, fontSize: '12px', color: colors.accent }}>{error}</p>
                 )}
 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
@@ -182,14 +188,15 @@ export default function AddClientModal() {
                       flex: 1,
                       padding: '12px',
                       backgroundColor: 'transparent',
-                      color: '#666666',
-                      border: '1px solid #333333',
-                      fontSize: '11px',
-                      fontWeight: 700,
+                      color: colors.textSecondary,
+                      border: `1px solid ${colors.borderLight}`,
+                      fontSize: 13,
+                      fontWeight: 600,
                       textTransform: 'uppercase',
                       cursor: 'pointer',
                       fontFamily: 'Montserrat, sans-serif',
                       minHeight: '44px',
+                      borderRadius: 10000,
                     }}
                   >
                     Cancel
@@ -200,17 +207,18 @@ export default function AddClientModal() {
                     style={{
                       flex: 2,
                       padding: '12px',
-                      backgroundColor: isPending ? '#2a2a2a' : '#BDD630',
-                      color: isPending ? '#555555' : '#080808',
+                      backgroundColor: isPending ? colors.bgHover : colors.accent,
+                      color: isPending ? colors.textMuted : colors.bg,
                       border: 'none',
-                      fontSize: '11px',
-                      fontWeight: 700,
+                      fontSize: 13,
+                      fontWeight: 600,
                       textTransform: 'uppercase',
                       cursor: isPending ? 'not-allowed' : 'pointer',
                       fontFamily: 'Montserrat, sans-serif',
                       minHeight: '44px',
                       letterSpacing: '0.5px',
                       transition: 'all 0.15s ease',
+                      borderRadius: 10000,
                     }}
                   >
                     {isPending ? 'Adding…' : 'Add Client'}

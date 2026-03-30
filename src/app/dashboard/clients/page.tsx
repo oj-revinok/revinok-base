@@ -37,7 +37,7 @@ export default async function ClientsPage() {
           style={{
             fontSize: 'clamp(22px, 5vw, 32px)',
             fontWeight: 900,
-            color: '#ffffff',
+            color: 'var(--text-primary)',
             margin: 0,
             textTransform: 'uppercase',
             letterSpacing: '-1px',
@@ -51,7 +51,7 @@ export default async function ClientsPage() {
       {clients && clients.length > 0 ? (
         <>
           {/* Desktop table — hidden on mobile */}
-          <div className="clients-table-wrap" style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', overflowX: 'auto' }}>
+          <div className="clients-table-wrap" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', overflowX: 'auto' }}>
             <table
               style={{
                 width: '100%',
@@ -61,7 +61,7 @@ export default async function ClientsPage() {
               }}
             >
               <thead>
-                <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['CLIENT', 'INDUSTRY', 'EMAIL', 'PROJECTS'].map((h) => (
                     <th
                       key={h}
@@ -70,7 +70,7 @@ export default async function ClientsPage() {
                         textAlign: 'left',
                         fontSize: '11px',
                         fontWeight: 700,
-                        color: '#BDD630',
+                        color: 'var(--brand)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
                         whiteSpace: 'nowrap',
@@ -87,7 +87,7 @@ export default async function ClientsPage() {
                     key={client.id}
                     className="nav-link"
                     style={{
-                      borderBottom: index < clients.length - 1 ? '1px solid #1a1a1a' : 'none',
+                      borderBottom: index < clients.length - 1 ? '1px solid var(--border)' : 'none',
                       cursor: 'pointer',
                     }}
                   >
@@ -98,11 +98,11 @@ export default async function ClientsPage() {
                           style={{
                             width: '36px',
                             height: '36px',
-                            backgroundColor: client.avatar_color || '#BDD630',
+                            backgroundColor: client.avatar_color || 'var(--brand)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#080808',
+                            color: 'var(--bg)',
                             fontWeight: 700,
                             fontSize: '13px',
                             flexShrink: 0,
@@ -116,21 +116,21 @@ export default async function ClientsPage() {
                             .toUpperCase()}
                         </div>
                         <div>
-                          <p style={{ margin: 0, fontWeight: 800, color: '#ffffff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                          <p style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                             {client.brand_name || client.name}
                           </p>
                           {client.website && (
-                            <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#666666' }}>
+                            <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: 'var(--text-secondary)' }}>
                               {client.website.replace('https://', '').replace('http://', '')}
                             </p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '16px 20px', fontSize: '13px', color: '#999999' }}>
+                    <td style={{ padding: '16px 20px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                       {client.industry || '—'}
                     </td>
-                    <td style={{ padding: '16px 20px', fontSize: '13px', color: '#999999' }}>
+                    <td style={{ padding: '16px 20px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                       {client.email || '—'}
                     </td>
                     <td style={{ padding: '16px 20px' }}>
@@ -139,8 +139,8 @@ export default async function ClientsPage() {
                         style={{
                           display: 'inline-block',
                           padding: '4px 12px',
-                          backgroundColor: '#1a1a1a',
-                          color: '#BDD630',
+                          backgroundColor: 'var(--border)',
+                          color: 'var(--brand)',
                           fontWeight: 700,
                           fontSize: '13px',
                         }}
@@ -160,8 +160,8 @@ export default async function ClientsPage() {
               <div
                 key={client.id}
                 style={{
-                  backgroundColor: '#0e0e0e',
-                  border: '1px solid #1a1a1a',
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
                   padding: '16px',
                   marginBottom: '12px',
                 }}
@@ -172,11 +172,11 @@ export default async function ClientsPage() {
                     style={{
                       width: '44px',
                       height: '44px',
-                      backgroundColor: client.avatar_color || '#BDD630',
+                      backgroundColor: client.avatar_color || 'var(--brand)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#080808',
+                      color: 'var(--bg)',
                       fontWeight: 700,
                       fontSize: '15px',
                       flexShrink: 0,
@@ -190,11 +190,11 @@ export default async function ClientsPage() {
                       .toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 800, color: '#ffffff', fontSize: '16px', lineHeight: 1.2, wordBreak: 'break-word', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                    <p style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)', fontSize: '16px', lineHeight: 1.2, wordBreak: 'break-word', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                       {client.brand_name || client.name}
                     </p>
                     {client.website && (
-                      <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#666666' }}>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--text-secondary)' }}>
                         {client.website.replace('https://', '').replace('http://', '')}
                       </p>
                     )}
@@ -203,8 +203,8 @@ export default async function ClientsPage() {
                     className="tag"
                     style={{
                       padding: '6px 12px',
-                      backgroundColor: '#1a1a1a',
-                      color: '#BDD630',
+                      backgroundColor: 'var(--border)',
+                      color: 'var(--brand)',
                       fontWeight: 700,
                       fontSize: '13px',
                       flexShrink: 0,
@@ -217,14 +217,14 @@ export default async function ClientsPage() {
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                   {client.industry && (
                     <div>
-                      <p style={{ margin: 0, fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Industry</p>
-                      <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#999999' }}>{client.industry}</p>
+                      <p style={{ margin: 0, fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Industry</p>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>{client.industry}</p>
                     </div>
                   )}
                   {client.email && (
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Email</p>
-                      <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#999999', wordBreak: 'break-all' }}>{client.email}</p>
+                      <p style={{ margin: 0, fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Email</p>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{client.email}</p>
                     </div>
                   )}
                 </div>
@@ -237,9 +237,9 @@ export default async function ClientsPage() {
           style={{
             textAlign: 'center',
             padding: '80px 40px',
-            backgroundColor: '#0e0e0e',
-            border: '1px solid #1a1a1a',
-            color: '#555555',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
             fontSize: '14px',
           }}
         >

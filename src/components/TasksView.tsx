@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
 import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
 import { getTaskDescription, getTaskNotionComments } from '@/lib/actions/notion'
+import { useTheme } from '@/context/ThemeContext'
 
 type ViewMode = 'list' | 'kanban'
 
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Props) {
+  const { colors, theme } = useTheme()
   const [viewMode, setViewMode] = useState<ViewMode>('kanban')
   const [search, setSearch] = useState('')
   const [showSecondary, setShowSecondary] = useState(false)
@@ -86,9 +88,9 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
 
   if (tasks.length === 0 && !isAdminOrPM && !hasNotionPersonId) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px dashed #333' }}>
-        <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>No tasks assigned to you yet</p>
-        <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>
+      <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: colors.bg, border: `1px dashed ${colors.borderLight}` }}>
+        <p style={{ color: colors.text, fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>No tasks assigned to you yet</p>
+        <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>
           Ask your admin to link your Notion profile so your tasks appear here.
         </p>
       </div>
@@ -106,36 +108,36 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            flex: 1, minWidth: '200px', padding: '8px 14px', backgroundColor: '#0e0e0e',
-            border: '1px solid #222', color: '#ffffff', fontSize: '13px',
+            flex: 1, minWidth: '200px', padding: '8px 14px', backgroundColor: colors.bg,
+            border: `1px solid ${colors.bgSecondary}`, color: colors.text, fontSize: '13px',
             fontFamily: 'Montserrat, sans-serif', outline: 'none',
           }}
         />
         {/* View toggle — available to all users */}
-        <div style={{ display: 'flex', border: '1px solid #222' }}>
+        <div style={{ display: 'flex', border: `1px solid ${colors.bgSecondary}` }}>
           {(['list', 'kanban'] as ViewMode[]).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
               style={{
-                padding: '8px 16px', backgroundColor: viewMode === mode ? '#BDD630' : 'transparent',
-                border: 'none', color: viewMode === mode ? '#080808' : '#555555',
+                padding: '8px 16px', backgroundColor: viewMode === mode ? colors.accent : 'transparent',
+                border: 'none', color: viewMode === mode ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textMuted,
                 fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
-                cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000,
               }}
             >
               {mode === 'list' ? '≡ List' : '⊞ Kanban'}
             </button>
           ))}
         </div>
-        <span style={{ color: '#444444', fontSize: '11px', whiteSpace: 'nowrap' }}>
+        <span style={{ color: colors.textMuted, fontSize: '11px', whiteSpace: 'nowrap' }}>
           {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {filteredTasks.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a' }}>
-          <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
+        <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+          <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
         </div>
       ) : viewMode === 'kanban' ? (
         <KanbanView groupedByStatus={groupedByStatus} onTaskClick={setSelectedTask} getVisible={getVisible} loadMore={loadMore} />
@@ -163,6 +165,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
 /* ── Task Detail Modal ─────────────────────────────────────── */
 
 function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => void }) {
+  const { colors, theme } = useTheme()
   const [comments, setComments] = useState<TaskComment[]>([])
   const [newComment, setNewComment] = useState('')
   const [loadingComments, setLoadingComments] = useState(true)
@@ -213,7 +216,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
       }}
     >
       <div style={{
-        backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
+        backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
         width: '100%', maxWidth: '580px', padding: '28px 24px', position: 'relative',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
@@ -222,7 +225,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
           onClick={onClose}
           style={{
             position: 'absolute', top: '16px', right: '16px',
-            background: 'none', border: 'none', color: '#555555', fontSize: '18px',
+            background: 'none', border: 'none', color: colors.textMuted, fontSize: '18px',
             cursor: 'pointer', lineHeight: 1, padding: '4px 8px', minHeight: '32px', minWidth: '32px',
           }}
         >
@@ -234,8 +237,8 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
           <span style={{
             display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
             textTransform: 'uppercase', letterSpacing: '0.5px',
-            backgroundColor: '#1a1a1a', color: STATUS_COLORS[task.status] || '#666',
-            border: `1px solid ${STATUS_COLORS[task.status] || '#333'}22`,
+            backgroundColor: colors.bgTertiary, color: STATUS_COLORS[task.status] || '#666',
+            border: `1px solid ${STATUS_COLORS[task.status] || colors.borderLight}22`,
           }}>
             {task.status}
           </span>
@@ -243,7 +246,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
             <span style={{
               display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '0.5px',
-              backgroundColor: '#1a1a1a', color: PRIORITY_COLORS[task.priority] || '#555',
+              backgroundColor: colors.bgTertiary, color: PRIORITY_COLORS[task.priority] || colors.textMuted,
             }}>
               ● {task.priority}
             </span>
@@ -252,7 +255,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
 
         {/* Task name */}
         <h2 style={{
-          fontSize: '18px', fontWeight: 800, color: '#ffffff',
+          fontSize: '18px', fontWeight: 800, color: colors.text,
           margin: '0 0 20px 0', lineHeight: 1.4, textTransform: 'uppercase', letterSpacing: '-0.3px',
           paddingRight: '32px',
         }}>
@@ -263,14 +266,14 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           {task.dueDate && (
             <DetailRow label="Due Date">
-              <span style={{ color: '#ffffff', fontSize: '13px' }}>
+              <span style={{ color: colors.text, fontSize: '13px' }}>
                 {new Date(task.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
             </DetailRow>
           )}
           {(task.assignedNames.length > 0 || task.assignedTo.length > 0) && (
             <DetailRow label="Assigned To">
-              <span style={{ color: '#BDD630', fontSize: '13px', fontWeight: 600 }}>
+              <span style={{ color: colors.accent, fontSize: '13px', fontWeight: 600 }}>
                 {task.assignedNames.length > 0
                   ? task.assignedNames.join(', ')
                   : `${task.assignedTo.length} person${task.assignedTo.length > 1 ? 's' : ''}`}
@@ -282,10 +285,10 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {task.tags.map(tag => (
                   <span key={tag} style={{
-                    fontSize: '9px', fontWeight: 700, color: '#aaaaaa',
-                    backgroundColor: '#1a1a1a', padding: '3px 8px',
+                    fontSize: '9px', fontWeight: 700, color: colors.textSecondary,
+                    backgroundColor: colors.bgTertiary, padding: '3px 8px',
                     textTransform: 'uppercase', letterSpacing: '0.5px',
-                    border: '1px solid #2a2a2a',
+                    border: `1px solid ${colors.bgHover}`,
                   }}>
                     {tag}
                   </span>
@@ -298,13 +301,13 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
         {/* Description */}
         {(loadingDesc || description) && (
           <div style={{ marginBottom: '20px' }}>
-            <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Description
             </p>
             {loadingDesc ? (
-              <p style={{ fontSize: '12px', color: '#444444', margin: 0 }}>Loading…</p>
+              <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0 }}>Loading…</p>
             ) : (
-              <p style={{ fontSize: '13px', color: '#cccccc', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
                 {description}
               </p>
             )}
@@ -312,7 +315,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
         )}
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />
+        <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: '20px' }} />
 
         {/* Notion Comments section */}
         {(loadingNotionComments || notionComments.length > 0) && (
@@ -321,17 +324,17 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               Notion Comments {notionComments.length > 0 ? `(${notionComments.length})` : ''}
             </p>
             {loadingNotionComments ? (
-              <p style={{ fontSize: '12px', color: '#444444' }}>Loading…</p>
+              <p style={{ fontSize: '12px', color: colors.textMuted }}>Loading…</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {notionComments.map((c, i) => (
-                  <div key={i} style={{ padding: '10px 14px', backgroundColor: '#111111', borderLeft: '3px solid #2d2040' }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.5 }}>
+                  <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
                       <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
                       {c.text}
                     </p>
                     {c.date && (
-                      <p style={{ margin: 0, fontSize: '10px', color: '#444444' }}>
+                      <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
                         {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
@@ -344,28 +347,28 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
 
         {/* Comments section */}
         <div style={{ marginBottom: '20px' }}>
-          <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Comments {comments.length > 0 ? `(${comments.length})` : ''}
           </p>
 
           {loadingComments ? (
-            <p style={{ fontSize: '12px', color: '#444444' }}>Loading…</p>
+            <p style={{ fontSize: '12px', color: colors.textMuted }}>Loading…</p>
           ) : comments.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
               {comments.map(c => (
-                <div key={c.id} style={{ padding: '10px 14px', backgroundColor: '#111111', borderLeft: '3px solid #1a1a1a' }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.5 }}>
-                    <span style={{ color: '#BDD630', fontWeight: 700 }}>{c.author_name}:</span>{' '}
+                <div key={c.id} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: `3px solid ${colors.border}` }}>
+                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
+                    <span style={{ color: colors.accent, fontWeight: 700 }}>{c.author_name}:</span>{' '}
                     {c.content}
                   </p>
-                  <p style={{ margin: 0, fontSize: '10px', color: '#444444' }}>
+                  <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
                     {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: '12px', color: '#444444', marginBottom: '14px' }}>No comments yet.</p>
+            <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '14px' }}>No comments yet.</p>
           )}
 
           {/* Add comment form */}
@@ -376,8 +379,8 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               placeholder="Add a comment…"
               rows={2}
               style={{
-                width: '100%', backgroundColor: '#111111', border: '1px solid #1a1a1a',
-                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`,
+                color: colors.text, fontSize: '13px', padding: '10px 12px',
                 fontFamily: 'Montserrat, sans-serif', resize: 'none',
                 display: 'block', boxSizing: 'border-box', lineHeight: 1.5,
               }}
@@ -387,11 +390,11 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               disabled={isPending || !newComment.trim()}
               style={{
                 marginTop: '8px', padding: '8px 18px',
-                backgroundColor: newComment.trim() ? '#BDD630' : '#1a1a1a',
-                color: newComment.trim() ? '#080808' : '#444444',
+                backgroundColor: newComment.trim() ? colors.accent : colors.bgTertiary,
+                color: newComment.trim() ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textMuted,
                 border: 'none', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                fontFamily: 'Montserrat, sans-serif', opacity: isPending ? 0.7 : 1,
+                fontFamily: 'Montserrat, sans-serif', opacity: isPending ? 0.7 : 1, borderRadius: 10000,
               }}
             >
               {isPending ? 'Posting…' : 'POST COMMENT'}
@@ -406,10 +409,11 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
 }
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  const { colors } = useTheme()
   return (
     <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
       <span style={{
-        fontSize: '10px', fontWeight: 700, color: '#555555',
+        fontSize: '10px', fontWeight: 700, color: colors.textMuted,
         textTransform: 'uppercase', letterSpacing: '0.5px',
         minWidth: '80px', paddingTop: '2px', flexShrink: 0,
       }}>
@@ -433,13 +437,14 @@ function KanbanView({
   getVisible: (s: string) => number
   loadMore: (s: string) => void
 }) {
+  const { colors } = useTheme()
   // Only show columns that have tasks
   const visibleColumns = STATUS_COLUMNS.filter(s => (groupedByStatus[s] || []).length > 0)
 
   if (visibleColumns.length === 0) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a' }}>
-        <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No tasks to display.</p>
+      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+        <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks to display.</p>
       </div>
     )
   }
@@ -456,14 +461,14 @@ function KanbanView({
             <div key={status} style={{ flex: '0 0 260px', minWidth: '260px' }}>
               {/* Column header */}
               <div style={{
-                padding: '8px 12px', marginBottom: '8px', backgroundColor: '#0e0e0e',
-                borderBottom: `2px solid ${STATUS_COLORS[status] || '#333'}`,
+                padding: '8px 12px', marginBottom: '8px', backgroundColor: colors.bg,
+                borderBottom: `2px solid ${STATUS_COLORS[status] || colors.borderLight}`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: STATUS_COLORS[status] || '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: STATUS_COLORS[status] || colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {status}
                 </span>
-                <span style={{ fontSize: '11px', color: '#444444' }}>{tasks.length}</span>
+                <span style={{ fontSize: '11px', color: colors.textMuted }}>{tasks.length}</span>
               </div>
               {/* Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -475,9 +480,9 @@ function KanbanView({
                     onClick={() => loadMore(status)}
                     style={{
                       width: '100%', padding: '10px', backgroundColor: 'transparent',
-                      border: '1px dashed #2a2a2a', color: '#555555', cursor: 'pointer',
+                      border: `1px dashed ${colors.bgHover}`, color: colors.textMuted, cursor: 'pointer',
                       fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
-                      letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif',
+                      letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000,
                     }}
                   >
                     + {remaining} more
@@ -493,37 +498,38 @@ function KanbanView({
 }
 
 function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }) {
+  const { colors } = useTheme()
   return (
     <button
       onClick={onClick}
       style={{
         display: 'block', width: '100%', textAlign: 'left',
-        padding: '12px', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
+        padding: '12px', backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
         cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.15s', borderRadius: 10000,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333' }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1a1a1a' }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.borderLight }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border }}
     >
-      <p style={{ fontSize: '14px', color: '#ffffff', margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
+      <p style={{ fontSize: '14px', color: colors.text, margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         {task.priority && (
-          <span style={{ fontSize: '11px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
             ● {task.priority}
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '11px', color: '#555555' }}>
+          <span style={{ fontSize: '11px', color: colors.textMuted }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
         {task.tags.slice(0, 1).map(tag => (
-          <span key={tag} style={{ fontSize: '10px', fontWeight: 700, color: '#555555', backgroundColor: '#1a1a1a', padding: '3px 6px', textTransform: 'uppercase' }}>
+          <span key={tag} style={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgTertiary, padding: '3px 6px', textTransform: 'uppercase' }}>
             {tag}
           </span>
         ))}
         {task.assignedNames.length > 0 && (
-          <span style={{ fontSize: '10px', color: '#BDD630', fontWeight: 600 }}>
+          <span style={{ fontSize: '10px', color: colors.accent, fontWeight: 600 }}>
             {task.assignedNames.join(', ')}
           </span>
         )}
@@ -547,6 +553,7 @@ function ListView({
   loadMore: (s: string) => void
   onTaskClick: (t: NotionTask) => void
 }) {
+  const { colors } = useTheme()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Primary statuses */}
@@ -556,14 +563,14 @@ function ListView({
         const visible = getVisible(status)
         const shown = tasks.slice(0, visible)
         return (
-          <div key={status} style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '0' }}>
+          <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, padding: '0' }}>
             <div style={{
-              padding: '12px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex',
+              padding: '12px 16px', borderBottom: `1px solid ${colors.border}`, display: 'flex',
               alignItems: 'center', gap: '10px',
             }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[status] || '#444' }} />
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
-              <span style={{ fontSize: '10px', color: '#444444', marginLeft: 'auto' }}>{tasks.length}</span>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[status] || colors.textMuted }} />
+              <span style={{ fontSize: '11px', fontWeight: 700, color: colors.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
+              <span style={{ fontSize: '10px', color: colors.textMuted, marginLeft: 'auto' }}>{tasks.length}</span>
             </div>
             {shown.map(task => <TaskListRow key={task.id} task={task} onClick={() => onTaskClick(task)} />)}
             {tasks.length > visible && (
@@ -571,9 +578,9 @@ function ListView({
                 onClick={() => loadMore(status)}
                 style={{
                   width: '100%', padding: '10px', backgroundColor: 'transparent', border: 'none',
-                  borderTop: '1px solid #1a1a1a', color: '#555555', cursor: 'pointer',
+                  borderTop: `1px solid ${colors.border}`, color: colors.textMuted, cursor: 'pointer',
                   fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
-                  fontFamily: 'Montserrat, sans-serif',
+                  fontFamily: 'Montserrat, sans-serif', borderRadius: 10000,
                 }}
               >
                 Load {Math.min(tasks.length - visible, 20)} more ({tasks.length - visible} remaining)
@@ -590,9 +597,9 @@ function ListView({
             onClick={() => setShowSecondary(!showSecondary)}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-              padding: '10px 16px', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a',
-              color: '#555555', cursor: 'pointer', fontSize: '11px', fontWeight: 700,
-              textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif',
+              padding: '10px 16px', backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
+              color: colors.textMuted, cursor: 'pointer', fontSize: '11px', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000,
             }}
           >
             <span>{showSecondary ? '▲' : '▼'} On Hold & Completed ({secondaryTasks.length})</span>
@@ -605,15 +612,15 @@ function ListView({
                 const visible = getVisible(status)
                 const shown = tasks.slice(0, visible)
                 return (
-                  <div key={status} style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a' }}>
-                    <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[status] || '#444' }} />
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
-                      <span style={{ fontSize: '10px', color: '#333333', marginLeft: 'auto' }}>{tasks.length}</span>
+                  <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                    <div style={{ padding: '10px 16px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[status] || colors.textMuted }} />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>
+                      <span style={{ fontSize: '10px', color: colors.borderLight, marginLeft: 'auto' }}>{tasks.length}</span>
                     </div>
                     {shown.map(task => <TaskListRow key={task.id} task={task} faded onClick={() => onTaskClick(task)} />)}
                     {tasks.length > visible && (
-                      <button onClick={() => loadMore(status)} style={{ width: '100%', padding: '10px', backgroundColor: 'transparent', border: 'none', borderTop: '1px solid #1a1a1a', color: '#444444', cursor: 'pointer', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif' }}>
+                      <button onClick={() => loadMore(status)} style={{ width: '100%', padding: '10px', backgroundColor: 'transparent', border: 'none', borderTop: `1px solid ${colors.border}`, color: colors.textMuted, cursor: 'pointer', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}>
                         Load more ({tasks.length - visible} remaining)
                       </button>
                     )}
@@ -629,37 +636,38 @@ function ListView({
 }
 
 function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
+  const { colors } = useTheme()
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
         width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
-        borderBottom: '1px solid #111111', cursor: 'pointer',
+        borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
-        opacity: faded ? 0.5 : 1,
+        opacity: faded ? 0.5 : 1, borderRadius: 10000,
       }}
     >
-      <p style={{ margin: 0, fontSize: '13px', color: faded ? '#555555' : '#ffffff', flex: 1, lineHeight: 1.4, textDecoration: faded ? 'line-through' : 'none' }}>
+      <p style={{ margin: 0, fontSize: '13px', color: faded ? colors.textMuted : colors.text, flex: 1, lineHeight: 1.4, textDecoration: faded ? 'line-through' : 'none' }}>
         {task.name}
       </p>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
         {task.tags.slice(0, 2).map(tag => (
-          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: '#444444', backgroundColor: '#111111', padding: '2px 6px', textTransform: 'uppercase', border: '1px solid #1a1a1a' }}>
+          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', border: `1px solid ${colors.border}` }}>
             {tag}
           </span>
         ))}
         {task.priority && (
-          <span style={{ fontSize: '10px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
             {task.priority}
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '10px', color: '#444444' }}>
+          <span style={{ fontSize: '10px', color: colors.textMuted }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
-        <span style={{ fontSize: '10px', color: '#333333' }}>›</span>
+        <span style={{ fontSize: '10px', color: colors.borderLight }}>›</span>
       </div>
     </button>
   )

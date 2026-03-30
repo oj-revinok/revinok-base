@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTheme } from '@/context/ThemeContext'
 
 interface MobileNavProps {
   role?: string
@@ -107,6 +108,7 @@ const ALL_NAV_ITEMS = [
 ]
 
 export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavProps) {
+  const { colors, theme } = useTheme()
   const pathname = usePathname()
   const isRestricted = RESTRICTED_ROLES.has(role || '')
   const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
@@ -132,7 +134,7 @@ export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavPr
                 href={item.href}
                 prefetch={true}
                 className={`mobile-nav-item${isActive ? ' active' : ''}`}
-                style={{ color: isActive ? '#BDD630' : '#555555', position: 'relative' }}
+                style={{ color: isActive ? colors.accent : colors.textMuted, position: 'relative' }}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <span style={{ position: 'relative', display: 'inline-block' }}>
@@ -140,7 +142,7 @@ export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavPr
                   {showBadge && (
                     <span style={{
                       position: 'absolute', top: '-4px', right: '-6px',
-                      backgroundColor: '#BDD630', color: '#080808',
+                      backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff',
                       fontSize: '8px', fontWeight: 800,
                       borderRadius: '10px', padding: '1px 4px', minWidth: '14px', textAlign: 'center',
                     }}>

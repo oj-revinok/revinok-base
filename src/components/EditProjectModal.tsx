@@ -1,31 +1,33 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 import { createClient } from '@/lib/supabase/client'
 import { updateProject } from '@/lib/actions/projects'
 
 const STATUSES = ['discovery', 'design', 'development', 'review', 'live', 'paused', 'cancelled']
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  color: '#BDD630',
-  marginBottom: '8px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  backgroundColor: '#111111',
-  border: '1px solid #1a1a1a',
-  color: '#ffffff',
-  fontSize: '14px',
-  fontFamily: 'Montserrat, sans-serif',
-  boxSizing: 'border-box',
-}
+const createStyles = (colors: any) => ({
+  labelStyle: {
+    display: 'block',
+    fontSize: '11px',
+    fontWeight: 600,
+    color: colors.accent,
+    marginBottom: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  } as React.CSSProperties,
+  inputStyle: {
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: colors.bgTertiary,
+    border: `1px solid ${colors.bgTertiary}`,
+    color: colors.text,
+    fontSize: '14px',
+    fontFamily: 'Montserrat, sans-serif',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+})
 
 interface Project {
   id: string
@@ -50,6 +52,9 @@ interface Props {
 }
 
 export default function EditProjectModal({ project, onClose, onSave }: Props) {
+  const { colors } = useTheme()
+  const styles = createStyles(colors)
+  const { labelStyle, inputStyle } = styles
   const [clients, setClients] = useState<{ id: string; name: string; brand_name: string | null }[]>([])
   const [notionProjects, setNotionProjects] = useState<{ id: string; name: string }[]>([])
   const [loadingNotion, setLoadingNotion] = useState(false)
@@ -104,14 +109,14 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto' }}>
+      <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgTertiary}`, width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase' }}>EDIT PROJECT</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666666', fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>EDIT PROJECT</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textSecondary, fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -161,7 +166,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
           </div>
 
           {/* Notion project link */}
-          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #1a1a1a' }}>
+          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: `1px solid ${colors.bgTertiary}` }}>
             <label style={labelStyle}>☰ NOTION PROJECT</label>
             <select name="notion_project_id" defaultValue={project.notion_project_id || ''} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">— Not linked —</option>
@@ -170,14 +175,14 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <p style={{ fontSize: '11px', color: '#555555', marginTop: '6px', marginBottom: 0 }}>
+            <p style={{ fontSize: '11px', color: colors.textMuted, marginTop: '6px', marginBottom: 0 }}>
               Link to pull tasks automatically from Notion Workload
             </p>
           </div>
 
           {/* Links */}
-          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #1a1a1a' }}>
-            <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>LINKS (optional)</p>
+          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: `1px solid ${colors.bgTertiary}` }}>
+            <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>LINKS (optional)</p>
             {[
               { name: 'figma_url', label: 'Figma URL', value: project.figma_url },
               { name: 'staging_url', label: 'Staging URL', value: project.staging_url },
@@ -186,7 +191,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
               { name: 'google_drive_url', label: 'Google Drive Folder', value: project.google_drive_url ?? null },
             ].map((field) => (
               <div key={field.name} style={{ marginBottom: '12px' }}>
-                <label style={{ ...labelStyle, color: '#555555' }}>{field.label}</label>
+                <label style={{ ...labelStyle, color: colors.textMuted }}>{field.label}</label>
                 <input name={field.name} type="url" placeholder="https://" defaultValue={field.value || ''} style={inputStyle} />
               </div>
             ))}
@@ -199,10 +204,10 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
           )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #1a1a1a', color: '#999999', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.bgTertiary}`, color: colors.textSecondary, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
               CANCEL
             </button>
-            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
+            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: colors.bg, border: 'none', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
               SAVE CHANGES
             </button>
           </div>

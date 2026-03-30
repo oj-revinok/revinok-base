@@ -1,34 +1,41 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 import { createClient } from '@/lib/supabase/client'
 import { getAppSetting, saveAppSetting } from '@/lib/actions/settings'
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  color: '#BDD630',
-  marginBottom: '8px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
+function getLabelStyle(colors: any): React.CSSProperties {
+  return {
+    display: 'block',
+    fontSize: '11px',
+    fontWeight: 600,
+    color: colors.accent,
+    marginBottom: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  }
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  backgroundColor: '#111111',
-  border: '1px solid #1a1a1a',
-  color: '#ffffff',
-  fontSize: '14px',
-  fontFamily: 'Montserrat, sans-serif',
-  boxSizing: 'border-box',
+function getInputStyle(colors: any): React.CSSProperties {
+  return {
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: colors.bgSecondary,
+    border: `1px solid ${colors.bgTertiary}`,
+    color: colors.text,
+    fontSize: '14px',
+    fontFamily: 'Montserrat, sans-serif',
+    boxSizing: 'border-box',
+  }
 }
 
-const cardStyle: React.CSSProperties = {
-  backgroundColor: '#0e0e0e',
-  border: '1px solid #1a1a1a',
-  padding: '28px',
+function getCardStyle(colors: any): React.CSSProperties {
+  return {
+    backgroundColor: colors.bgSecondary,
+    border: `1px solid ${colors.bgTertiary}`,
+    padding: '28px',
+  }
 }
 
 const SYNC_INTERVALS = [
@@ -40,6 +47,7 @@ const SYNC_INTERVALS = [
 ]
 
 export default function SettingsPage() {
+  const { colors, theme } = useTheme()
   const supabase = createClient()
 
   const [userRole, setUserRole] = useState<string>('')
@@ -150,14 +158,14 @@ export default function SettingsPage() {
   }
 
   if (loadingProfile) {
-    return <div style={{ padding: '40px 20px', color: '#666666', fontSize: '13px' }}>Loading...</div>
+    return <div style={{ padding: '40px 20px', color: colors.textSecondary, fontSize: '13px' }}>Loading...</div>
   }
 
   const isAdmin = userRole === 'admin'
 
   return (
     <div style={{ padding: '20px 16px 60px', maxWidth: '640px' }}>
-      <h1 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: '#ffffff', margin: '0 0 32px 0', textTransform: 'uppercase', letterSpacing: '-1px' }}>
+      <h1 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: colors.text, margin: '0 0 32px 0', textTransform: 'uppercase', letterSpacing: '-1px' }}>
         SETTINGS
       </h1>
 
@@ -175,30 +183,30 @@ export default function SettingsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Profile */}
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>PROFILE</h2>
+        <div style={getCardStyle(colors)}>
+          <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>PROFILE</h2>
           <form onSubmit={handleUpdateProfile}>
             <div style={{ marginBottom: '20px' }}>
-              <label style={labelStyle}>FULL NAME</label>
-              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" style={inputStyle} disabled={loading} />
+              <label style={getLabelStyle(colors)}>FULL NAME</label>
+              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" style={getInputStyle(colors)} disabled={loading} />
             </div>
-            <SaveButton loading={loading} label="SAVE CHANGES" />
+            <SaveButton loading={loading} label="SAVE CHANGES" colors={colors} theme={theme} />
           </form>
         </div>
 
         {/* Security */}
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SECURITY</h2>
+        <div style={getCardStyle(colors)}>
+          <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SECURITY</h2>
           <form onSubmit={handleChangePassword}>
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>NEW PASSWORD</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" style={inputStyle} disabled={loading} />
+              <label style={getLabelStyle(colors)}>NEW PASSWORD</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} />
             </div>
             <div style={{ marginBottom: '20px' }}>
-              <label style={labelStyle}>CONFIRM PASSWORD</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" style={inputStyle} disabled={loading} />
+              <label style={getLabelStyle(colors)}>CONFIRM PASSWORD</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} />
             </div>
-            <SaveButton loading={loading} label="UPDATE PASSWORD" />
+            <SaveButton loading={loading} label="UPDATE PASSWORD" colors={colors} theme={theme} />
           </form>
         </div>
 
@@ -206,16 +214,16 @@ export default function SettingsPage() {
         {isAdmin && (
           <>
             {/* Notion API Key */}
-            <div style={cardStyle}>
+            <div style={getCardStyle(colors)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTEGRATIONS</h2>
-                <span className="tag" style={{ padding: '2px 8px', backgroundColor: '#1a1a1a', color: '#BDD630', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
+                <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTEGRATIONS</h2>
+                <span className="tag" style={{ padding: '2px 8px', backgroundColor: colors.bgTertiary, color: colors.accent, fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
               </div>
 
               <form onSubmit={handleSaveNotionKey}>
                 <div style={{ marginBottom: '8px' }}>
-                  <label style={labelStyle}>NOTION API KEY</label>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
+                  <label style={getLabelStyle(colors)}>NOTION API KEY</label>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: colors.textSecondary, lineHeight: 1.5 }}>
                     Required to sync project notes and tasks from Notion. Get your key at notion.so/my-integrations.
                   </p>
                   <input
@@ -223,31 +231,31 @@ export default function SettingsPage() {
                     value={notionKey}
                     onChange={(e) => setNotionKey(e.target.value)}
                     placeholder="secret_xxxxxxxxxxxxxxxx"
-                    style={inputStyle}
+                    style={getInputStyle(colors)}
                     disabled={loading}
                     autoComplete="off"
                   />
                 </div>
-                <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#444444' }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: colors.textMuted }}>
                   {notionKey ? '● Key saved' : '○ No key set'}
                 </p>
-                <SaveButton loading={loading} label="SAVE API KEY" />
+                <SaveButton loading={loading} label="SAVE API KEY" colors={colors} theme={theme} />
               </form>
             </div>
 
             {/* Notion Sync Interval */}
-            <div style={cardStyle}>
+            <div style={getCardStyle(colors)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION SYNC</h2>
-                <span className="tag" style={{ padding: '2px 8px', backgroundColor: '#1a1a1a', color: '#BDD630', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
+                <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION SYNC</h2>
+                <span className="tag" style={{ padding: '2px 8px', backgroundColor: colors.bgTertiary, color: colors.accent, fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
               </div>
-              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: '#555555', lineHeight: 1.5 }}>
+              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: colors.textSecondary, lineHeight: 1.5 }}>
                 How often the Tasks page pulls fresh data from Notion. Lower intervals mean more up-to-date tasks but slightly more API usage.
               </p>
 
               <form onSubmit={handleSaveSyncInterval}>
                 <div style={{ marginBottom: '20px' }}>
-                  <label style={labelStyle}>SYNC INTERVAL</label>
+                  <label style={getLabelStyle(colors)}>SYNC INTERVAL</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
                     {SYNC_INTERVALS.map((opt) => (
                       <button
@@ -255,12 +263,12 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => setSyncInterval(opt.value)}
                         style={{
-                          padding: '12px 16px',
-                          backgroundColor: syncInterval === opt.value ? '#BDD630' : '#111111',
-                          color: syncInterval === opt.value ? '#080808' : '#666666',
-                          border: syncInterval === opt.value ? '1px solid #BDD630' : '1px solid #1a1a1a',
-                          fontSize: '12px',
-                          fontWeight: 700,
+                          padding: '12px 16px', borderRadius: 10000,
+                          backgroundColor: syncInterval === opt.value ? colors.accent : colors.bgSecondary,
+                          color: syncInterval === opt.value ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textSecondary,
+                          border: syncInterval === opt.value ? `1px solid ${colors.accent}` : `1px solid ${colors.bgTertiary}`,
+                          fontSize: '13px',
+                          fontWeight: 600,
                           textTransform: 'uppercase',
                           letterSpacing: '0.3px',
                           cursor: 'pointer',
@@ -274,7 +282,7 @@ export default function SettingsPage() {
                     ))}
                   </div>
                 </div>
-                <SaveButton loading={savingSyncInterval} label="SAVE SYNC INTERVAL" />
+                <SaveButton loading={savingSyncInterval} label="SAVE SYNC INTERVAL" colors={colors} theme={theme} />
               </form>
             </div>
           </>
@@ -284,12 +292,12 @@ export default function SettingsPage() {
   )
 }
 
-function SaveButton({ loading, label }: { loading: boolean; label: string }) {
+function SaveButton({ loading, label, colors, theme }: { loading: boolean; label: string; colors: any; theme: string }) {
   return (
     <button
       type="submit"
       disabled={loading}
-      style={{ padding: '12px 24px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: loading ? 0.7 : 1 }}
+      style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: loading ? 0.7 : 1, borderRadius: 10000 }}
     >
       {loading ? 'SAVING...' : label}
     </button>

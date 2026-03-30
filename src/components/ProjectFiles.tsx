@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition, useEffect } from 'react'
 import { uploadFile, deleteFile } from '@/lib/actions/files'
+import { useTheme } from '@/context/ThemeContext'
 
 interface ProjectFile {
   id: string
@@ -30,9 +31,10 @@ function formatBytes(bytes: number) {
 
 // SVG file type indicator (no emojis)
 function FileTypeTag({ mimeType }: { mimeType: string | null }) {
+  const { colors } = useTheme()
   let label = 'FILE'
-  let color = '#444444'
-  if (mimeType === 'checklist') { label = 'CHKLST'; color = '#BDD630' }
+  let color = colors.textMuted
+  if (mimeType === 'checklist') { label = 'CHKLST'; color = colors.accent }
   else if (mimeType?.startsWith('image/')) { label = 'IMG'; color = '#4a9eff' }
   else if (mimeType === 'application/pdf') { label = 'PDF'; color = '#ef4444' }
   else if (mimeType?.includes('word') || mimeType?.includes('document')) { label = 'DOC'; color = '#4a9eff' }
@@ -41,7 +43,7 @@ function FileTypeTag({ mimeType }: { mimeType: string | null }) {
   else if (mimeType?.includes('zip')) { label = 'ZIP'; color = '#a78bfa' }
   return (
     <span style={{
-      fontSize: '8px', fontWeight: 800, color, backgroundColor: '#1a1a1a',
+      fontSize: '8px', fontWeight: 800, color, backgroundColor: colors.bgTertiary,
       border: `1px solid ${color}33`, padding: '3px 5px', letterSpacing: '0.5px',
       flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
     }}>
@@ -73,6 +75,7 @@ export default function ProjectFiles({
   canDelete?: boolean
   onDelete?: (fileId: string) => void
 }) {
+  const { colors } = useTheme()
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -171,12 +174,12 @@ export default function ProjectFiles({
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px',
           padding: '10px 20px',
-          backgroundColor: uploading ? '#1a1a1a' : 'transparent',
-          color: uploading ? '#444444' : '#BDD630',
-          border: '1px solid', borderColor: uploading ? '#1a1a1a' : '#BDD630',
-          fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const,
+          backgroundColor: uploading ? colors.bgTertiary : 'transparent',
+          color: uploading ? colors.textMuted : colors.accent,
+          border: '1px solid', borderColor: uploading ? colors.bgTertiary : colors.accent,
+          fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' as const,
           letterSpacing: '0.5px', cursor: uploading ? 'not-allowed' : 'pointer',
-          fontFamily: 'Montserrat, sans-serif', minHeight: '44px',
+          fontFamily: 'Montserrat, sans-serif', minHeight: '44px', borderRadius: 10000,
           marginBottom: uploading ? '0' : '16px', transition: 'all 0.15s ease',
         }}
       >
@@ -185,10 +188,10 @@ export default function ProjectFiles({
 
       {uploading && (
         <div style={{ marginBottom: '16px', marginTop: '10px' }}>
-          <div style={{ height: '2px', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${uploadProgress}%`, backgroundColor: '#BDD630', transition: 'width 0.12s ease' }} />
+          <div style={{ height: '2px', backgroundColor: colors.bgTertiary, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${uploadProgress}%`, backgroundColor: colors.accent, transition: 'width 0.12s ease' }} />
           </div>
-          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#444444' }}>{Math.round(uploadProgress)}%</p>
+          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: colors.textMuted }}>{Math.round(uploadProgress)}%</p>
         </div>
       )}
 
@@ -204,7 +207,7 @@ export default function ProjectFiles({
       )}
 
       {files.length === 0 ? (
-        <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No files yet. Upload a PDF, image, or doc.</p>
+        <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No files yet. Upload a PDF, image, or doc.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {files.map((file) => (
@@ -212,8 +215,8 @@ export default function ProjectFiles({
               key={file.id}
               style={{
                 display: 'flex', alignItems: 'center', gap: '12px',
-                padding: '12px 14px', backgroundColor: '#0a0a0a',
-                border: '1px solid #1a1a1a', minHeight: '52px',
+                padding: '12px 14px', backgroundColor: colors.bgSecondary,
+                border: `1px solid ${colors.border}`, minHeight: '52px',
               }}
             >
               <FileTypeTag mimeType={file.is_launch_checklist ? 'checklist' : file.file_type} />
@@ -226,7 +229,7 @@ export default function ProjectFiles({
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       background: 'none', border: 'none', padding: 0,
-                      color: '#BDD630', fontSize: '13px', fontWeight: 600,
+                      color: colors.accent, fontSize: '13px', fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
@@ -239,18 +242,18 @@ export default function ProjectFiles({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      display: 'block', color: '#ffffff', fontSize: '13px', fontWeight: 600,
+                      display: 'block', color: colors.text, fontSize: '13px', fontWeight: 600,
                       textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
                   >
                     {file.name}
                   </a>
                 )}
-                <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#444444' }}>
+                <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: colors.textMuted }}>
                   {file.size_bytes ? formatBytes(file.size_bytes) : '—'}
                   {' · '}
                   {new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  {file.is_launch_checklist && <span style={{ color: '#BDD630', marginLeft: '6px', fontWeight: 700 }}>Go-Live Checklist</span>}
+                  {file.is_launch_checklist && <span style={{ color: colors.accent, marginLeft: '6px', fontWeight: 700 }}>Go-Live Checklist</span>}
                 </p>
               </div>
 
@@ -259,14 +262,14 @@ export default function ProjectFiles({
                   onClick={() => onDelete ? onDelete(file.id) : handleDelete(file)}
                   disabled={deletingId === file.id}
                   style={{
-                    background: 'none', border: 'none', color: '#333333', fontSize: '16px',
+                    background: 'none', border: 'none', color: colors.borderLight, fontSize: '16px',
                     cursor: 'pointer', padding: '8px', minHeight: '44px', minWidth: '44px',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
                     transition: 'color 0.15s',
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#333333' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = colors.borderLight }}
                   title="Delete file"
                 >
                   ×
@@ -300,6 +303,7 @@ function ChecklistViewModal({
   data: ChecklistData
   onClose: () => void
 }) {
+  const { colors, theme } = useTheme()
   const items = data.items ?? []
   const progress = data.progress ?? { done: items.filter(i => i.done).length, total: items.length }
   const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0
@@ -316,36 +320,36 @@ function ChecklistViewModal({
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       style={{
-        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+        position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay,
         zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
       }}
     >
       <div style={{
-        backgroundColor: '#0a0a0a', border: '1px solid #222222',
+        backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgHover}`,
         width: '100%', maxWidth: '680px', maxHeight: '90vh',
         overflowY: 'auto', display: 'flex', flexDirection: 'column',
       }}>
         {/* Header */}
         <div style={{
-          padding: '24px 28px 20px', borderBottom: '1px solid #1a1a1a',
+          padding: '24px 28px 20px', borderBottom: `1px solid ${colors.border}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px',
-          position: 'sticky', top: 0, backgroundColor: '#0a0a0a', zIndex: 1,
+          position: 'sticky', top: 0, backgroundColor: colors.bgSecondary, zIndex: 1,
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: '0 0 4px 0', fontSize: '9px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+            <p style={{ margin: '0 0 4px 0', fontSize: '9px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
               Go-Live Checklist
             </p>
-            <h2 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: 800, color: '#ffffff', lineHeight: 1.3 }}>
+            <h2 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: 800, color: colors.text, lineHeight: 1.3 }}>
               {data.projectName || fileName}
             </h2>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {data.reviewedBy && (
-                <span style={{ fontSize: '11px', color: '#555555' }}>
-                  Submitted by <span style={{ color: '#888888' }}>{data.reviewedBy}</span>
+                <span style={{ fontSize: '11px', color: colors.textMuted }}>
+                  Submitted by <span style={{ color: colors.textSecondary }}>{data.reviewedBy}</span>
                 </span>
               )}
               {data.sentAt && (
-                <span style={{ fontSize: '11px', color: '#555555' }}>
+                <span style={{ fontSize: '11px', color: colors.textMuted }}>
                   {new Date(data.sentAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               )}
@@ -354,9 +358,9 @@ function ChecklistViewModal({
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: '1px solid #222', color: '#555555',
+              background: 'none', border: `1px solid ${colors.bgHover}`, color: colors.textMuted,
               fontSize: '14px', cursor: 'pointer', padding: '6px 10px', lineHeight: 1,
-              fontFamily: 'Montserrat, sans-serif', flexShrink: 0,
+              fontFamily: 'Montserrat, sans-serif', flexShrink: 0, borderRadius: 10000, fontWeight: 600,
             }}
           >
             ✕
@@ -364,22 +368,22 @@ function ChecklistViewModal({
         </div>
 
         {/* Progress */}
-        <div style={{ padding: '16px 28px', borderBottom: '1px solid #1a1a1a', backgroundColor: '#0d0d0d' }}>
+        <div style={{ padding: '16px 28px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.bgTertiary }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: colors.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {progress.done} / {progress.total} completed
             </span>
             <span style={{
               fontSize: '12px', fontWeight: 700,
-              color: pct === 100 ? '#4ade80' : pct >= 80 ? '#BDD630' : '#ff9d4a',
+              color: pct === 100 ? '#4ade80' : pct >= 80 ? colors.accent : '#ff9d4a',
             }}>
               {pct}%
             </span>
           </div>
-          <div style={{ height: '4px', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
+          <div style={{ height: '4px', backgroundColor: colors.border, overflow: 'hidden' }}>
             <div style={{
               height: '100%', transition: 'width 0.4s ease',
-              backgroundColor: pct === 100 ? '#4ade80' : '#BDD630',
+              backgroundColor: pct === 100 ? '#4ade80' : colors.accent,
               width: `${pct}%`,
             }} />
           </div>
@@ -395,23 +399,23 @@ function ChecklistViewModal({
                 {/* Section header */}
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 28px', backgroundColor: '#0d0d0d',
-                  borderTop: '1px solid #141414', borderBottom: '1px solid #141414',
+                  padding: '10px 28px', backgroundColor: colors.bgTertiary,
+                  borderTop: `1px solid ${colors.bgSecondary}`, borderBottom: `1px solid ${colors.bgSecondary}`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{
-                      fontSize: '9px', fontWeight: 700, color: '#444444',
-                      backgroundColor: '#1a1a1a', padding: '3px 7px', letterSpacing: '0.5px',
+                      fontSize: '9px', fontWeight: 700, color: colors.textMuted,
+                      backgroundColor: colors.border, padding: '3px 7px', letterSpacing: '0.5px',
                       fontFamily: 'Montserrat, sans-serif', flexShrink: 0,
                     }}>
                       {sectionNum}
                     </span>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                       {sectionName}
                     </span>
                   </div>
                   <span style={{
-                    fontSize: '10px', color: doneSec === sectionItems.length ? '#4ade80' : '#444444',
+                    fontSize: '10px', color: doneSec === sectionItems.length ? '#4ade80' : colors.textMuted,
                     fontWeight: 600,
                   }}>
                     {doneSec}/{sectionItems.length}
@@ -424,25 +428,25 @@ function ChecklistViewModal({
                     key={item.id}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '10px 28px', borderBottom: '1px solid #0d0d0d',
+                      padding: '10px 28px', borderBottom: `1px solid ${colors.bgTertiary}`,
                     }}
                   >
                     {/* Checkbox */}
                     <div style={{
                       width: '14px', height: '14px', flexShrink: 0,
-                      border: `1.5px solid ${item.done ? '#4ade80' : '#2a2a2a'}`,
+                      border: `1.5px solid ${item.done ? '#4ade80' : colors.bgHover}`,
                       backgroundColor: item.done ? '#4ade80' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       {item.done && (
                         <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
-                          <path d="M1 2.5L2.5 4L6 1" stroke="#080808" strokeWidth="1.5" strokeLinecap="round"/>
+                          <path d="M1 2.5L2.5 4L6 1" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       )}
                     </div>
                     <span style={{
                       fontSize: '12px', lineHeight: 1.5, flex: 1,
-                      color: item.done ? '#3a3a3a' : '#cccccc',
+                      color: item.done ? colors.textMuted : colors.textSecondary,
                       textDecoration: item.done ? 'line-through' : 'none',
                     }}>
                       {item.title}

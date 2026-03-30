@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { addNote } from '@/lib/actions/notes'
+import { useTheme } from '@/context/ThemeContext'
 
 interface Props {
   projectId: string
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
+  const { colors } = useTheme()
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -38,9 +40,9 @@ export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
         rows={3}
         style={{
           width: '100%',
-          backgroundColor: '#111111',
-          border: '1px solid #1a1a1a',
-          color: '#ffffff',
+          backgroundColor: colors.bgSecondary,
+          border: `1px solid ${colors.border}`,
+          color: colors.text,
           fontSize: '13px',
           padding: '12px',
           fontFamily: 'Montserrat, sans-serif',
@@ -60,8 +62,8 @@ export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
         style={{
           marginTop: '10px',
           padding: '10px 20px',
-          backgroundColor: isPending || !content.trim() ? '#2a2a2a' : '#BDD630',
-          color: isPending || !content.trim() ? '#555555' : '#080808',
+          backgroundColor: isPending || !content.trim() ? colors.border : colors.accent,
+          color: isPending || !content.trim() ? colors.textMuted : colors.bg,
           border: 'none',
           fontSize: '11px',
           fontWeight: 700,
@@ -71,6 +73,7 @@ export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
           fontFamily: 'Montserrat, sans-serif',
           minHeight: '44px',
           transition: 'all 0.15s ease',
+          borderRadius: 10000,
         }}
       >
         {isPending ? 'Saving…' : 'Add Note'}

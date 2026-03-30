@@ -3,31 +3,33 @@
 import { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { createProject } from '@/lib/actions/projects'
+import { useTheme } from '@/context/ThemeContext'
 
 const STATUSES = ['discovery', 'design', 'development', 'review', 'live', 'paused']
 
-const labelStyle: React.CSSProperties = {
+const getLabelStyle = (accentColor: string): React.CSSProperties => ({
   display: 'block',
   fontSize: '11px',
   fontWeight: 600,
-  color: '#BDD630',
+  color: accentColor,
   marginBottom: '8px',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
-}
+})
 
-const inputStyle: React.CSSProperties = {
+const getInputStyle = (bgSecondary: string, border: string, text: string): React.CSSProperties => ({
   width: '100%',
   padding: '12px 16px',
-  backgroundColor: '#111111',
-  border: '1px solid #1a1a1a',
-  color: '#ffffff',
+  backgroundColor: bgSecondary,
+  border: `1px solid ${border}`,
+  color: text,
   fontSize: '14px',
   fontFamily: 'Montserrat, sans-serif',
   boxSizing: 'border-box',
-}
+})
 
 export default function AddProjectModal({ onClose }: { onClose: () => void }) {
+  const { colors, theme } = useTheme()
   const [clients, setClients] = useState<{ id: string; name: string; brand_name: string | null }[]>([])
   const [notionProjects, setNotionProjects] = useState<{ id: string; name: string }[]>([])
   const [loadingNotion, setLoadingNotion] = useState(false)
@@ -67,21 +69,21 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto' }}>
+      <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase' }}>NEW PROJECT</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666666', fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>NEW PROJECT</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10000, fontWeight: 600 }}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Client */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>CLIENT</label>
-            <select name="client_id" style={{ ...inputStyle, cursor: 'pointer' }}>
+            <label style={getLabelStyle(colors.accent)}>CLIENT</label>
+            <select name="client_id" style={{ ...getInputStyle(colors.bgSecondary, colors.border, colors.text), cursor: 'pointer' }}>
               <option value="">No client</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.brand_name || c.name}</option>
@@ -91,14 +93,14 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
 
           {/* Project name */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>PROJECT NAME *</label>
-            <input name="name" type="text" required placeholder="e.g. Brand Website Redesign" style={inputStyle} />
+            <label style={getLabelStyle(colors.accent)}>PROJECT NAME *</label>
+            <input name="name" type="text" required placeholder="e.g. Brand Website Redesign" style={getInputStyle(colors.bgSecondary, colors.border, colors.text)} />
           </div>
 
           {/* Status */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>STATUS</label>
-            <select name="status" defaultValue="discovery" style={{ ...inputStyle, cursor: 'pointer' }}>
+            <label style={getLabelStyle(colors.accent)}>STATUS</label>
+            <select name="status" defaultValue="discovery" style={{ ...getInputStyle(colors.bgSecondary, colors.border, colors.text), cursor: 'pointer' }}>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
               ))}
@@ -107,40 +109,40 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
 
           {/* Description */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>DESCRIPTION</label>
-            <textarea name="description" rows={3} placeholder="Brief project description..." style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.6' }} />
+            <label style={getLabelStyle(colors.accent)}>DESCRIPTION</label>
+            <textarea name="description" rows={3} placeholder="Brief project description..." style={{ ...getInputStyle(colors.bgSecondary, colors.border, colors.text), resize: 'vertical', lineHeight: '1.6' }} />
           </div>
 
           {/* Dates row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
             <div>
-              <label style={labelStyle}>START DATE</label>
-              <input name="start_date" type="date" style={inputStyle} />
+              <label style={getLabelStyle(colors.accent)}>START DATE</label>
+              <input name="start_date" type="date" style={getInputStyle(colors.bgSecondary, colors.border, colors.text)} />
             </div>
             <div>
-              <label style={labelStyle}>DUE DATE</label>
-              <input name="due_date" type="date" style={inputStyle} />
+              <label style={getLabelStyle(colors.accent)}>DUE DATE</label>
+              <input name="due_date" type="date" style={getInputStyle(colors.bgSecondary, colors.border, colors.text)} />
             </div>
           </div>
 
           {/* Notion project link */}
-          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #1a1a1a' }}>
-            <label style={labelStyle}>☰ NOTION PROJECT</label>
-            <select name="notion_project_id" style={{ ...inputStyle, cursor: 'pointer' }}>
+          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+            <label style={getLabelStyle(colors.accent)}>☰ NOTION PROJECT</label>
+            <select name="notion_project_id" style={{ ...getInputStyle(colors.bgSecondary, colors.border, colors.text), cursor: 'pointer' }}>
               <option value="">— Not linked —</option>
               {loadingNotion && <option disabled>Loading Notion projects…</option>}
               {notionProjects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <p style={{ fontSize: '11px', color: '#555555', marginTop: '6px', marginBottom: 0 }}>
+            <p style={{ fontSize: '11px', color: colors.textMuted, marginTop: '6px', marginBottom: 0 }}>
               Link to pull tasks automatically from Notion Workload
             </p>
           </div>
 
           {/* Links */}
-          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid #1a1a1a' }}>
-            <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>LINKS (optional)</p>
+          <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+            <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>LINKS (optional)</p>
             {[
               { name: 'figma_url', label: 'Figma URL' },
               { name: 'staging_url', label: 'Staging URL' },
@@ -149,8 +151,8 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
               { name: 'google_drive_url', label: 'Google Drive Folder' },
             ].map((field) => (
               <div key={field.name} style={{ marginBottom: '12px' }}>
-                <label style={{ ...labelStyle, color: '#555555' }}>{field.label}</label>
-                <input name={field.name} type="url" placeholder="https://" style={inputStyle} />
+                <label style={{ ...getLabelStyle(colors.textMuted) }}>{field.label}</label>
+                <input name={field.name} type="url" placeholder="https://" style={getInputStyle(colors.bgSecondary, colors.border, colors.text)} />
               </div>
             ))}
           </div>
@@ -162,10 +164,10 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
           )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={onClose} disabled={isPending} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #1a1a1a', color: '#999999', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.5 : 1 }}>
+            <button type="button" onClick={onClose} disabled={isPending} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.5 : 1, borderRadius: 10000 }}>
               CANCEL
             </button>
-            <button type="submit" disabled={isPending} style={{ flex: 2, padding: '14px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.7 : 1 }}>
+            <button type="submit" disabled={isPending} style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.7 : 1, borderRadius: 10000 }}>
               {isPending ? 'CREATING...' : 'CREATE PROJECT'}
             </button>
           </div>

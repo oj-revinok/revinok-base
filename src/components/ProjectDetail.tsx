@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { updateProjectStatus, updateProject, deleteNote, deleteProjectFile } from '@/lib/actions/projects'
+import { useTheme } from '@/context/ThemeContext'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
 import EditProjectModal from './EditProjectModal'
@@ -123,9 +124,10 @@ interface Props {
 }
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  const { colors } = useTheme()
   return (
-    <div style={{ backgroundColor: '#0e0e0e', padding: '20px', border: '1px solid #1a1a1a' }}>
-      <h2 style={{ fontSize: '12px', fontWeight: 700, color: '#BDD630', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+    <div style={{ backgroundColor: colors.bgSecondary, padding: '20px', border: `1px solid ${colors.border}` }}>
+      <h2 style={{ fontSize: '12px', fontWeight: 700, color: colors.accent, margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         {title}
       </h2>
       {children}
@@ -137,6 +139,7 @@ export default function ProjectDetail({
   project: initialProject, notes: initialNotes, activity, links, projectFiles: initialFiles,
   notionTasks, projectMembers: initialMembers, userRole, userFullName
 }: Props) {
+  const { colors, theme } = useTheme()
   const [tab, setTab] = useState<Tab>('overview')
   const [project, setProject] = useState(initialProject)
   const [notes, setNotes] = useState(initialNotes)
@@ -226,18 +229,18 @@ export default function ProjectDetail({
   return (
     <div style={{ padding: '20px 16px 80px', maxWidth: '100%', overflowX: 'hidden' }}>
       {/* Back */}
-      <Link href="/dashboard/projects" prefetch={true} style={{ color: '#666666', textDecoration: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-block', marginBottom: '20px', minHeight: '44px', lineHeight: '44px' }}>
+      <Link href="/dashboard/projects" prefetch={true} style={{ color: colors.textMuted, textDecoration: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-block', marginBottom: '20px', minHeight: '44px', lineHeight: '44px' }}>
         ← BACK TO PROJECTS
       </Link>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: 'clamp(24px, 6vw, 38px)', fontWeight: 900, color: '#ffffff', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '-1px', wordBreak: 'break-word', lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: 'clamp(24px, 6vw, 38px)', fontWeight: 900, color: colors.text, margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '-1px', wordBreak: 'break-word', lineHeight: 1.1 }}>
             {clientName || project.name}
           </h1>
           {clientName && (
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#666666', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {project.name}
             </p>
           )}
@@ -250,9 +253,9 @@ export default function ProjectDetail({
             <button
               onClick={() => setShowLaunchChecklist(true)}
               style={{
-                padding: '3px 12px', backgroundColor: '#BDD630', border: 'none',
-                color: '#080808', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+                padding: '3px 12px', backgroundColor: colors.accent, border: 'none',
+                color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
               LAUNCH
@@ -263,9 +266,9 @@ export default function ProjectDetail({
             <button
               onClick={() => setShowShareModal(true)}
               style={{
-                padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333',
-                color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+                padding: '3px 12px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
+                color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
               SHARE ({members.length})
@@ -276,9 +279,9 @@ export default function ProjectDetail({
             <button
               onClick={() => setShowEditModal(true)}
               style={{
-                padding: '3px 12px', backgroundColor: 'transparent', border: '1px solid #333333',
-                color: '#999999', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px'
+                padding: '3px 12px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
+                color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
               EDIT
@@ -294,13 +297,14 @@ export default function ProjectDetail({
               onChange={e => handleStatusChange(e.target.value)}
               disabled={statusSaving}
               style={{
-                padding: '3px 28px 3px 10px', backgroundColor: STATUS_COLORS[project.status] || '#666666',
-                color: '#080808', border: 'none', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                padding: '3px 28px 3px 10px', backgroundColor: STATUS_COLORS[project.status] || colors.textMuted,
+                color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                 appearance: 'none', WebkitAppearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23080808'/%3E%3C/svg%3E")`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='${theme === 'dark' ? '%23080808' : '%23ffffff'}'/%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
                 opacity: statusSaving ? 0.6 : 1,
+                borderRadius: 10000
               }}
             >
               {ALL_STATUSES.map(s => (
@@ -312,8 +316,8 @@ export default function ProjectDetail({
         {/* Status badge for non-editors */}
         {!canEdit && (
           <span style={{
-            padding: '3px 10px', backgroundColor: STATUS_COLORS[project.status] || '#666666',
-            color: '#080808', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+            padding: '3px 10px', backgroundColor: STATUS_COLORS[project.status] || colors.textMuted,
+            color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: 10000
           }}>
             {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
           </span>
@@ -323,14 +327,14 @@ export default function ProjectDetail({
       {/* Members strip */}
       {members.length > 0 && (
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '10px', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Team:</span>
+          <span style={{ fontSize: '10px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Team:</span>
           {members.map(m => {
             const p = m.profiles
             if (!p) return null
             const initials = p.initials || (p.full_name || p.email).slice(0, 2).toUpperCase()
             return (
               <div key={m.id} title={`${p.full_name || p.email} (${ROLE_LABELS[p.role as keyof typeof ROLE_LABELS] || p.role})`}
-                style={{ width: '28px', height: '28px', backgroundColor: '#1a1a1a', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#BDD630', cursor: 'default' }}>
+                style={{ width: '28px', height: '28px', backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: colors.accent, cursor: 'default', borderRadius: '50%' }}>
                 {initials}
               </div>
             )
@@ -341,25 +345,25 @@ export default function ProjectDetail({
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Tasks', value: notionTasks.length, color: '#ffffff' },
+          { label: 'Total Tasks', value: notionTasks.length, color: colors.text },
           { label: 'In Progress', value: notionTasks.filter(t => t.status === 'In progress').length, color: '#4a9eff' },
           { label: 'Completed', value: notionTasks.filter(t => t.status === 'Complete').length, color: '#4ade80' },
         ].map(stat => (
-          <div key={stat.label} style={{ backgroundColor: '#0e0e0e', padding: '16px 20px', border: '1px solid #1a1a1a' }}>
-            <p style={{ fontSize: '10px', color: '#666666', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.label}</p>
+          <div key={stat.label} style={{ backgroundColor: colors.bgSecondary, padding: '16px 20px', border: `1px solid ${colors.border}` }}>
+            <p style={{ fontSize: '10px', color: colors.textMuted, margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.label}</p>
             <p style={{ fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800, color: stat.color, margin: 0 }}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid #1a1a1a' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: `1px solid ${colors.border}` }}>
         {(['overview', 'tasks', 'activity'] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '10px 16px', backgroundColor: 'transparent',
-            color: tab === t ? '#BDD630' : '#555555', border: 'none',
-            borderBottom: tab === t ? '2px solid #BDD630' : '2px solid transparent',
-            fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+            color: tab === t ? colors.accent : colors.textMuted, border: 'none',
+            borderBottom: tab === t ? `2px solid ${colors.accent}` : '2px solid transparent',
+            fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px',
             cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.15s ease', marginBottom: '-1px',
           }}>
             {t === 'overview' ? 'Overview' : t === 'tasks' ? `Tasks (${notionTasks.length})` : 'Activity'}
@@ -377,24 +381,24 @@ export default function ProjectDetail({
               {editingDesc && canEdit ? (
                 <div>
                   <textarea value={descDraft} onChange={e => setDescDraft(e.target.value)} rows={4} autoFocus
-                    style={{ width: '100%', padding: '12px', backgroundColor: '#111111', border: '1px solid #333333', color: '#ffffff', fontSize: '13px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', lineHeight: '1.6', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px', backgroundColor: colors.bgTertiary, border: `1px solid ${colors.borderLight}`, color: colors.text, fontSize: '13px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', lineHeight: '1.6', boxSizing: 'border-box' }}
                   />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                    <button onClick={handleSaveDesc} disabled={savingDesc} style={{ padding: '8px 16px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+                    <button onClick={handleSaveDesc} disabled={savingDesc} style={{ padding: '8px 16px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}>
                       {savingDesc ? 'Saving…' : 'Save'}
                     </button>
-                    <button onClick={() => { setEditingDesc(false); setDescDraft(project.description || '') }} style={{ padding: '8px 16px', backgroundColor: 'transparent', color: '#666666', border: '1px solid #333333', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+                    <button onClick={() => { setEditingDesc(false); setDescDraft(project.description || '') }} style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.borderLight}`, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}>
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <p style={{ color: project.description ? '#999999' : '#444444', fontSize: '13px', lineHeight: 1.7, margin: 0, flex: 1 }}>
+                  <p style={{ color: project.description ? colors.textSecondary : colors.textMuted, fontSize: '13px', lineHeight: 1.7, margin: 0, flex: 1 }}>
                     {project.description || 'No description.'}
                   </p>
                   {canEdit && (
-                    <button onClick={() => setEditingDesc(true)} title="Edit description" style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>✎</button>
+                    <button onClick={() => setEditingDesc(true)} title="Edit description" style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>✎</button>
                   )}
                 </div>
               )}
@@ -411,20 +415,20 @@ export default function ProjectDetail({
                   {notes.map(note => {
                     const author = note.profiles?.full_name
                     return (
-                      <div key={note.id} style={{ padding: '14px', backgroundColor: '#111111', borderLeft: '3px solid #333333', position: 'relative' }}>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.6 }}>{note.content}</p>
+                      <div key={note.id} style={{ padding: '14px', backgroundColor: colors.bgTertiary, borderLeft: `3px solid ${colors.borderLight}`, position: 'relative' }}>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }}>{note.content}</p>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            {author && <span style={{ fontSize: '11px', color: '#BDD630', fontWeight: 600 }}>{author}</span>}
-                            {author && <span style={{ fontSize: '11px', color: '#333333' }}>·</span>}
-                            <span style={{ fontSize: '11px', color: '#555555' }}>
+                            {author && <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 600 }}>{author}</span>}
+                            {author && <span style={{ fontSize: '11px', color: colors.borderLight }}>·</span>}
+                            <span style={{ fontSize: '11px', color: colors.textMuted }}>
                               {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                           </div>
                           {canDelete && (
                             <button
                               onClick={() => handleDeleteNote(note.id)}
-                              style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', fontSize: '12px', padding: '2px 6px' }}
+                              style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '12px', padding: '2px 6px' }}
                               title="Delete note"
                             >
                               ✕
@@ -453,8 +457,8 @@ export default function ProjectDetail({
                   { label: 'Due', value: project.due_date ? new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD' },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '11px', color: '#666666', textTransform: 'uppercase' }}>{item.label}</span>
-                    <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>{item.value}</span>
+                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase' }}>{item.label}</span>
+                    <span style={{ fontSize: '12px', color: colors.text, fontWeight: 600 }}>{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -465,9 +469,9 @@ export default function ProjectDetail({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {allLinks.map(link => (
                     <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#111111', textDecoration: 'none', color: '#ffffff', fontSize: '12px', fontWeight: 600, minHeight: '44px' }}>
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: colors.bgTertiary, textDecoration: 'none', color: colors.text, fontSize: '12px', fontWeight: 600, minHeight: '44px' }}>
                       <span>{link.label}</span>
-                      <span style={{ color: '#BDD630' }}>↗</span>
+                      <span style={{ color: colors.accent }}>↗</span>
                     </a>
                   ))}
                 </div>
@@ -481,19 +485,19 @@ export default function ProjectDetail({
       {tab === 'tasks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {!project.notion_project_id ? (
-            <div style={{ backgroundColor: '#0e0e0e', border: '1px dashed #333333', padding: '32px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px dashed ${colors.borderLight}`, padding: '32px', textAlign: 'center' }}>
               <p style={{ fontSize: '24px', margin: '0 0 12px 0' }}>☰</p>
-              <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>Not linked to Notion</p>
-              <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 20px 0' }}>
+              <p style={{ color: colors.text, fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>Not linked to Notion</p>
+              <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 20px 0' }}>
                 Link this project to a Notion page to pull tasks automatically from your Workload database.
               </p>
               {canEdit && (
-                <p style={{ color: '#555555', fontSize: '12px', margin: 0 }}>Use the EDIT button to link a Notion project.</p>
+                <p style={{ color: colors.textMuted, fontSize: '12px', margin: 0 }}>Use the EDIT button to link a Notion project.</p>
               )}
             </div>
           ) : notionTasks.length === 0 ? (
-            <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '32px', textAlign: 'center' }}>
-              <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No tasks found in Notion for this project.</p>
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '32px', textAlign: 'center' }}>
+              <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks found in Notion for this project.</p>
             </div>
           ) : (
             <TasksView
@@ -513,16 +517,16 @@ export default function ProjectDetail({
               {activity.map((entry, i) => (
                 <div key={entry.id} style={{ display: 'flex', gap: '14px', paddingBottom: '20px', position: 'relative' }}>
                   {i < activity.length - 1 && (
-                    <div style={{ position: 'absolute', left: '5px', top: '14px', bottom: 0, width: '1px', backgroundColor: '#1a1a1a' }} />
+                    <div style={{ position: 'absolute', left: '5px', top: '14px', bottom: 0, width: '1px', backgroundColor: colors.border }} />
                   )}
-                  <div style={{ width: '11px', height: '11px', backgroundColor: '#BDD630', borderRadius: '50%', flexShrink: 0, marginTop: '3px', zIndex: 1 }} />
+                  <div style={{ width: '11px', height: '11px', backgroundColor: colors.accent, borderRadius: '50%', flexShrink: 0, marginTop: '3px', zIndex: 1 }} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#cccccc', lineHeight: 1.5 }}>{entry.description}</p>
+                    <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>{entry.description}</p>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {entry.profiles?.full_name && (
-                        <span style={{ fontSize: '11px', color: '#BDD630', fontWeight: 600 }}>{entry.profiles.full_name}</span>
+                        <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 600 }}>{entry.profiles.full_name}</span>
                       )}
-                      <span style={{ fontSize: '11px', color: '#555555' }}>
+                      <span style={{ fontSize: '11px', color: colors.textMuted }}>
                         {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     </div>
@@ -531,7 +535,7 @@ export default function ProjectDetail({
               ))}
             </div>
           ) : (
-            <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No activity yet.</p>
+            <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No activity yet.</p>
           )}
         </SectionCard>
       )}
@@ -568,6 +572,7 @@ export default function ProjectDetail({
 }
 
 function TaskRow({ task, isDone = false }: { task: NotionTask; isDone?: boolean }) {
+  const { colors } = useTheme()
   return (
     <a
       href={task.notionUrl}
@@ -575,30 +580,30 @@ function TaskRow({ task, isDone = false }: { task: NotionTask; isDone?: boolean 
       rel="noopener noreferrer"
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
-        backgroundColor: '#111111', border: '1px solid #1a1a1a', minHeight: '44px', textDecoration: 'none',
+        backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`, minHeight: '44px', textDecoration: 'none',
       }}
     >
-      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || '#444', flexShrink: 0 }} />
-      <p style={{ margin: 0, fontSize: '13px', color: isDone ? '#555555' : '#ffffff', flex: 1, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4 }}>
+      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || colors.textMuted, flexShrink: 0 }} />
+      <p style={{ margin: 0, fontSize: '13px', color: isDone ? colors.textMuted : colors.text, flex: 1, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4 }}>
         {task.name}
       </p>
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
         {task.tags.slice(0, 2).map(tag => (
-          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: '#555555', backgroundColor: '#1a1a1a', padding: '2px 6px', textTransform: 'uppercase' }}>
+          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase' }}>
             {tag}
           </span>
         ))}
         {task.priority && (
-          <span style={{ fontSize: '10px', fontWeight: 700, color: NOTION_PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: NOTION_PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
             {task.priority}
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '10px', color: '#555555' }}>
+          <span style={{ fontSize: '10px', color: colors.textMuted }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
-        <span style={{ fontSize: '10px', color: '#333333' }}>↗</span>
+        <span style={{ fontSize: '10px', color: colors.borderLight }}>↗</span>
       </div>
     </a>
   )

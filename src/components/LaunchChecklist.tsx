@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { sendLaunchForReview } from '@/lib/actions/notifications'
+import { useTheme } from '@/context/ThemeContext'
 
 interface ChecklistItem {
   id: string
@@ -104,6 +105,7 @@ interface Props {
 type Step = 'checklist' | 'send' | 'sent'
 
 export default function LaunchChecklist({ projectId, projectName, currentUserName, projectMembers, onClose }: Props) {
+  const { colors, theme } = useTheme()
   const [items, setItems] = useState<ChecklistItem[]>(
     CHECKLIST_ITEMS.map(item => ({ ...item, done: false }))
   )
@@ -169,22 +171,22 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
     const reviewer = reviewers.find(r => r.id === selectedReviewerId)
     const reviewerName = reviewer?.full_name || reviewer?.email || 'Reviewer'
     return (
-      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '48px 40px', maxWidth: '480px', textAlign: 'center' }}>
-          <div style={{ width: '52px', height: '52px', backgroundColor: '#051a0a', border: '2px solid #4ade80', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-            <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 9.5L7.5 16L21 2" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/></svg>
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '48px 40px', maxWidth: '480px', textAlign: 'center' }}>
+          <div style={{ width: '52px', height: '52px', backgroundColor: colors.bgTertiary, border: `2px solid ${colors.accent}`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 9.5L7.5 16L21 2" stroke={colors.accent} strokeWidth="2.5" strokeLinecap="round"/></svg>
           </div>
-          <h2 style={{ color: '#ffffff', fontSize: '20px', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase' }}>Sent for Review</h2>
-          <p style={{ color: '#999999', fontSize: '14px', lineHeight: 1.6, margin: '0 0 8px 0' }}>
-            The Go-Live checklist for <strong style={{ color: '#ffffff' }}>{projectName}</strong> has been sent to
+          <h2 style={{ color: colors.text, fontSize: '20px', fontWeight: 800, margin: '0 0 12px 0', textTransform: 'uppercase' }}>Sent for Review</h2>
+          <p style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.6, margin: '0 0 8px 0' }}>
+            The Go-Live checklist for <strong style={{ color: colors.text }}>{projectName}</strong> has been sent to
           </p>
-          <p style={{ color: '#BDD630', fontSize: '16px', fontWeight: 700, margin: '0 0 32px 0' }}>{reviewerName}</p>
-          <p style={{ color: '#666666', fontSize: '12px', margin: '0 0 32px 0' }}>
+          <p style={{ color: colors.accent, fontSize: '16px', fontWeight: 700, margin: '0 0 32px 0' }}>{reviewerName}</p>
+          <p style={{ color: colors.textMuted, fontSize: '12px', margin: '0 0 32px 0' }}>
             They will receive a notification and can approve or decline the checklist. You'll be notified either way.
           </p>
           <button
             onClick={onClose}
-            style={{ padding: '14px 32px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+            style={{ padding: '14px 32px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}
           >
             DONE
           </button>
@@ -196,23 +198,23 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
   // ── SEND STEP ──────────────────────────────────────────────────────────────
   if (step === 'send') {
     return (
-      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', padding: '40px 32px', maxWidth: '480px', width: '100%' }}>
-          <h2 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 800, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Send for Review</h2>
-          <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 28px 0', lineHeight: 1.5 }}>
-            Select who should review the Go-Live checklist for <strong style={{ color: '#ffffff' }}>{projectName}</strong>.
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '40px 32px', maxWidth: '480px', width: '100%' }}>
+          <h2 style={{ color: colors.text, fontSize: '18px', fontWeight: 800, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Send for Review</h2>
+          <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 28px 0', lineHeight: 1.5 }}>
+            Select who should review the Go-Live checklist for <strong style={{ color: colors.text }}>{projectName}</strong>.
             They'll receive a notification with the full checklist and can approve or decline.
           </p>
 
-          <div style={{ marginBottom: '8px', fontSize: '10px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reviewed by</div>
-          <div style={{ marginBottom: '8px', padding: '10px 14px', backgroundColor: '#111111', border: '1px solid #1a1a1a', fontSize: '13px', color: '#cccccc' }}>
+          <div style={{ marginBottom: '8px', fontSize: '10px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reviewed by</div>
+          <div style={{ marginBottom: '8px', padding: '10px 14px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, fontSize: '13px', color: colors.textSecondary }}>
             {currentUserName || 'You'}
           </div>
 
-          <div style={{ marginBottom: '8px', marginTop: '20px', fontSize: '10px', fontWeight: 700, color: '#BDD630', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Send to</div>
+          <div style={{ marginBottom: '8px', marginTop: '20px', fontSize: '10px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Send to</div>
 
           {reviewers.length === 0 ? (
-            <div style={{ padding: '16px', backgroundColor: '#111111', border: '1px solid #1a1a1a', color: '#666666', fontSize: '13px', marginBottom: '20px' }}>
+            <div style={{ padding: '16px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textMuted, fontSize: '13px', marginBottom: '20px' }}>
               No admins or project managers are assigned to this project yet. Ask your PM to join the project first.
             </div>
           ) : (
@@ -224,23 +226,23 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
                   onClick={() => setSelectedReviewerId(r.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '12px', padding: '14px',
-                    backgroundColor: selectedReviewerId === r.id ? '#0d1f0d' : '#111111',
-                    border: selectedReviewerId === r.id ? '1px solid #4ade80' : '1px solid #1a1a1a',
+                    backgroundColor: selectedReviewerId === r.id ? colors.bgTertiary : colors.bgSecondary,
+                    border: selectedReviewerId === r.id ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
                     cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Montserrat, sans-serif',
                   }}
                 >
                   <div style={{
-                    width: '32px', height: '32px', backgroundColor: '#BDD630', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#080808', fontWeight: 700, fontSize: '12px', flexShrink: 0,
+                    width: '32px', height: '32px', backgroundColor: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: theme === 'dark' ? '#080808' : '#ffffff', fontWeight: 700, fontSize: '12px', flexShrink: 0,
                   }}>
                     {(r.full_name || r.email).slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p style={{ margin: 0, color: '#ffffff', fontSize: '13px', fontWeight: 600 }}>{r.full_name || r.email}</p>
-                    {r.full_name && <p style={{ margin: '2px 0 0 0', color: '#666666', fontSize: '11px' }}>{r.email}</p>}
+                    <p style={{ margin: 0, color: colors.text, fontSize: '13px', fontWeight: 600 }}>{r.full_name || r.email}</p>
+                    {r.full_name && <p style={{ margin: '2px 0 0 0', color: colors.textMuted, fontSize: '11px' }}>{r.email}</p>}
                   </div>
                   {selectedReviewerId === r.id && (
-                    <div style={{ marginLeft: 'auto', color: '#4ade80' }}>✓</div>
+                    <div style={{ marginLeft: 'auto', color: colors.accent }}>✓</div>
                   )}
                 </button>
               ))}
@@ -249,8 +251,8 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
 
           {/* Optional: Comment */}
           <div style={{ marginBottom: '16px', marginTop: '4px' }}>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-              Comment <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Comment <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
             </label>
             <textarea
               value={sendComment}
@@ -258,8 +260,8 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               placeholder="Any notes or context for the reviewer…"
               rows={2}
               style={{
-                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
-                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.borderLight}`,
+                color: colors.text, fontSize: '13px', padding: '10px 12px',
                 fontFamily: 'Montserrat, sans-serif', resize: 'vertical',
                 boxSizing: 'border-box', lineHeight: 1.5, outline: 'none',
               }}
@@ -268,8 +270,8 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
 
           {/* Optional: URLs */}
           <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-              Latest/Staging URL <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Latest/Staging URL <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
             </label>
             <input
               type="url"
@@ -277,15 +279,15 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               onChange={e => setLatestUrl(e.target.value)}
               placeholder="https://staging.example.com"
               style={{
-                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
-                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.borderLight}`,
+                color: colors.text, fontSize: '13px', padding: '10px 12px',
                 fontFamily: 'Montserrat, sans-serif', boxSizing: 'border-box', outline: 'none',
               }}
             />
           </div>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-              Live URL <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Live URL <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
             </label>
             <input
               type="url"
@@ -293,8 +295,8 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               onChange={e => setLiveUrl(e.target.value)}
               placeholder="https://www.example.com"
               style={{
-                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
-                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.borderLight}`,
+                color: colors.text, fontSize: '13px', padding: '10px 12px',
                 fontFamily: 'Montserrat, sans-serif', boxSizing: 'border-box', outline: 'none',
               }}
             />
@@ -307,7 +309,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={() => setStep('checklist')}
-              style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #222', color: '#666666', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+              style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`, color: colors.textMuted, fontSize: '11px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
             >
               BACK
             </button>
@@ -315,9 +317,9 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               onClick={handleSendForReview}
               disabled={!selectedReviewerId || sending || reviewers.length === 0}
               style={{
-                flex: 2, padding: '14px', backgroundColor: selectedReviewerId ? '#BDD630' : '#1a1a1a',
-                color: selectedReviewerId ? '#080808' : '#444444', border: 'none',
-                fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                flex: 2, padding: '14px', backgroundColor: selectedReviewerId ? colors.accent : colors.bgTertiary,
+                color: selectedReviewerId ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textMuted, border: 'none',
+                fontSize: '11px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
                 cursor: selectedReviewerId ? 'pointer' : 'not-allowed', fontFamily: 'Montserrat, sans-serif',
                 opacity: sending ? 0.7 : 1,
               }}
@@ -332,21 +334,21 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
 
   // ── CHECKLIST ──────────────────────────────────────────────────────────────
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       {/* Top toolbar */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#080808',
-        borderBottom: '1px solid #1a1a1a', padding: '0 24px',
+        position: 'sticky', top: 0, zIndex: 10, backgroundColor: colors.bg,
+        borderBottom: `1px solid ${colors.border}`, padding: '0 24px',
         display: 'flex', alignItems: 'center', gap: '16px', height: '52px', flexShrink: 0,
       }}>
-        <span style={{ fontSize: '10px', color: '#555555', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '10px', color: colors.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>
           Revinok · Go-Live
         </span>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '340px', margin: '0 auto' }}>
-          <div style={{ flex: 1, height: '3px', backgroundColor: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', backgroundColor: '#BDD630', width: `${pct}%`, transition: 'width 0.3s ease' }} />
+          <div style={{ flex: 1, height: '3px', backgroundColor: colors.border, borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', backgroundColor: colors.accent, width: `${pct}%`, transition: 'width 0.3s ease' }} />
           </div>
-          <span style={{ fontSize: '10px', color: '#555555', whiteSpace: 'nowrap', minWidth: '52px', textAlign: 'right' }}>
+          <span style={{ fontSize: '10px', color: colors.textMuted, whiteSpace: 'nowrap', minWidth: '52px', textAlign: 'right' }}>
             {doneCount} / {total}
           </span>
         </div>
@@ -354,9 +356,9 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <button
             onClick={() => setStep('send')}
             style={{
-              padding: '6px 16px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+              padding: '6px 16px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', borderRadius: 10000,
               letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
-              backgroundColor: '#BDD630', color: '#080808',
+              backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff',
               fontFamily: 'Montserrat, sans-serif',
             }}
           >
@@ -365,9 +367,9 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <button
             onClick={onClose}
             style={{
-              padding: '6px 14px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.1em', backgroundColor: 'transparent', border: '1px solid #333',
-              color: '#555555', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+              padding: '6px 14px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', borderRadius: 10000,
+              letterSpacing: '0.1em', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
+              color: colors.textMuted, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
             }}
           >
             Close
@@ -378,27 +380,27 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
       {/* Content */}
       <div style={{ maxWidth: '820px', margin: '40px auto 80px', padding: '0 24px', width: '100%' }}>
         {/* Header */}
-        <div style={{ borderBottom: '2px solid #ffffff', paddingBottom: '20px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ borderBottom: `2px solid ${colors.text}`, paddingBottom: '20px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <p style={{ color: '#BDD630', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 8px 0' }}>
+            <p style={{ color: colors.accent, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 8px 0' }}>
               Revinok · Webflow Protocol
             </p>
-            <h1 style={{ color: '#ffffff', fontSize: 'clamp(28px, 5vw, 38px)', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>
+            <h1 style={{ color: colors.text, fontSize: 'clamp(28px, 5vw, 38px)', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>
               Go-Live Checklist
             </h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ color: '#555555', fontSize: '10px', textTransform: 'uppercase', margin: 0 }}>Internal Use Only</p>
-            <p style={{ color: '#ffffff', fontSize: '16px', fontWeight: 700, margin: '4px 0 0 0' }}>{projectName}</p>
+            <p style={{ color: colors.textMuted, fontSize: '10px', textTransform: 'uppercase', margin: 0 }}>Internal Use Only</p>
+            <p style={{ color: colors.text, fontSize: '16px', fontWeight: 700, margin: '4px 0 0 0' }}>{projectName}</p>
           </div>
         </div>
 
         {/* Progress hint */}
         {doneCount > 0 && doneCount < total && (
-          <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', padding: '12px 16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '12px', color: '#BDD630' }}>{pct}% complete</span>
-            <span style={{ fontSize: '12px', color: '#555555' }}>—</span>
-            <span style={{ fontSize: '12px', color: '#666666' }}>All items are optional. Click "Send for Review" when ready.</span>
+          <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '12px 16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '12px', color: colors.accent }}>{pct}% complete</span>
+            <span style={{ fontSize: '12px', color: colors.textMuted }}>—</span>
+            <span style={{ fontSize: '12px', color: colors.textMuted }}>All items are optional. Click "Send for Review" when ready.</span>
           </div>
         )}
 
@@ -415,11 +417,11 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
         ))}
 
         {/* Sign-off — reviewer auto-populated */}
-        <div style={{ marginTop: '40px', borderTop: '2px solid #ffffff', paddingTop: '20px' }}>
-          <p style={{ color: '#555555', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 16px 0' }}>Sign-Off</p>
+        <div style={{ marginTop: '40px', borderTop: `2px solid ${colors.text}`, paddingTop: '20px' }}>
+          <p style={{ color: colors.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 16px 0' }}>Sign-Off</p>
           <div>
-            <label style={{ color: '#555555', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginBottom: '8px' }}>Reviewed By</label>
-            <p style={{ margin: 0, color: '#ffffff', fontSize: '13px', borderBottom: '1px solid #333333', paddingBottom: '6px' }}>
+            <label style={{ color: colors.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginBottom: '8px' }}>Reviewed By</label>
+            <p style={{ margin: 0, color: colors.text, fontSize: '13px', borderBottom: `1px solid ${colors.borderLight}`, paddingBottom: '6px' }}>
               {currentUserName || 'You'}
             </p>
           </div>
@@ -430,8 +432,8 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <button
             onClick={() => setStep('send')}
             style={{
-              padding: '14px 32px', backgroundColor: '#BDD630', color: '#080808', border: 'none',
-              fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+              padding: '14px 32px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', borderRadius: 10000,
+              fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px',
               cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
             }}
           >
@@ -444,24 +446,26 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
 }
 
 function SectionBanner({ letter, title, items }: { letter: string; title: string; items: ChecklistItem[] }) {
+  const { colors } = useTheme()
   const done = items.filter(i => i.done).length
   return (
-    <div style={{ backgroundColor: '#111111', padding: '10px 20px', margin: '32px 0 0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-      <span style={{ color: '#444444', fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{letter}</span>
-      <span style={{ color: '#ffffff', fontSize: '11px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{title}</span>
-      <span style={{ marginLeft: 'auto', color: '#444444', fontSize: '10px' }}>{done} / {items.length}</span>
+    <div style={{ backgroundColor: colors.bgSecondary, padding: '10px 20px', margin: '32px 0 0', display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <span style={{ color: colors.textMuted, fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{letter}</span>
+      <span style={{ color: colors.text, fontSize: '11px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{title}</span>
+      <span style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: '10px' }}>{done} / {items.length}</span>
     </div>
   )
 }
 
 function SectionGroup({ num, name, items, onToggle }: { num: string; name: string; items: ChecklistItem[]; onToggle: (id: string) => void }) {
+  const { colors } = useTheme()
   const done = items.filter(i => i.done).length
   return (
     <div style={{ marginTop: '0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0 10px', borderBottom: '1px solid #1a1a1a', marginBottom: '2px' }}>
-        <span style={{ color: '#BDD630', fontSize: '10px', fontWeight: 700 }}>{num}</span>
-        <span style={{ color: '#ffffff', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{name}</span>
-        <span style={{ marginLeft: 'auto', color: '#444444', fontSize: '10px' }}>{done} / {items.length}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0 10px', borderBottom: `1px solid ${colors.border}`, marginBottom: '2px' }}>
+        <span style={{ color: colors.accent, fontSize: '10px', fontWeight: 700 }}>{num}</span>
+        <span style={{ color: colors.text, fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{name}</span>
+        <span style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: '10px' }}>{done} / {items.length}</span>
       </div>
       {items.map(item => (
         <ChecklistRow key={item.id} item={item} onToggle={onToggle} />
@@ -471,20 +475,21 @@ function SectionGroup({ num, name, items, onToggle }: { num: string; name: strin
 }
 
 function ChecklistRow({ item, onToggle }: { item: ChecklistItem; onToggle: (id: string) => void }) {
+  const { colors } = useTheme()
   const tagStyle = TAG_COLORS[item.tag] || TAG_COLORS.design
   return (
     <div
       onClick={() => onToggle(item.id)}
       style={{
         display: 'grid', gridTemplateColumns: '26px 1fr auto', alignItems: 'start', gap: '12px',
-        padding: '10px 0', borderBottom: '1px solid #111111', cursor: 'pointer',
+        padding: '10px 0', borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         opacity: item.done ? 0.6 : 1,
       }}
     >
       <div style={{
         width: '17px', height: '17px', border: '1.5px solid',
-        borderColor: item.done ? '#4ade80' : '#333333',
-        backgroundColor: item.done ? '#4ade80' : 'transparent',
+        borderColor: item.done ? colors.accent : colors.borderLight,
+        backgroundColor: item.done ? colors.accent : 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', flexShrink: 0,
         transition: 'all 0.15s',
       }}>
@@ -495,10 +500,10 @@ function ChecklistRow({ item, onToggle }: { item: ChecklistItem; onToggle: (id: 
         )}
       </div>
       <div>
-        <p style={{ fontSize: '13px', fontWeight: 500, color: item.done ? '#555555' : '#ffffff', margin: 0, textDecoration: item.done ? 'line-through' : 'none', lineHeight: 1.4 }}>
+        <p style={{ fontSize: '13px', fontWeight: 500, color: item.done ? colors.textMuted : colors.text, margin: 0, textDecoration: item.done ? 'line-through' : 'none', lineHeight: 1.4 }}>
           {item.title}
         </p>
-        <p style={{ fontSize: '11.5px', color: '#444444', margin: '3px 0 0 0', lineHeight: 1.5 }}>{item.note}</p>
+        <p style={{ fontSize: '11.5px', color: colors.textMuted, margin: '3px 0 0 0', lineHeight: 1.5 }}>{item.note}</p>
       </div>
       <span style={{ fontSize: '8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 7px', backgroundColor: tagStyle.bg, color: tagStyle.color, whiteSpace: 'nowrap', marginTop: '3px' }}>
         {tagStyle.label}
