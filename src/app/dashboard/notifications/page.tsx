@@ -222,6 +222,28 @@ export default function NotificationsPage() {
                       Open review →
                     </p>
                   )}
+
+                  {/* Project-added CTA */}
+                  {n.type === 'project_added' && n.project_id && (
+                    <div style={{ marginTop: '10px' }}>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await markRead(n.id)
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x))
+                          router.push(`/dashboard/projects/${n.project_id}`)
+                        }}
+                        style={{
+                          padding: '6px 14px', backgroundColor: 'transparent',
+                          border: '1px solid #4a9eff', color: '#4a9eff',
+                          fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                          letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                        }}
+                      >
+                        Open Project →
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Unread dot */}

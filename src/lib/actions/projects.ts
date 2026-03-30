@@ -112,6 +112,12 @@ export async function createProject(formData: FormData) {
   const { data, error } = await supabase.from('projects').insert(values).select().single()
   if (error) throw error
 
+  // Auto-add creator as a project member
+  await supabase.from('project_members').insert({
+    project_id: data.id,
+    profile_id: user.id,
+  }).maybeSingle()
+
   await supabase.from('activity_log').insert({
     project_id: data.id,
     actor_id: user.id,
@@ -190,7 +196,7 @@ export async function getShareableTeamMembers() {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, email, role, initials, avatar_url')
-    .not('role', 'in', '("admin","project_manager","client")')
+    .not('role', 'eq', 'client')
     .order('full_name')
 
   if (error) throw error

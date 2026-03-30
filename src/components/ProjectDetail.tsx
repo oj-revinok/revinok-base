@@ -154,7 +154,7 @@ export default function ProjectDetail({
 
   const canEdit = isAdminOrPM(userRole as any)
   const canDelete = isAdminOrPM(userRole as any)
-  const canLaunch = isDevRole(userRole as any) || isDesignerRole(userRole as any) || canEdit
+  const canLaunch = (isDevRole(userRole as any) || canEdit) && project.status !== 'live'
   const isDev = isDevRole(userRole as any)
 
   const client = project.clients

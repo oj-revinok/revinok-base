@@ -51,7 +51,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
   const [loadMoreCount, setLoadMoreCount] = useState<Record<string, number>>({})
   const [selectedTask, setSelectedTask] = useState<NotionTask | null>(null)
 
-  const INITIAL_VISIBLE = 15
+  const INITIAL_VISIBLE = 10
 
   const filteredTasks = useMemo(() => {
     if (!search.trim()) return tasks
@@ -138,7 +138,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
           <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
         </div>
       ) : viewMode === 'kanban' ? (
-        <KanbanView groupedByStatus={groupedByStatus} onTaskClick={setSelectedTask} />
+        <KanbanView groupedByStatus={groupedByStatus} onTaskClick={setSelectedTask} getVisible={getVisible} loadMore={loadMore} />
       ) : (
         <ListView
           primaryTasks={primaryTasks}
@@ -425,37 +425,63 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function KanbanView({
   groupedByStatus,
   onTaskClick,
+  getVisible,
+  loadMore,
 }: {
   groupedByStatus: Record<string, NotionTask[]>
   onTaskClick: (t: NotionTask) => void
+  getVisible: (s: string) => number
+  loadMore: (s: string) => void
 }) {
+  // Only show columns that have tasks
+  const visibleColumns = STATUS_COLUMNS.filter(s => (groupedByStatus[s] || []).length > 0)
+
+  if (visibleColumns.length === 0) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a' }}>
+        <p style={{ color: '#444444', fontSize: '13px', margin: 0 }}>No tasks to display.</p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ overflowX: 'auto', paddingBottom: '20px' }}>
-      <div style={{ display: 'flex', gap: '12px', minWidth: `${STATUS_COLUMNS.length * 240}px` }}>
-        {STATUS_COLUMNS.map(status => {
+      <div style={{ display: 'flex', gap: '12px', minWidth: `${visibleColumns.length * 260}px` }}>
+        {visibleColumns.map(status => {
           const tasks = groupedByStatus[status] || []
+          const visible = getVisible(status)
+          const shown = tasks.slice(0, visible)
+          const remaining = tasks.length - visible
           return (
-            <div key={status} style={{ flex: '0 0 240px', minWidth: '240px' }}>
+            <div key={status} style={{ flex: '0 0 260px', minWidth: '260px' }}>
               {/* Column header */}
               <div style={{
                 padding: '8px 12px', marginBottom: '8px', backgroundColor: '#0e0e0e',
                 borderBottom: `2px solid ${STATUS_COLORS[status] || '#333'}`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: STATUS_COLORS[status] || '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: STATUS_COLORS[status] || '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {status}
                 </span>
-                <span style={{ fontSize: '10px', color: '#444444' }}>{tasks.length}</span>
+                <span style={{ fontSize: '11px', color: '#444444' }}>{tasks.length}</span>
               </div>
               {/* Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {tasks.map(task => (
+                {shown.map(task => (
                   <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
                 ))}
-                {tasks.length === 0 && (
-                  <div style={{ padding: '20px', textAlign: 'center', border: '1px dashed #1a1a1a' }}>
-                    <span style={{ color: '#333333', fontSize: '11px' }}>—</span>
-                  </div>
+                {remaining > 0 && (
+                  <button
+                    onClick={() => loadMore(status)}
+                    style={{
+                      width: '100%', padding: '10px', backgroundColor: 'transparent',
+                      border: '1px dashed #2a2a2a', color: '#555555', cursor: 'pointer',
+                      fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+                      letterSpacing: '0.5px', fontFamily: 'Montserrat, sans-serif',
+                    }}
+                  >
+                    + {remaining} more
+                  </button>
                 )}
               </div>
             </div>
@@ -479,23 +505,28 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1a1a1a' }}
     >
-      <p style={{ fontSize: '12px', color: '#ffffff', margin: '0 0 8px 0', lineHeight: 1.4 }}>{task.name}</p>
+      <p style={{ fontSize: '14px', color: '#ffffff', margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         {task.priority && (
-          <span style={{ fontSize: '9px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || '#555', textTransform: 'uppercase' }}>
             ● {task.priority}
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '10px', color: '#555555' }}>
+          <span style={{ fontSize: '11px', color: '#555555' }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         )}
         {task.tags.slice(0, 1).map(tag => (
-          <span key={tag} style={{ fontSize: '8px', fontWeight: 700, color: '#555555', backgroundColor: '#1a1a1a', padding: '2px 5px', textTransform: 'uppercase' }}>
+          <span key={tag} style={{ fontSize: '10px', fontWeight: 700, color: '#555555', backgroundColor: '#1a1a1a', padding: '3px 6px', textTransform: 'uppercase' }}>
             {tag}
           </span>
         ))}
+        {task.assignedNames.length > 0 && (
+          <span style={{ fontSize: '10px', color: '#BDD630', fontWeight: 600 }}>
+            {task.assignedNames.join(', ')}
+          </span>
+        )}
       </div>
     </button>
   )

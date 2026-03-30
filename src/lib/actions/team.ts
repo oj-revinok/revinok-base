@@ -214,7 +214,7 @@ export async function resetMemberPassword(
   }
 }
 
-export function generatePassword(name: string): string {
+export async function generatePassword(name: string): Promise<string> {
   const base = name.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '')
   const cap = base.charAt(0).toUpperCase() + base.slice(1).toLowerCase()
   const year = new Date().getFullYear()

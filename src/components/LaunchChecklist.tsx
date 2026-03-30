@@ -109,6 +109,9 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
   )
   const [step, setStep] = useState<Step>('checklist')
   const [selectedReviewerId, setSelectedReviewerId] = useState('')
+  const [sendComment, setSendComment] = useState('')
+  const [latestUrl, setLatestUrl] = useState('')
+  const [liveUrl, setLiveUrl] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
@@ -137,6 +140,9 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
         sentAt: new Date().toISOString(),
         progress: { done: doneCount, total },
         items: items.map(({ id, sectionNum, section, title, done }) => ({ id, sectionNum, section, title, done })),
+        ...(sendComment.trim() && { comment: sendComment.trim() }),
+        ...(latestUrl.trim() && { latestUrl: latestUrl.trim() }),
+        ...(liveUrl.trim() && { liveUrl: liveUrl.trim() }),
       }
       await sendLaunchForReview(
         projectId,
@@ -240,6 +246,59 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               ))}
             </div>
           )}
+
+          {/* Optional: Comment */}
+          <div style={{ marginBottom: '16px', marginTop: '4px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Comment <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              value={sendComment}
+              onChange={e => setSendComment(e.target.value)}
+              placeholder="Any notes or context for the reviewer…"
+              rows={2}
+              style={{
+                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
+                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                fontFamily: 'Montserrat, sans-serif', resize: 'vertical',
+                boxSizing: 'border-box', lineHeight: 1.5, outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Optional: URLs */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Latest/Staging URL <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <input
+              type="url"
+              value={latestUrl}
+              onChange={e => setLatestUrl(e.target.value)}
+              placeholder="https://staging.example.com"
+              style={{
+                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
+                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                fontFamily: 'Montserrat, sans-serif', boxSizing: 'border-box', outline: 'none',
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+              Live URL <span style={{ color: '#333333', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <input
+              type="url"
+              value={liveUrl}
+              onChange={e => setLiveUrl(e.target.value)}
+              placeholder="https://www.example.com"
+              style={{
+                width: '100%', backgroundColor: '#111111', border: '1px solid #222222',
+                color: '#ffffff', fontSize: '13px', padding: '10px 12px',
+                fontFamily: 'Montserrat, sans-serif', boxSizing: 'border-box', outline: 'none',
+              }}
+            />
+          </div>
 
           {sendError && (
             <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#ef4444' }}>{sendError}</p>

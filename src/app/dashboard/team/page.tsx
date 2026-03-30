@@ -171,9 +171,9 @@ export default function TeamPage() {
     }
   }
 
-  function openPasswordPanel(member: TeamMember) {
+  async function openPasswordPanel(member: TeamMember) {
     setPwMemberId(member.id)
-    const suggested = generatePassword(member.full_name || member.email || 'User')
+    const suggested = await generatePassword(member.full_name || member.email || 'User')
     setPwValue(suggested)
     setPwError('')
     setPwSuccess('')
@@ -593,8 +593,8 @@ export default function TeamPage() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  const suggested = generatePassword(member.full_name || member.email || 'User')
+                onClick={async () => {
+                  const suggested = await generatePassword(member.full_name || member.email || 'User')
                   setPwValue(suggested)
                   setPwSuccess('')
                   setPwError('')
