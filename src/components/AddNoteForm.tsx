@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { addNote } from '@/lib/actions/notes'
 import { useTheme } from '@/context/ThemeContext'
+import RichTextEditor from './RichTextEditor'
 
 interface Props {
   projectId: string
@@ -32,35 +33,21 @@ export default function AddNoteForm({ projectId, onNoteAdded }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
+    <form onSubmit={handleSubmit} style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <RichTextEditor
+        content={content}
+        onChange={setContent}
         placeholder="Write a note…"
-        rows={3}
-        style={{
-          width: '100%',
-          backgroundColor: colors.bgSecondary,
-          border: `1px solid ${colors.border}`,
-          color: colors.text,
-          fontSize: '13px',
-          padding: '12px',
-          fontFamily: 'Montserrat, sans-serif',
-          resize: 'vertical',
-          display: 'block',
-          boxSizing: 'border-box',
-          lineHeight: 1.5,
-        }}
+        editable={true}
       />
       {error && (
-        <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#ef4444' }}>{error}</p>
+        <p style={{ margin: 0, fontSize: '12px', color: '#ef4444' }}>{error}</p>
       )}
       <button
         type="submit"
         disabled={isPending || !content.trim()}
         className="btn-primary"
         style={{
-          marginTop: '10px',
           padding: '10px 20px',
           backgroundColor: isPending || !content.trim() ? colors.border : colors.accent,
           color: isPending || !content.trim() ? colors.textMuted : colors.bg,

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 import { getShareableTeamMembers, addProjectMember, removeProjectMember } from '@/lib/actions/projects'
+import { getGroups } from '@/lib/actions/groups'
 import { ROLE_LABELS } from '@/types'
+import type { Group } from '@/types'
 
 interface TeamMember {
   id: string
@@ -30,16 +32,24 @@ interface Props {
 export default function ShareProjectModal({ projectId, projectName, currentMembers, onClose }: Props) {
   const { colors, theme } = useTheme()
   const [allMembers, setAllMembers] = useState<TeamMember[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
   const [members, setMembers] = useState<CurrentMember[]>(currentMembers)
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(new Set())
 
   const currentMemberIds = new Set(members.map(m => m.profile_id))
 
   useEffect(() => {
-    getShareableTeamMembers().then(data => {
-      setAllMembers(data as TeamMember[])
+    Promise.all([
+      getShareableTeamMembers().then(data => {
+        setAllMembers(data as TeamMember[])
+      }),
+      getGroups().then(data => {
+        setGroups(data)
+      })
+    ]).then(() => {
       setLoading(false)
     })
   }, [])
@@ -73,6 +83,27 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
     } finally {
       setRemoving(null)
     }
+  }
+
+  async function handleAddGroup(groupId: string) {
+    const group = groups.find(g => g.id === groupId)
+    if (!group || !group.members) return
+
+    for (const member of group.members) {
+      if (!currentMemberIds.has(member.id)) {
+        await handleAdd(member.id)
+      }
+    }
+  }
+
+  function toggleGroupExpanded(groupId: string) {
+    const newSet = new Set(expandedGroupIds)
+    if (newSet.has(groupId)) {
+      newSet.delete(groupId)
+    } else {
+      newSet.add(groupId)
+    }
+    setExpandedGroupIds(newSet)
   }
 
   const addableMembers = allMembers.filter(m => !currentMemberIds.has(m.id))
@@ -136,6 +167,159 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
                       >
                         {removing === m.profile_id ? '…' : 'Remove'}
                       </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Groups */}
+          {groups.length > 0 && (
+            <div style={{ padding: '20px 24px', borderBottom: `1px solid ${colors.bgTertiary}` }}>
+              <p style={{ color: colors.textSecondary, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 12px 0' }}>
+                Add by Group
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {groups.map(group => {
+                  const isExpanded = expandedGroupIds.has(group.id)
+                  const groupMembers = group.members || []
+                  const membersNotAdded = groupMembers.filter(m => !currentMemberIds.has(m.id))
+                  const membersAlreadyAdded = groupMembers.filter(m => currentMemberIds.has(m.id))
+                  const allMembersAdded = membersNotAdded.length === 0 && groupMembers.length > 0
+
+                  return (
+                    <div key={group.id}>
+                      <div
+                        onClick={() => toggleGroupExpanded(group.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: colors.bgTertiary,
+                          cursor: 'pointer',
+                          borderRadius: '8px',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = colors.bgHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = colors.bgTertiary
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: colors.textSecondary,
+                            fontSize: '12px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isExpanded ? '▼' : '▶'}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ color: colors.text, fontSize: '13px', fontWeight: 600, margin: 0 }}>
+                            {group.name}
+                          </p>
+                          <p style={{ color: colors.textMuted, fontSize: '10px', margin: '2px 0 0 0' }}>
+                            {groupMembers.length} member{groupMembers.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        {membersNotAdded.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleAddGroup(group.id)
+                            }}
+                            style={{
+                              background: colors.accent,
+                              border: 'none',
+                              color: theme === 'dark' ? '#080808' : '#000000',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              padding: '4px 10px',
+                              flexShrink: 0,
+                              fontFamily: 'Montserrat, sans-serif',
+                              borderRadius: 10000,
+                            }}
+                          >
+                            Add All
+                          </button>
+                        )}
+                      </div>
+
+                      {isExpanded && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', marginLeft: '24px' }}>
+                          {groupMembers.length === 0 ? (
+                            <p style={{ color: colors.textMuted, fontSize: '12px', margin: 0 }}>No members in this group</p>
+                          ) : (
+                            <>
+                              {groupMembers.map(member => {
+                                const isAdded = currentMemberIds.has(member.id)
+                                const initials = (member.full_name || member.email || '?').slice(0, 2).toUpperCase()
+
+                                return (
+                                  <div
+                                    key={member.id}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '10px',
+                                      padding: '8px 10px',
+                                      backgroundColor: isAdded ? colors.bg : colors.bgTertiary,
+                                      borderRadius: '6px',
+                                      opacity: isAdded ? 0.6 : 1,
+                                    }}
+                                  >
+                                    <div style={{ width: '24px', height: '24px', backgroundColor: colors.bgHover, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: colors.textMuted, flexShrink: 0 }}>
+                                      {initials}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <p style={{ color: colors.text, fontSize: '12px', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {member.full_name || member.email}
+                                      </p>
+                                    </div>
+                                    {!isAdded && (
+                                      <button
+                                        onClick={() => handleAdd(member.id)}
+                                        disabled={adding === member.id}
+                                        style={{
+                                          background: adding === member.id ? colors.bgHover : colors.accent,
+                                          border: 'none',
+                                          color: adding === member.id ? colors.textMuted : colors.bg,
+                                          cursor: 'pointer',
+                                          fontSize: '10px',
+                                          fontWeight: 700,
+                                          textTransform: 'uppercase',
+                                          padding: '2px 8px',
+                                          flexShrink: 0,
+                                          fontFamily: 'Montserrat, sans-serif',
+                                          borderRadius: 10000,
+                                        }}
+                                      >
+                                        {adding === member.id ? '…' : 'Add'}
+                                      </button>
+                                    )}
+                                    {isAdded && (
+                                      <span style={{ color: colors.textMuted, fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' }}>
+                                        Added
+                                      </span>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )
                 })}

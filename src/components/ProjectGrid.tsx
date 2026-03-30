@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTheme } from '@/context/ThemeContext'
 import AddProjectModal from './AddProjectModal'
 
@@ -129,9 +130,10 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
             ].filter(Boolean) as { href: string; label: string }[]
 
             return (
-              <a
+              <Link
                 key={project.id}
                 href={`/dashboard/projects/${project.id}`}
+                prefetch={true}
                 style={{ textDecoration: 'none', display: 'block' }}
               >
                 <div
@@ -189,7 +191,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                       : 'No dates set'}
                   </div>
                 </div>
-              </a>
+              </Link>
             )
           })
         ) : (

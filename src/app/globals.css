@@ -230,3 +230,65 @@ input:focus, textarea:focus, select:focus {
   .clients-mobile-list { display: block; }
   .clients-table-wrap  { display: none; }
 }
+
+/* ── Skeleton loading animations ────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background-color: var(--border);
+}
+
+/* ── TipTap Editor Styles ────────────────────────────────────────── */
+.tiptap-editor .ProseMirror {
+  outline: none;
+  min-height: 150px;
+  padding: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tiptap-editor .ProseMirror p {
+  margin: 0 0 8px 0;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 16px 0 8px;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 12px 0 6px;
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.tiptap-editor .ProseMirror img,
+.tiptap-editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.tiptap-editor .ProseMirror a {
+  text-decoration: underline;
+}
+
+.tiptap-editor .ProseMirror .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+}

@@ -128,3 +128,32 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: 'Viewer',
   client: 'Client',
 }
+
+export interface Message {
+  id: string
+  sender_id: string
+  receiver_id: string
+  content: string | null
+  file_url: string | null
+  file_name: string | null
+  file_type: string | null
+  created_at: string
+  deleted_at: string | null
+  deleted_by: string | null
+  sender?: Profile
+}
+
+export interface Conversation {
+  user: Profile
+  lastMessage: string | null
+  lastMessageTime: string | null
+  unreadCount: number
+}
+
+export interface Group {
+  id: string
+  name: string
+  created_by: string | null
+  created_at: string
+  members?: { id: string; full_name: string | null; email: string | null; role: string }[]
+}

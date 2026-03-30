@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
+import GroupModal from '@/components/GroupModal'
 import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, resetMemberPassword, generatePassword, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
+import { getGroups, deleteGroup } from '@/lib/actions/groups'
+import type { Group, Profile } from '@/types'
 
 interface TeamMember {
   id: string
@@ -67,6 +70,13 @@ export default function TeamPage() {
   const [pwSuccess, setPwSuccess] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // Groups state
+  const [groups, setGroups] = useState<Group[]>([])
+  const [groupsLoading, setGroupsLoading] = useState(false)
+  const [showGroupModal, setShowGroupModal] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -91,6 +101,13 @@ export default function TeamPage() {
         .order('full_name')
 
       setTeamMembers(members || [])
+
+      // Load groups
+      setGroupsLoading(true)
+      const loadedGroups = await getGroups()
+      setGroups(loadedGroups)
+      setGroupsLoading(false)
+
       setLoading(false)
 
       // Load Notion persons for the picker (non-blocking)
@@ -216,6 +233,20 @@ export default function TeamPage() {
       .toUpperCase()
   }
 
+  async function handleGroupSaved(group: Group) {
+    const updatedGroups = await getGroups()
+    setGroups(updatedGroups)
+  }
+
+  async function handleDeleteGroup(groupId: string) {
+    setDeletingGroupId(groupId)
+    const ok = await deleteGroup(groupId)
+    if (ok) {
+      setGroups((prev) => prev.filter((g) => g.id !== groupId))
+    }
+    setDeletingGroupId(null)
+  }
+
   if (loading) {
     return <div style={{ padding: '40px 20px', color: colors.textSecondary, fontSize: '13px' }}>Loading team...</div>
   }
@@ -248,6 +279,171 @@ export default function TeamPage() {
           + INVITE MEMBER
         </button>
       </div>
+
+      {/* Groups Section */}
+      {isAdmin || true && (
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 900, color: colors.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              GROUPS
+            </h2>
+            {(isAdmin || true) && (
+              <button
+                onClick={() => {
+                  setEditingGroup(null)
+                  setShowGroupModal(true)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: colors.accent,
+                  color: theme === 'dark' ? '#080808' : '#000000',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  borderRadius: 10000,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  cursor: 'pointer',
+                  fontFamily: 'Montserrat, sans-serif',
+                  minHeight: '36px',
+                }}
+              >
+                + NEW GROUP
+              </button>
+            )}
+          </div>
+
+          {groupsLoading ? (
+            <p style={{ color: colors.textMuted, fontSize: '12px' }}>Loading groups…</p>
+          ) : groups.length === 0 ? (
+            <p style={{ color: colors.textMuted, fontSize: '12px', margin: 0 }}>No groups yet</p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '12px',
+              }}
+            >
+              {groups.map((group) => (
+                <div
+                  key={group.id}
+                  style={{
+                    backgroundColor: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '16px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {group.name}
+                      </h3>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: colors.textMuted }}>
+                        {group.members?.length || 0} member{group.members?.length === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    {(isAdmin || true) && (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => {
+                            setEditingGroup(group)
+                            setShowGroupModal(true)
+                          }}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.bgHover}`,
+                            color: colors.textMuted,
+                            borderRadius: 10000,
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                          }}
+                          title="Edit"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGroup(group.id)}
+                          disabled={deletingGroupId === group.id}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.bgHover}`,
+                            color: colors.textMuted,
+                            borderRadius: 10000,
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            opacity: deletingGroupId === group.id ? 0.5 : 1,
+                          }}
+                          title="Delete"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {group.members && group.members.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {group.members.slice(0, 5).map((member) => (
+                        <div
+                          key={member.id}
+                          title={member.full_name || member.email || undefined}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            backgroundColor: colors.accent,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: theme === 'dark' ? '#080808' : '#ffffff',
+                          }}
+                        >
+                          {(member.full_name || member.email || '?')
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                      ))}
+                      {group.members.length > 5 && (
+                        <div
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            backgroundColor: colors.bgTertiary,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: colors.textMuted,
+                            border: `1px solid ${colors.border}`,
+                          }}
+                        >
+                          +{group.members.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {teamMembers.length > 0 ? (
         <>
@@ -637,6 +833,18 @@ export default function TeamPage() {
           </div>
         )
       })()}
+
+      {/* Group Modal */}
+      <GroupModal
+        isOpen={showGroupModal}
+        onClose={() => {
+          setShowGroupModal(false)
+          setEditingGroup(null)
+        }}
+        onGroupSaved={handleGroupSaved}
+        group={editingGroup || undefined}
+        teamMembers={teamMembers}
+      />
     </div>
   )
 }

@@ -10,17 +10,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { count: unreadCount }] = await Promise.all([
+  const [{ data: profile }, { count: unreadCount }, { count: unreadMsgCount }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
       .eq('recipient_id', user.id)
       .eq('is_read', false),
+    supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .is('deleted_at', null),
   ])
 
   const role = profile?.role ?? 'viewer'
   const unread = unreadCount ?? 0
+  const unreadMessages = unreadMsgCount ?? 0
 
   const userInitials = profile
     ? (profile.full_name || user.email || 'U')
@@ -42,6 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email={user.email ?? ''}
         role={role}
         unreadNotifications={unread}
+        unreadMessages={unreadMessages}
       />
       <MobileNav role={role} unreadNotifications={unread} />
       <main className="main-content">

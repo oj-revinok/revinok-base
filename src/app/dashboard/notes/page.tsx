@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTheme } from '@/context/ThemeContext'
+import RichTextEditor from '@/components/RichTextEditor'
 import {
   getMyPersonalNotes,
   getSharedPersonalNotes,
@@ -534,19 +535,11 @@ export default function NotesPage() {
 
             {/* Content */}
             <div style={{ flex: 1, padding: '16px 28px 28px', overflow: 'hidden', display: 'flex' }}>
-              <textarea
-                value={editContent}
-                onChange={e => handleContentChange(e.target.value)}
-                readOnly={isReadOnly(selected)}
+              <RichTextEditor
+                content={editContent}
+                onChange={handleContentChange}
                 placeholder={isReadOnly(selected) ? '' : 'Start writing…'}
-                style={{
-                  flex: 1, backgroundColor: 'transparent', border: 'none',
-                  color: colors.textSecondary, fontSize: '14px', lineHeight: 1.75,
-                  fontFamily: 'Montserrat, sans-serif', outline: 'none',
-                  resize: 'none', padding: '0',
-                  cursor: isReadOnly(selected) ? 'default' : 'text',
-                  width: '100%',
-                }}
+                editable={!isReadOnly(selected)}
               />
             </div>
           </>
