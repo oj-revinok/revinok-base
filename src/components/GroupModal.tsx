@@ -294,7 +294,6 @@ export default function GroupModal({
               color: '#ff6b6b',
               fontSize: '13px',
               marginBottom: '20px',
-              borderRadius: '8px',
             }}
           >
             {error}
