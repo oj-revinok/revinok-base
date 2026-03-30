@@ -16,6 +16,7 @@ const createStyles = (colors: any) => ({
     display: 'block',
     boxSizing: 'border-box',
     outline: 'none',
+    borderRadius: 12,
   } as React.CSSProperties,
   labelStyle: {
     display: 'block',

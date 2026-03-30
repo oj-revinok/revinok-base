@@ -17,6 +17,8 @@ interface Project {
   live_url: string | null
   notion_url: string | null
   clients?: { id: string; name: string; brand_name: string | null } | { id: string; name: string; brand_name: string | null }[] | null
+  project_members?: { id: string }[] | null
+  notes?: { id: string }[] | null
 }
 
 interface ProjectGridProps {
@@ -137,12 +139,17 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                 style={{ textDecoration: 'none', display: 'block' }}
               >
                 <div
-                  style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s ease', height: '100%', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box', borderRadius: 16 }}
+                  style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s ease', height: '100%', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box', borderRadius: 16, position: 'relative' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = colors.borderLight }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = colors.border }}
                 >
+                  {/* Status badge — top right */}
+                  <span className="tag" style={{ position: 'absolute', top: '14px', right: '14px', display: 'inline-block', padding: '3px 10px', backgroundColor: statusColors[project.status?.toLowerCase()] || colors.textMuted, color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: 10000 }}>
+                    {project.status}
+                  </span>
+
                   {/* Client / project name */}
-                  <div>
+                  <div style={{ paddingRight: '90px' }}>
                     {clientName ? (
                       <>
                         <h2 style={{ fontSize: '18px', fontWeight: 800, color: colors.text, margin: '0 0 4px 0', lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
@@ -157,13 +164,6 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                         {project.name}
                       </h2>
                     )}
-                  </div>
-
-                  {/* Status badge */}
-                  <div>
-                    <span className="tag" style={{ display: 'inline-block', padding: '3px 10px', backgroundColor: statusColors[project.status?.toLowerCase()] || colors.textMuted, color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: 10000 }}>
-                      {project.status}
-                    </span>
                   </div>
 
                   {/* Description */}
@@ -182,13 +182,23 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                     </div>
                   )}
 
-                  {/* Footer: date */}
-                  <div style={{ paddingTop: '10px', borderTop: `1px solid ${colors.border}`, fontSize: '11px', color: colors.textMuted, marginTop: 'auto' }}>
-                    {project.due_date
-                      ? `Due ${new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                      : project.start_date
-                      ? `Started ${new Date(project.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                      : 'No dates set'}
+                  {/* Footer: stats + date */}
+                  <div style={{ paddingTop: '10px', borderTop: `1px solid ${colors.border}`, fontSize: '11px', color: colors.textMuted, marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      {(project.project_members?.length ?? 0) > 0 && (
+                        <span title="Team members">👤 {project.project_members!.length}</span>
+                      )}
+                      {(project.notes?.length ?? 0) > 0 && (
+                        <span title="Notes">📝 {project.notes!.length}</span>
+                      )}
+                    </div>
+                    <span>
+                      {project.due_date
+                        ? `Due ${new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                        : project.start_date
+                        ? `Started ${new Date(project.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                        : 'No dates set'}
+                    </span>
                   </div>
                 </div>
               </Link>

@@ -24,7 +24,7 @@ export default async function ProjectsPage() {
     // Admin/PM see all projects
     const { data } = await supabase
       .from('projects')
-      .select('id, name, description, status, start_date, due_date, figma_url, staging_url, live_url, notion_url, clients ( id, name, brand_name )')
+      .select('id, name, description, status, start_date, due_date, figma_url, staging_url, live_url, notion_url, clients ( id, name, brand_name ), project_members ( id ), notes ( id )')
       .order('created_at', { ascending: false })
     projects = data
   } else {
@@ -41,7 +41,7 @@ export default async function ProjectsPage() {
     } else {
       const { data } = await supabase
         .from('projects')
-        .select('id, name, description, status, start_date, due_date, figma_url, staging_url, live_url, notion_url, clients ( id, name, brand_name )')
+        .select('id, name, description, status, start_date, due_date, figma_url, staging_url, live_url, notion_url, clients ( id, name, brand_name ), project_members ( id ), notes ( id )')
         .in('id', projectIds)
         .order('created_at', { ascending: false })
       projects = data
