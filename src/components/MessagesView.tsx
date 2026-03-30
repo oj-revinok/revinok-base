@@ -100,7 +100,18 @@ export default function MessagesView({
             (newMsg.sender_id === selectedUserId && newMsg.receiver_id === currentUserId) ||
             (newMsg.sender_id === currentUserId && newMsg.receiver_id === selectedUserId)
           ) {
-            setMessages((prev) => [...prev, newMsg])
+            setMessages((prev) => {
+              // Deduplicate: skip if message already exists (from optimistic update)
+              if (prev.some((m) => m.id === newMsg.id || (m.id.startsWith('temp_') && m.sender_id === newMsg.sender_id && m.content === newMsg.content))) {
+                // Replace temp message with real one if it exists
+                const hasTemp = prev.find((m) => m.id.startsWith('temp_') && m.sender_id === newMsg.sender_id && m.content === newMsg.content)
+                if (hasTemp) {
+                  return prev.map((m) => m.id === hasTemp.id ? newMsg : m)
+                }
+                return prev
+              }
+              return [...prev, newMsg]
+            })
             scrollToBottom()
           }
           // Update conversation list
@@ -596,42 +607,44 @@ export default function MessagesView({
                 flexShrink: 0,
               }}
             >
-              {selectedConv && (
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: colors.accent,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: theme === 'dark' ? '#080808' : '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '12px',
-                    }}
-                  >
-                    {selectedConv.user.avatar_initials}
-                  </div>
-                  <div>
-                    <p
+              {(() => {
+                const selectedTeamMember = teamMembers.find((m) => m.id === selectedUserId)
+                const displayName = selectedConv?.user.full_name || selectedConv?.user.email || selectedTeamMember?.full_name || selectedTeamMember?.email || ''
+                const displayInitials = selectedConv?.user.avatar_initials || selectedTeamMember?.avatar_initials || displayName.slice(0, 2).toUpperCase()
+                return displayName ? (
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: '14px',
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: colors.accent,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: theme === 'dark' ? '#080808' : '#ffffff',
                         fontWeight: 700,
-                        color: colors.text,
-                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '12px',
                       }}
                     >
-                      {selectedConv.user.full_name || selectedConv.user.email}
-                    </p>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: colors.textMuted, fontFamily: 'Montserrat, sans-serif' }}>
-                      {selectedConv.user.role}
-                    </p>
+                      {displayInitials}
+                    </div>
+                    <div>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          color: colors.text,
+                          fontFamily: 'Montserrat, sans-serif',
+                        }}
+                      >
+                        {displayName}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null
+              })()}
             </div>
 
             {/* Messages Area */}

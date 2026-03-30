@@ -160,14 +160,14 @@ export default function NotificationsPage() {
       {notifications.length === 0 ? (
         <div style={{
           border: `1px solid ${colors.border}`, padding: '60px 40px',
-          textAlign: 'center', backgroundColor: colors.bg,
+          textAlign: 'center', backgroundColor: colors.bg, borderRadius: 12,
         }}>
           <p style={{ color: colors.borderLight, fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             No notifications yet
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {notifications.map(n => {
             const accent = notifAccent(n.type)
             const isReview = n.type === 'launch_review_request'
@@ -182,6 +182,7 @@ export default function NotificationsPage() {
                   borderRight: `1px solid ${colors.border}`,
                   borderTop: `1px solid ${colors.border}`,
                   borderBottom: `1px solid ${colors.border}`,
+                  borderRadius: 12,
                   cursor: isReview ? 'pointer' : 'default',
                   transition: 'background-color 0.15s',
                 }}

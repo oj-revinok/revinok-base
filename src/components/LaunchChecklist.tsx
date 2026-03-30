@@ -172,7 +172,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
     const reviewerName = reviewer?.full_name || reviewer?.email || 'Reviewer'
     return (
       <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '48px 40px', maxWidth: '480px', textAlign: 'center' }}>
+        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: 16, padding: '48px 40px', maxWidth: '480px', textAlign: 'center' }}>
           <div style={{ width: '52px', height: '52px', backgroundColor: colors.bgTertiary, border: `2px solid ${colors.accent}`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 9.5L7.5 16L21 2" stroke={colors.accent} strokeWidth="2.5" strokeLinecap="round"/></svg>
           </div>
@@ -199,7 +199,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
   if (step === 'send') {
     return (
       <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '40px 32px', maxWidth: '480px', width: '100%' }}>
+        <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: 16, padding: '40px 32px', maxWidth: '480px', width: '100%' }}>
           <h2 style={{ color: colors.text, fontSize: '18px', fontWeight: 800, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Send for Review</h2>
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 28px 0', lineHeight: 1.5 }}>
             Select who should review the Go-Live checklist for <strong style={{ color: colors.text }}>{projectName}</strong>.
@@ -207,14 +207,14 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           </p>
 
           <div style={{ marginBottom: '8px', fontSize: '10px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reviewed by</div>
-          <div style={{ marginBottom: '8px', padding: '10px 14px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, fontSize: '13px', color: colors.textSecondary }}>
+          <div style={{ marginBottom: '8px', padding: '10px 14px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: 12, fontSize: '13px', color: colors.textSecondary }}>
             {currentUserName || 'You'}
           </div>
 
           <div style={{ marginBottom: '8px', marginTop: '20px', fontSize: '10px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Send to</div>
 
           {reviewers.length === 0 ? (
-            <div style={{ padding: '16px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textMuted, fontSize: '13px', marginBottom: '20px' }}>
+            <div style={{ padding: '16px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: 12, color: colors.textMuted, fontSize: '13px', marginBottom: '20px' }}>
               No admins or project managers are assigned to this project yet. Ask your PM to join the project first.
             </div>
           ) : (

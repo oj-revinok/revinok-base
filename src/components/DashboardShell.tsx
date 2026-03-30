@@ -1,7 +1,6 @@
 'use client';
 
 import { useTheme } from '@/context/ThemeContext';
-import FeedbackButton from '@/components/FeedbackButton';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -22,7 +21,6 @@ export default function DashboardShell({ children, userId, userName }: Dashboard
       }}
     >
       {children}
-      <FeedbackButton userId={userId} userName={userName} />
     </div>
   );
 }

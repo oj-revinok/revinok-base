@@ -126,7 +126,7 @@ interface Props {
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors } = useTheme()
   return (
-    <div style={{ backgroundColor: colors.bgSecondary, padding: '20px', border: `1px solid ${colors.border}` }}>
+    <div style={{ backgroundColor: colors.bgSecondary, padding: '20px', border: `1px solid ${colors.border}`, borderRadius: 16 }}>
       <h2 style={{ fontSize: '12px', fontWeight: 700, color: colors.accent, margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         {title}
       </h2>
@@ -349,7 +349,7 @@ export default function ProjectDetail({
           { label: 'In Progress', value: notionTasks.filter(t => t.status === 'In progress').length, color: '#4a9eff' },
           { label: 'Completed', value: notionTasks.filter(t => t.status === 'Complete').length, color: '#4ade80' },
         ].map(stat => (
-          <div key={stat.label} style={{ backgroundColor: colors.bgSecondary, padding: '16px 20px', border: `1px solid ${colors.border}` }}>
+          <div key={stat.label} style={{ backgroundColor: colors.bgSecondary, padding: '16px 20px', border: `1px solid ${colors.border}`, borderRadius: 16 }}>
             <p style={{ fontSize: '10px', color: colors.textMuted, margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.label}</p>
             <p style={{ fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800, color: stat.color, margin: 0 }}>{stat.value}</p>
           </div>
@@ -415,8 +415,8 @@ export default function ProjectDetail({
                   {notes.map(note => {
                     const author = note.profiles?.full_name
                     return (
-                      <div key={note.id} style={{ padding: '14px', backgroundColor: colors.bgTertiary, borderLeft: `3px solid ${colors.borderLight}`, position: 'relative' }}>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }}>{note.content}</p>
+                      <div key={note.id} style={{ padding: '14px', backgroundColor: colors.bgTertiary, borderLeft: `3px solid ${colors.borderLight}`, position: 'relative', borderRadius: 12 }}>
+                        <div className="tiptap-editor" style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: note.content }} />
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             {author && <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 600 }}>{author}</span>}
@@ -469,7 +469,7 @@ export default function ProjectDetail({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {allLinks.map(link => (
                     <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: colors.bgTertiary, textDecoration: 'none', color: colors.text, fontSize: '12px', fontWeight: 600, minHeight: '44px' }}>
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: colors.bgTertiary, textDecoration: 'none', color: colors.text, fontSize: '12px', fontWeight: 600, minHeight: '44px', borderRadius: 12 }}>
                       <span>{link.label}</span>
                       <span style={{ color: colors.accent }}>↗</span>
                     </a>
@@ -485,7 +485,7 @@ export default function ProjectDetail({
       {tab === 'tasks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {!project.notion_project_id ? (
-            <div style={{ backgroundColor: colors.bgSecondary, border: `1px dashed ${colors.borderLight}`, padding: '32px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px dashed ${colors.borderLight}`, padding: '32px', textAlign: 'center', borderRadius: 16 }}>
               <p style={{ fontSize: '24px', margin: '0 0 12px 0' }}>☰</p>
               <p style={{ color: colors.text, fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>Not linked to Notion</p>
               <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 20px 0' }}>
@@ -496,7 +496,7 @@ export default function ProjectDetail({
               )}
             </div>
           ) : notionTasks.length === 0 ? (
-            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '32px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '32px', textAlign: 'center', borderRadius: 16 }}>
               <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks found in Notion for this project.</p>
             </div>
           ) : (
@@ -580,7 +580,7 @@ function TaskRow({ task, isDone = false }: { task: NotionTask; isDone?: boolean 
       rel="noopener noreferrer"
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
-        backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`, minHeight: '44px', textDecoration: 'none',
+        backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`, minHeight: '44px', textDecoration: 'none', borderRadius: 12,
       }}
     >
       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: NOTION_STATUS_COLORS[task.status] || colors.textMuted, flexShrink: 0 }} />

@@ -116,7 +116,7 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
     }}>
       <div style={{
         backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '520px',
-        maxHeight: '80vh', display: 'flex', flexDirection: 'column'
+        maxHeight: '80vh', display: 'flex', flexDirection: 'column', borderRadius: 16
       }}>
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${colors.bgTertiary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -448,7 +448,7 @@ export default function TeamPage() {
       {teamMembers.length > 0 ? (
         <>
           {/* Desktop table */}
-          <div className="clients-table-wrap" style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, overflowX: 'auto' }}>
+          <div className="clients-table-wrap" style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, overflowX: 'auto', borderRadius: 16 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Montserrat, sans-serif', minWidth: '600px' }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
@@ -571,7 +571,7 @@ export default function TeamPage() {
             {teamMembers.map((member) => {
               const isEditing = editingMemberId === member.id
               return (
-                <div key={member.id} style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '16px', marginBottom: '12px' }}>
+                <div key={member.id} style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '16px', marginBottom: '12px', borderRadius: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
                     <div className="avatar" style={{ width: '44px', height: '44px', backgroundColor: colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'dark' ? '#080808' : '#000000', fontWeight: 700, fontSize: '15px', flexShrink: 0 }}>
                       {initials(member)}
@@ -678,7 +678,7 @@ export default function TeamPage() {
           </div>
         </>
       ) : (
-        <div style={{ textAlign: 'center', padding: '80px 40px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textMuted, fontSize: '14px' }}>
+        <div style={{ textAlign: 'center', padding: '80px 40px', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textMuted, fontSize: '14px', borderRadius: 16 }}>
           No team members yet
         </div>
       )}
@@ -689,7 +689,7 @@ export default function TeamPage() {
           style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
           onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
         >
-          <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '480px', padding: '32px 24px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '480px', padding: '32px 24px', maxHeight: '90vh', overflowY: 'auto', borderRadius: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
               <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>INVITE MEMBER</h2>
               <button onClick={closeModal} style={{ background: 'none', border: 'none', color: colors.textSecondary, fontSize: '20px', cursor: 'pointer', padding: '4px 8px', lineHeight: 1, minHeight: '44px', minWidth: '44px' }}>✕</button>
@@ -772,7 +772,7 @@ export default function TeamPage() {
             style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
             onClick={(e) => { if (e.target === e.currentTarget) closePasswordPanel() }}
           >
-            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '420px', padding: '32px 24px' }}>
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, width: '100%', maxWidth: '420px', padding: '32px 24px', borderRadius: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>RESET PASSWORD</h2>
                 <button onClick={closePasswordPanel} style={{ background: 'none', border: 'none', color: colors.textSecondary, fontSize: '20px', cursor: 'pointer', padding: '4px 8px', lineHeight: 1, minHeight: '44px', minWidth: '44px' }}>✕</button>

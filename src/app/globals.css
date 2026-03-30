@@ -246,10 +246,15 @@ input:focus, textarea:focus, select:focus {
 .tiptap-editor .ProseMirror {
   outline: none;
   min-height: 150px;
+  height: 100%;
   padding: 12px;
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.tiptap-editor .tiptap {
+  height: 100%;
 }
 
 .tiptap-editor .ProseMirror p {

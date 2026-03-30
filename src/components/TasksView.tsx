@@ -88,7 +88,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
 
   if (tasks.length === 0 && !isAdminOrPM && !hasNotionPersonId) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: colors.bg, border: `1px dashed ${colors.borderLight}` }}>
+      <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: colors.bg, border: `1px dashed ${colors.borderLight}`, borderRadius: 16 }}>
         <p style={{ color: colors.text, fontWeight: 700, fontSize: '14px', margin: '0 0 8px 0' }}>No tasks assigned to you yet</p>
         <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>
           Ask your admin to link your Notion profile so your tasks appear here.
@@ -136,7 +136,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
       </div>
 
       {filteredTasks.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+        <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 12 }}>
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
         </div>
       ) : viewMode === 'kanban' ? (
@@ -218,7 +218,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
       <div style={{
         backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
         width: '100%', maxWidth: '580px', padding: '28px 24px', position: 'relative',
-        maxHeight: '90vh', overflowY: 'auto',
+        maxHeight: '90vh', overflowY: 'auto', borderRadius: 16,
       }}>
         {/* Close button */}
         <button
@@ -328,7 +328,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {notionComments.map((c, i) => (
-                  <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040' }}>
+                  <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040', borderRadius: 12 }}>
                     <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
                       <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
                       {c.text}
@@ -356,7 +356,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
           ) : comments.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
               {comments.map(c => (
-                <div key={c.id} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: `3px solid ${colors.border}` }}>
+                <div key={c.id} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: `3px solid ${colors.border}`, borderRadius: 12 }}>
                   <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
                     <span style={{ color: colors.accent, fontWeight: 700 }}>{c.author_name}:</span>{' '}
                     {c.content}
@@ -443,7 +443,7 @@ function KanbanView({
 
   if (visibleColumns.length === 0) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 12 }}>
         <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks to display.</p>
       </div>
     )
@@ -563,7 +563,7 @@ function ListView({
         const visible = getVisible(status)
         const shown = tasks.slice(0, visible)
         return (
-          <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, padding: '0' }}>
+          <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, padding: '0', borderRadius: 12 }}>
             <div style={{
               padding: '12px 16px', borderBottom: `1px solid ${colors.border}`, display: 'flex',
               alignItems: 'center', gap: '10px',
@@ -612,7 +612,7 @@ function ListView({
                 const visible = getVisible(status)
                 const shown = tasks.slice(0, visible)
                 return (
-                  <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                  <div key={status} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 12 }}>
                     <div style={{ padding: '10px 16px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[status] || colors.textMuted }} />
                       <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{status}</span>

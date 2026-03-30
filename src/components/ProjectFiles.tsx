@@ -414,7 +414,7 @@ function ChecklistViewModal({
       <div style={{
         backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgHover}`,
         width: '100%', maxWidth: '680px', maxHeight: '90vh',
-        overflowY: 'auto', display: 'flex', flexDirection: 'column',
+        overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRadius: 12,
       }}>
         {/* Header */}
         <div style={{

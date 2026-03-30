@@ -100,7 +100,7 @@ export default function RichTextEditor({
   })
 
   return (
-    <div className="tiptap-editor" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="tiptap-editor" style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, width: '100%', minWidth: 0 }}>
       {/* Toolbar */}
       {editable && (
         <div

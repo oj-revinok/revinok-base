@@ -113,7 +113,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
       style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgTertiary}`, width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto' }}>
+      <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.bgTertiary}`, width: '100%', maxWidth: '560px', padding: '32px 24px', margin: 'auto', borderRadius: 16 }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>EDIT PROJECT</h2>
