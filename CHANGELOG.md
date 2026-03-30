@@ -6,6 +6,22 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-03-31] — 75621e4
+
+### Added
+- **Delete confirmation** — clicking "delete" now shows a confirm/cancel prompt before actually deleting (prevents accidental mass deletion)
+- **Typing indicator** — uses Supabase Presence to show a smooth "typing..." animation with bouncing dots when the other person is typing
+- **Browser notifications** — requests permission on mount, sends desktop notifications for new messages when the tab is not focused
+- **Error toast system** — `ToastProvider` wraps the dashboard; shows red/green/accent toast notifications that auto-dismiss after 4s; used for failed send and delete operations
+
+### Changed
+- Removed right-click context menu delete (it bypassed the confirmation dialog)
+
+### Verified
+- `SUPABASE_SERVICE_ROLE_KEY` is correctly set on Netlify — admin client operations confirmed working
+
+---
+
 ## [2026-03-31] — 5d10a78
 
 ### Fixed
