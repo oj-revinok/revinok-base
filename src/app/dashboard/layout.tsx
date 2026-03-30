@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect('/login')
 
   const [{ data: profile }, { count: unreadCount }, { count: unreadMsgCount }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, email, role, initials, avatar_url').eq('id', user.id).single(),
     supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })

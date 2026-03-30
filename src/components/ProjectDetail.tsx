@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { updateProjectStatus, updateProject, deleteNote, deleteProjectFile } from '@/lib/actions/projects'
+import { updateProjectStatus, updateProject, deleteNote, deleteProjectFile, deleteProject } from '@/lib/actions/projects'
 import { useTheme } from '@/context/ThemeContext'
 import AddNoteForm from './AddNoteForm'
 import ProjectFiles from './ProjectFiles'
@@ -153,6 +153,8 @@ export default function ProjectDetail({
   const [showShareModal, setShowShareModal] = useState(false)
   const [showLaunchChecklist, setShowLaunchChecklist] = useState(false)
   const [showSecondaryTasks, setShowSecondaryTasks] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [, startTransition] = useTransition()
 
   const canEdit = isAdminOrPM(userRole as any)
@@ -214,6 +216,17 @@ export default function ProjectDetail({
       setProjectFiles(prev => prev.filter(f => f.id !== fileId))
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  async function handleDeleteProject() {
+    setDeleting(true)
+    try {
+      await deleteProject(project.id)
+    } catch (err) {
+      console.error(err)
+      setDeleting(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -285,6 +298,19 @@ export default function ProjectDetail({
               }}
             >
               EDIT
+            </button>
+          )}
+          {/* Delete — admin only */}
+          {userRole === 'admin' && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                padding: '3px 12px', backgroundColor: 'transparent', border: `1px solid #ef4444`,
+                color: '#ef4444', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
+              }}
+            >
+              DELETE
             </button>
           )}
         </div>
@@ -566,6 +592,38 @@ export default function ProjectDetail({
           projectMembers={members}
           onClose={() => setShowLaunchChecklist(false)}
         />
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: colors.modalOverlay, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          onClick={() => !deleting && setShowDeleteConfirm(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '32px', maxWidth: '420px', width: '100%', borderRadius: 16 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>Delete Project</h2>
+            <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6, margin: '0 0 8px 0' }}>
+              Are you sure you want to delete <strong style={{ color: colors.text }}>{clientName || project.name}</strong>?
+            </p>
+            <p style={{ fontSize: '12px', color: colors.textMuted, lineHeight: 1.5, margin: '0 0 24px 0' }}>
+              This will permanently remove the project along with all its notes, files, tasks, activity logs, and team assignments. This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                style={{ padding: '10px 20px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000, opacity: deleting ? 0.5 : 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                disabled={deleting}
+                style={{ padding: '10px 20px', backgroundColor: '#ef4444', border: 'none', color: '#ffffff', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: deleting ? 'wait' : 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000, opacity: deleting ? 0.7 : 1 }}
+              >
+                {deleting ? 'Deleting…' : 'Delete Project'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -24,7 +24,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   ] = await Promise.all([
     supabase.from('projects').select('*, clients ( id, name, brand_name )').eq('id', id).single(),
     supabase.from('notes').select('*, profiles!notes_author_id_fkey ( full_name )').eq('project_id', id).order('created_at', { ascending: false }),
-    supabase.from('activity_log').select('*, profiles!activity_log_actor_id_fkey ( full_name )').eq('project_id', id).order('created_at', { ascending: false }),
+    supabase.from('activity_log').select('*, profiles!activity_log_actor_id_fkey ( full_name )').eq('project_id', id).order('created_at', { ascending: false }).limit(50),
     supabase.from('project_links').select('*').eq('project_id', id).order('sort_order'),
     supabase.from('project_files').select('*').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('project_members').select('*, profiles ( id, full_name, email, role, initials, avatar_url )').eq('project_id', id),

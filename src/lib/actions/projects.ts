@@ -352,6 +352,37 @@ export async function deleteProjectFile(fileId: string, projectId: string) {
   return { success: true }
 }
 
+// ── Delete entire project (admin only) ──
+export async function deleteProject(projectId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Role check — admin only
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') {
+    throw new Error('Only admins can delete projects')
+  }
+
+  // Delete related records first (cascade)
+  await Promise.all([
+    supabase.from('activity_log').delete().eq('project_id', projectId),
+    supabase.from('notes').delete().eq('project_id', projectId),
+    supabase.from('project_files').delete().eq('project_id', projectId),
+    supabase.from('project_links').delete().eq('project_id', projectId),
+    supabase.from('project_members').delete().eq('project_id', projectId),
+    supabase.from('notifications').delete().eq('project_id', projectId),
+    supabase.from('tasks').delete().eq('project_id', projectId),
+  ])
+
+  // Delete the project itself
+  const { error } = await supabase.from('projects').delete().eq('id', projectId)
+  if (error) throw error
+
+  revalidatePath('/dashboard/projects')
+  redirect('/dashboard/projects')
+}
+
 // ── Delete a note (admin/PM only) ──
 export async function deleteNote(noteId: string, projectId: string) {
   const supabase = createClient()
