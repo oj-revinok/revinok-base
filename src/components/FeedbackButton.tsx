@@ -108,7 +108,7 @@ export default function FeedbackButton({ userName, userId }: FeedbackButtonProps
                 fontFamily: 'Montserrat, sans-serif',
               }}
             >
-              <i className="lni lni-check-circle-" style={{ fontSize: 28, display: 'block', marginBottom: 8 }} />
+              <i className="lni lni-check-circle-1" style={{ fontSize: 28, display: 'block', marginBottom: 8 }} />
               Thanks! Feedback sent.
             </div>
           ) : (
@@ -203,7 +203,7 @@ export default function FeedbackButton({ userName, userId }: FeedbackButtonProps
         {isOpen ? (
           <i className="lni lni-xmark" />
         ) : (
-          <i className="lni lni-comment-" />
+          <i className="lni lni-comment-1" />
         )}
       </button>
 
