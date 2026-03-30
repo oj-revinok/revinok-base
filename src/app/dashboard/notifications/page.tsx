@@ -18,6 +18,7 @@ function notifAccent(type: string) {
   if (type === 'launch_approved') return '#4ade80'
   if (type === 'launch_declined') return '#ef4444'
   if (type === 'project_added') return '#4a9eff'
+  if (type === 'note_shared') return '#a78bfa'
   return '#333333'
 }
 
@@ -26,16 +27,22 @@ function notifTypeLabel(type: string) {
   if (type === 'launch_approved') return 'Approved'
   if (type === 'launch_declined') return 'Declined'
   if (type === 'project_added') return 'Project'
+  if (type === 'note_shared') return 'Note Shared'
   return 'Notification'
 }
 
 function notifTitle(n: Notification) {
   const project = n.data?.project_name || n.project?.name || 'a project'
-  const sender = n.data?.submitted_by_name || n.data?.reviewer_name || n.sender?.full_name || 'Someone'
+  const sender = n.data?.submitted_by_name || n.data?.reviewer_name || n.data?.shared_by_name || n.sender?.full_name || 'Someone'
   if (n.type === 'launch_review_request') return `${sender} sent a Go-Live checklist for ${project}`
   if (n.type === 'launch_approved') return `${sender} approved the Go-Live checklist for ${project}`
   if (n.type === 'launch_declined') return `${sender} declined the Go-Live checklist for ${project}`
   if (n.type === 'project_added') return `${sender} added you to ${project}`
+  if (n.type === 'note_shared') {
+    const noteTitle = n.data?.note_title || 'a note'
+    const access = n.data?.access_level || 'view'
+    return `${sender} shared "${noteTitle}" with you (${access} access)`
+  }
   return 'New notification'
 }
 
@@ -241,6 +248,28 @@ export default function NotificationsPage() {
                         }}
                       >
                         Open Project →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Note-shared CTA */}
+                  {n.type === 'note_shared' && (
+                    <div style={{ marginTop: '10px' }}>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await markRead(n.id)
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x))
+                          router.push('/dashboard/notes')
+                        }}
+                        style={{
+                          padding: '6px 14px', backgroundColor: 'transparent',
+                          border: '1px solid #a78bfa', color: '#a78bfa',
+                          fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                          letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                        }}
+                      >
+                        Open Notes →
                       </button>
                     </div>
                   )}
