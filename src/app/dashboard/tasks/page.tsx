@@ -3,7 +3,7 @@ import { fetchAllNotionTasks } from '@/lib/actions/notion'
 import { getAppSetting } from '@/lib/actions/settings'
 import TasksView from '@/components/TasksView'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function TasksPage() {
   const supabase = createClient()

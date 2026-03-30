@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import ProjectDetail from '@/components/ProjectDetail'
 import { fetchNotionTasksForProject } from '@/lib/actions/notion'
 
+export const dynamic = 'force-dynamic'
+
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>
 }

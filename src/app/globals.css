@@ -43,7 +43,7 @@
   padding: 0;
 }
 
-.tag { border-radius: 0 !important; }
+.tag { border-radius: 10000px !important; }
 .avatar { border-radius: 50% !important; }
 
 html {

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import ProjectGrid from '@/components/ProjectGrid'
 
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 export default async function ProjectsPage() {
   const supabase = createClient()
