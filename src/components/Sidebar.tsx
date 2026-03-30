@@ -29,7 +29,7 @@ interface NavItem {
   href: string
   label: string
   restricted: boolean
-  isBell?: boolean
+  clientHidden?: boolean
 }
 
 const ALL_NAV_ITEMS: NavItem[] = [
@@ -37,8 +37,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/tasks',         label: 'TASKS',         restricted: false },
   { href: '/dashboard/clients',       label: 'CLIENTS',       restricted: true  },
   { href: '/dashboard/team',          label: 'TEAM',          restricted: true  },
-  { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false },
-  { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false, isBell: true },
+  { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false, clientHidden: true },
+  { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false },
 ]
 
 export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0 }: SidebarProps) {
@@ -47,7 +47,12 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
   const supabase = createClient()
 
   const isRestricted = RESTRICTED_ROLES.has(role)
-  const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
+  const isClient = role === 'client'
+  const navItems = ALL_NAV_ITEMS.filter(item => {
+    if (item.restricted && isRestricted) return false
+    if (item.clientHidden && isClient) return false
+    return true
+  })
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -68,7 +73,8 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
       <nav style={{ flex: 1, padding: '0 12px' }}>
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href)
-          const showBadge = item.isBell && unreadNotifications > 0
+          const isNotif = item.href === '/dashboard/notifications'
+          const showBadge = isNotif && unreadNotifications > 0
           return (
             <Link
               key={item.href}
@@ -102,14 +108,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
                 }
               }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {item.isBell && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
-                  </svg>
-                )}
-                {item.label}
-              </span>
+              <span>{item.label}</span>
               {showBadge && (
                 <span style={{
                   backgroundColor: '#BDD630', color: '#080808',

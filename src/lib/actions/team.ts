@@ -183,3 +183,42 @@ export async function createClient_action(formData: FormData) {
   revalidatePath('/dashboard/clients')
   redirect(`/dashboard/clients/${data.id}`)
 }
+
+// ── Password management (admin only) ─────────────────────────────────────
+
+export async function resetMemberPassword(
+  memberId: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Verify caller is admin
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { success: false, error: 'Unauthorized' }
+
+  if (newPassword.length < 8) return { success: false, error: 'Password must be at least 8 characters' }
+
+  try {
+    const adminClient = createAdminClient()
+    const { error } = await adminClient.auth.admin.updateUserById(memberId, { password: newPassword })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to reset password' }
+  }
+}
+
+export function generatePassword(name: string): string {
+  const base = name.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '')
+  const cap = base.charAt(0).toUpperCase() + base.slice(1).toLowerCase()
+  const year = new Date().getFullYear()
+  const specials = ['!', '@', '#', '$']
+  const special = specials[Math.floor(Math.random() * specials.length)]
+  return `${cap}${year}${special}`
+}

@@ -1,7 +1,25 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getTasksForProject, getNotionProjectsPage, getAllTasks, NotionTask, getNotionClient } from '@/lib/notion'
+import { getTasksForProject, getNotionProjectsPage, getAllTasks, getNotionTeamPersons, NotionTask, getNotionClient } from '@/lib/notion'
+
+// Enrich tasks with assignee names resolved from the Team DB
+async function enrichTasksWithNames(tasks: NotionTask[], notionKey?: string): Promise<NotionTask[]> {
+  if (tasks.length === 0) return tasks
+  // Only fetch team persons if any task has assignedTo IDs
+  const hasAssignees = tasks.some(t => t.assignedTo.length > 0)
+  if (!hasAssignees) return tasks
+  try {
+    const teamPersons = await getNotionTeamPersons(notionKey)
+    const nameMap = new Map(teamPersons.map(p => [p.id, p.name]))
+    return tasks.map(t => ({
+      ...t,
+      assignedNames: t.assignedTo.map(id => nameMap.get(id) || id).filter(Boolean),
+    }))
+  } catch {
+    return tasks
+  }
+}
 
 async function getAdminNotionKey(): Promise<string | undefined> {
   const supabase = createClient()
@@ -28,7 +46,8 @@ export async function fetchNotionTasksForProject(projectId: string): Promise<Not
 
   if (!project?.notion_project_id) return []
 
-  return getTasksForProject(project.notion_project_id, notionKey)
+  const tasks = await getTasksForProject(project.notion_project_id, notionKey)
+  return enrichTasksWithNames(tasks, notionKey)
 }
 
 export async function fetchNotionProjects(): Promise<{ id: string; name: string }[]> {
@@ -52,13 +71,14 @@ export async function fetchAllNotionTasks(): Promise<NotionTask[]> {
   // Admin/PM see all tasks; designer/developer see their own (if notion_person_id set)
   const isAdminOrPM = profile?.role === 'admin' || profile?.role === 'project_manager'
 
+  let tasks: NotionTask[]
   if (isAdminOrPM) {
-    return getAllTasks(notionKey, null)
+    tasks = await getAllTasks(notionKey, null)
   } else {
-    // For individual contributors, filter by their notion_person_id if set
     const notionPersonId = profile?.notion_person_id || null
-    return getAllTasks(notionKey, notionPersonId)
+    tasks = await getAllTasks(notionKey, notionPersonId)
   }
+  return enrichTasksWithNames(tasks, notionKey)
 }
 
 // Fetch Notion-native comments for a task

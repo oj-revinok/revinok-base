@@ -268,10 +268,12 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
               </span>
             </DetailRow>
           )}
-          {task.assignedNames.length > 0 && (
+          {(task.assignedNames.length > 0 || task.assignedTo.length > 0) && (
             <DetailRow label="Assigned To">
               <span style={{ color: '#BDD630', fontSize: '13px', fontWeight: 600 }}>
-                {task.assignedNames.join(', ')}
+                {task.assignedNames.length > 0
+                  ? task.assignedNames.join(', ')
+                  : `${task.assignedTo.length} person${task.assignedTo.length > 1 ? 's' : ''}`}
               </span>
             </DetailRow>
           )}

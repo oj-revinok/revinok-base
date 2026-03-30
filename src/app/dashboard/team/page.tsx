@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
+import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, resetMemberPassword, generatePassword, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
 
 interface TeamMember {
   id: string
@@ -57,6 +57,14 @@ export default function TeamPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  // Per-member password state
+  const [pwMemberId, setPwMemberId] = useState<string | null>(null)
+  const [pwValue, setPwValue] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -72,6 +80,8 @@ export default function TeamPage() {
         router.push('/dashboard')
         return
       }
+
+      setIsAdmin(profile?.role === 'admin')
 
       const { data: members } = await supabase
         .from('profiles')
@@ -158,6 +168,40 @@ export default function TeamPage() {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function openPasswordPanel(member: TeamMember) {
+    setPwMemberId(member.id)
+    const suggested = generatePassword(member.full_name || member.email || 'User')
+    setPwValue(suggested)
+    setPwError('')
+    setPwSuccess('')
+  }
+
+  function closePasswordPanel() {
+    setPwMemberId(null)
+    setPwValue('')
+    setPwError('')
+    setPwSuccess('')
+  }
+
+  async function handleResetPassword(memberId: string) {
+    if (!pwValue.trim()) return
+    setPwSaving(true)
+    setPwError('')
+    setPwSuccess('')
+    try {
+      const result = await resetMemberPassword(memberId, pwValue.trim())
+      if (result.success) {
+        setPwSuccess(`Password updated. New password: ${pwValue.trim()}`)
+      } else {
+        setPwError(result.error || 'Failed to reset password')
+      }
+    } catch (err: unknown) {
+      setPwError(err instanceof Error ? err.message : 'Failed to reset password')
+    } finally {
+      setPwSaving(false)
     }
   }
 
@@ -297,12 +341,23 @@ export default function TeamPage() {
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => startEditing(member)}
-                            style={{ padding: '6px 14px', backgroundColor: 'transparent', color: '#555555', border: '1px solid #222222', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
-                          >
-                            EDIT
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => startEditing(member)}
+                              style={{ padding: '6px 14px', backgroundColor: 'transparent', color: '#555555', border: '1px solid #222222', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                            >
+                              EDIT
+                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => openPasswordPanel(member)}
+                                style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                                title="Reset password"
+                              >
+                                PW
+                              </button>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -400,12 +455,22 @@ export default function TeamPage() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => startEditing(member)}
-                        style={{ padding: '8px 16px', backgroundColor: 'transparent', color: '#555555', border: '1px solid #222222', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
-                      >
-                        EDIT
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {isAdmin && (
+                          <button
+                            onClick={() => openPasswordPanel(member)}
+                            style={{ padding: '8px 14px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
+                          >
+                            PW
+                          </button>
+                        )}
+                        <button
+                          onClick={() => startEditing(member)}
+                          style={{ padding: '8px 16px', backgroundColor: 'transparent', color: '#555555', border: '1px solid #222222', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
+                        >
+                          EDIT
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -498,6 +563,77 @@ export default function TeamPage() {
           </div>
         </div>
       )}
+
+      {/* Password Reset Modal */}
+      {pwMemberId && (() => {
+        const member = teamMembers.find(m => m.id === pwMemberId)
+        if (!member) return null
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+            onClick={(e) => { if (e.target === e.currentTarget) closePasswordPanel() }}
+          >
+            <div style={{ backgroundColor: '#0e0e0e', border: '1px solid #1a1a1a', width: '100%', maxWidth: '420px', padding: '32px 24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase' }}>RESET PASSWORD</h2>
+                <button onClick={closePasswordPanel} style={{ background: 'none', border: 'none', color: '#666666', fontSize: '20px', cursor: 'pointer', padding: '4px 8px', lineHeight: 1, minHeight: '44px', minWidth: '44px' }}>✕</button>
+              </div>
+              <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#888888' }}>
+                Setting password for <span style={{ color: '#ffffff', fontWeight: 700 }}>{member.full_name || member.email}</span>
+              </p>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>NEW PASSWORD</label>
+                <input
+                  type="text"
+                  value={pwValue}
+                  onChange={(e) => setPwValue(e.target.value)}
+                  placeholder="Enter password"
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const suggested = generatePassword(member.full_name || member.email || 'User')
+                  setPwValue(suggested)
+                  setPwSuccess('')
+                  setPwError('')
+                }}
+                style={{ width: '100%', padding: '10px', backgroundColor: '#111111', color: '#888888', border: '1px solid #222222', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', marginBottom: '20px' }}
+              >
+                GENERATE NEW PASSWORD
+              </button>
+              {pwError && (
+                <div style={{ padding: '12px 16px', backgroundColor: '#2a1515', border: '1px solid #8b3a3a', color: '#ff6b6b', fontSize: '13px', marginBottom: '16px' }}>
+                  {pwError}
+                </div>
+              )}
+              {pwSuccess && (
+                <div style={{ padding: '12px 16px', backgroundColor: '#0f2a0f', border: '1px solid #2d6a2d', color: '#4ade80', fontSize: '13px', marginBottom: '16px' }}>
+                  {pwSuccess}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={closePasswordPanel}
+                  style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #1a1a1a', color: '#999999', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleResetPassword(pwMemberId)}
+                  disabled={pwSaving || !pwValue.trim()}
+                  style={{ flex: 2, padding: '14px', backgroundColor: '#4a9eff', color: '#ffffff', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: (pwSaving || !pwValue.trim()) ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: (pwSaving || !pwValue.trim()) ? 0.6 : 1, minHeight: '48px' }}
+                >
+                  {pwSaving ? 'SAVING...' : 'RESET PASSWORD'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
