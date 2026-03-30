@@ -1,6 +1,7 @@
 'use client';
 
 import { useTheme } from '@/context/ThemeContext';
+import NavigationLoader from './NavigationLoader';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export default function DashboardShell({ children, userId, userName }: Dashboard
         transition: 'background-color 0.2s ease',
       }}
     >
+      <NavigationLoader />
       {children}
     </div>
   );

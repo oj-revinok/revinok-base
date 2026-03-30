@@ -141,7 +141,18 @@ export default function MessagesView({
 
   async function refreshConversations() {
     const updated = await getConversations()
+    // Already sorted by latest message time from server
     setConversations(updated)
+  }
+
+  // Move active conversation to top after sending
+  function moveConversationToTop(userId: string, content: string) {
+    setConversations((prev) => {
+      const idx = prev.findIndex((c) => c.user.id === userId)
+      if (idx <= 0) return prev // already at top or not found
+      const conv = { ...prev[idx], lastMessage: content, lastMessageTime: new Date().toISOString() }
+      return [conv, ...prev.filter((_, i) => i !== idx)]
+    })
   }
 
   const selectedConv = conversations.find((c) => c.user.id === selectedUserId)
@@ -194,6 +205,7 @@ export default function MessagesView({
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? result : m))
       )
+      moveConversationToTop(selectedUserId, content)
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setMessageInput(content)
@@ -219,7 +231,7 @@ export default function MessagesView({
     }
   }
 
-  function startDeleteTimer(messageId: string) {
+  function clearDeleteTimer(messageId: string) {
     if (deleteTimersRef.current[messageId]) {
       clearTimeout(deleteTimersRef.current[messageId])
       delete deleteTimersRef.current[messageId]
@@ -680,7 +692,7 @@ export default function MessagesView({
                         gap: '8px',
                       }}
                       onMouseEnter={() => {
-                        if (isOwn && !isDeleted) startDeleteTimer(msg.id)
+                        if (isOwn && !isDeleted) clearDeleteTimer(msg.id)
                       }}
                     >
                       {!isOwn && (

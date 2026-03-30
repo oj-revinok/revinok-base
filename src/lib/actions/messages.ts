@@ -51,7 +51,7 @@ export async function getConversations(): Promise<Conversation[]> {
     return []
   }
 
-  return (profiles || []).map((profile) => {
+  const result = (profiles || []).map((profile) => {
     const conv = convMap.get(profile.id)
     return {
       user: {
@@ -67,6 +67,16 @@ export async function getConversations(): Promise<Conversation[]> {
       unreadCount: conv?.unreadCount || 0,
     }
   })
+
+  // Sort by latest message time (newest first)
+  result.sort((a, b) => {
+    if (!a.lastMessageTime && !b.lastMessageTime) return 0
+    if (!a.lastMessageTime) return 1
+    if (!b.lastMessageTime) return -1
+    return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+  })
+
+  return result
 }
 
 export async function getMessages(otherUserId: string): Promise<Message[]> {
@@ -133,17 +143,25 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('messages')
     .update({
+      content: null,
       deleted_at: new Date().toISOString(),
       deleted_by: user.id,
     })
     .eq('id', messageId)
     .eq('sender_id', user.id)
+    .select('id')
 
   if (error) {
     console.error('softDeleteMessage:', error)
+    return false
+  }
+
+  // If no rows returned, update didn't match (RLS or wrong sender)
+  if (!data || data.length === 0) {
+    console.error('softDeleteMessage: no rows updated — check RLS policies on messages table')
     return false
   }
 
