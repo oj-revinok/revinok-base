@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
+import DashboardShell from '@/components/DashboardShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -31,7 +32,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : 'U'
 
   return (
-    <div style={{ backgroundColor: '#080808', fontFamily: 'Montserrat, sans-serif', minHeight: '100vh' }}>
+    <DashboardShell
+      userId={user.id}
+      userName={profile?.full_name ?? user.email ?? 'Unknown'}
+    >
       <Sidebar
         userInitials={userInitials}
         fullName={profile?.full_name ?? null}
@@ -43,6 +47,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="main-content">
         {children}
       </main>
-    </div>
+    </DashboardShell>
   )
 }

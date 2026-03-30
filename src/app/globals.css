@@ -16,12 +16,31 @@
   --bottomnav-h: 64px;
 }
 
+/* ── Light mode overrides ─────────────────────────────────────── */
+[data-theme="light"] {
+  --brand: #8FA824;
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --text-primary: #1a1a1a;
+  --text-secondary: rgba(0,0,0,0.6);
+  --text-muted: rgba(0,0,0,0.35);
+}
+[data-theme="light"] body {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
+[data-theme="light"] .card-hover:hover { border-color: rgba(0,0,0,0.2) !important; background-color: #f0f0f0 !important; }
+[data-theme="light"] .btn-ghost:hover { background-color: #eee !important; }
+[data-theme="light"] .nav-link:hover { background-color: #eee !important; }
+[data-theme="light"] .mobile-card { background: var(--surface); border-color: var(--border); }
+
 /* ── Reset ──────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: 0 !important;
 }
 
 .tag { border-radius: 0 !important; }

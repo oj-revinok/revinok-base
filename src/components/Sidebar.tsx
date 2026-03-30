@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/context/ThemeContext'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface SidebarProps {
   userInitials: string
@@ -109,6 +111,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const { colors, theme } = useTheme()
 
   const isRestricted = RESTRICTED_ROLES.has(role)
   const isClient = role === 'client'
@@ -150,8 +153,8 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
                 gap: '10px',
                 justifyContent: 'space-between',
                 padding: '12px 16px',
-                color: isActive ? '#BDD630' : '#666666',
-                backgroundColor: isActive ? '#111111' : 'transparent',
+                color: isActive ? colors.accent : colors.textMuted,
+                backgroundColor: isActive ? colors.bgSecondary : 'transparent',
                 textDecoration: 'none',
                 fontSize: '11px',
                 fontWeight: 700,
@@ -159,19 +162,19 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
                 letterSpacing: '0.5px',
                 marginBottom: '2px',
                 transition: 'color 0.15s, background-color 0.15s',
-                borderLeft: `2px solid ${isActive ? '#BDD630' : 'transparent'}`,
+                borderLeft: `2px solid ${isActive ? colors.accent : 'transparent'}`,
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.backgroundColor = '#0d0d0d'
-                  e.currentTarget.style.color = '#BDD630'
-                  e.currentTarget.style.borderLeftColor = '#333'
+                  e.currentTarget.style.backgroundColor = colors.bgHover
+                  e.currentTarget.style.color = colors.accent
+                  e.currentTarget.style.borderLeftColor = colors.textMuted
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
                   e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#666666'
+                  e.currentTarget.style.color = colors.textMuted
                   e.currentTarget.style.borderLeftColor = 'transparent'
                 }
               }}
@@ -182,7 +185,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
               </span>
               {showBadge && (
                 <span style={{
-                  backgroundColor: '#BDD630', color: '#080808',
+                  backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#1a1a1a',
                   fontSize: '9px', fontWeight: 800,
                   borderRadius: '10px', padding: '2px 6px', minWidth: '18px', textAlign: 'center',
                 }}>
@@ -194,27 +197,28 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
         })}
       </nav>
 
-      {/* User info + Sign Out */}
-      <div style={{ padding: '16px 24px', borderTop: '1px solid #1a1a1a' }}>
+      {/* User info + Theme Toggle + Sign Out */}
+      <div style={{ padding: '16px 24px', borderTop: `1px solid ${colors.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
           <div
             className="avatar"
             style={{
-              width: '38px', height: '38px', backgroundColor: '#BDD630',
+              width: '38px', height: '38px', backgroundColor: colors.accent,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#080808', fontWeight: 700, fontSize: '13px', flexShrink: 0,
+              color: theme === 'dark' ? '#080808' : '#1a1a1a', fontWeight: 700, fontSize: '13px', flexShrink: 0,
             }}
           >
             {userInitials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, color: '#ffffff', fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ margin: 0, color: colors.text, fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {fullName || email}
             </p>
-            <p style={{ margin: '3px 0 0 0', color: '#666666', fontSize: '10px', textTransform: 'uppercase' as const, fontWeight: 500 }}>
+            <p style={{ margin: '3px 0 0 0', color: colors.textMuted, fontSize: '10px', textTransform: 'uppercase' as const, fontWeight: 500 }}>
               {ROLE_LABELS[role] || role}
             </p>
           </div>
+          <ThemeToggle />
         </div>
 
         <button
@@ -222,8 +226,9 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
           style={{
             width: '100%', padding: '9px 12px',
             backgroundColor: 'transparent',
-            border: '1px solid #1e1e1e',
-            color: '#444444', cursor: 'pointer',
+            border: `1px solid ${colors.border}`,
+            borderRadius: 10000,
+            color: colors.textMuted, cursor: 'pointer',
             fontSize: '10px', fontWeight: 700,
             textTransform: 'uppercase' as const, letterSpacing: '0.5px',
             fontFamily: 'Montserrat, sans-serif',
@@ -231,12 +236,12 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
             transition: 'all 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#BDD630'
-            e.currentTarget.style.color = '#BDD630'
+            e.currentTarget.style.borderColor = colors.accent
+            e.currentTarget.style.color = colors.accent
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#1e1e1e'
-            e.currentTarget.style.color = '#444444'
+            e.currentTarget.style.borderColor = colors.border
+            e.currentTarget.style.color = colors.textMuted
           }}
         >
           {Icons.signout}
