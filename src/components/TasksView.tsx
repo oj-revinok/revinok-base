@@ -397,33 +397,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
           </form>
         </div>
 
-        {/* Divider */}
-        <div style={{ borderTop: '1px solid #1a1a1a', marginBottom: '20px' }} />
-
-        {/* Open in Notion */}
-        <a
-          href={task.notionUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '10px 20px', backgroundColor: 'transparent',
-            border: '1px solid #333', color: '#888888',
-            textDecoration: 'none', fontSize: '11px', fontWeight: 700,
-            textTransform: 'uppercase', letterSpacing: '0.5px',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#BDD630'
-            e.currentTarget.style.color = '#BDD630'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#333'
-            e.currentTarget.style.color = '#888888'
-          }}
-        >
-          Open in Notion ↗
-        </a>
+        {/* No external Notion link — all interaction stays in the portal */}
       </div>
     </div>
   )

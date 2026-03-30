@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { addCommentToNotionTask } from '@/lib/notion'
 
 export interface TaskComment {
   id: string
@@ -50,5 +51,24 @@ export async function addTaskComment(
     .single()
 
   if (error) throw new Error(error.message)
+
+  // Push to Notion as "AuthorName: comment" (non-blocking — don't fail if Notion is down)
+  try {
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('notion_api_key')
+      .eq('role', 'admin')
+      .limit(1)
+      .single()
+
+    await addCommentToNotionTask(
+      taskNotionId,
+      `${authorName}: ${content.trim()}`,
+      adminProfile?.notion_api_key || undefined
+    )
+  } catch {
+    // Notion push failure should not break the comment save
+  }
+
   return data as TaskComment
 }

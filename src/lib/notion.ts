@@ -4,6 +4,7 @@ import { Client } from '@notionhq/client'
 export const NOTION_DB = {
   projects: '24c391cd-225f-8038-8d80-000bacadc183',
   workload: '24d391cd-225f-805a-b6f1-000b483af790',
+  team: '24d391cd-225f-803f-a3b5-000b9b80ab78',
 }
 
 export function getNotionClient(apiKey?: string) {
@@ -126,6 +127,58 @@ function parseNotionTask(page: any): NotionTask {
     tags,
     notionUrl: page.url,
     projectIds,
+  }
+}
+
+export interface NotionTeamPerson {
+  id: string
+  name: string
+  email: string | null
+  role: string | null
+}
+
+export async function getNotionTeamPersons(
+  apiKey?: string
+): Promise<NotionTeamPerson[]> {
+  const notion = getNotionClient(apiKey)
+  if (!notion) return []
+
+  try {
+    const response = await notion.dataSources.query({
+      data_source_id: NOTION_DB.team,
+      sorts: [{ property: 'Name', direction: 'ascending' }],
+    } as any)
+
+    return response.results.map((page: any) => {
+      const props = page.properties
+      const name = props['Name']?.title?.[0]?.plain_text || 'Unnamed'
+      const email = props['Email']?.email || null
+      const role = props['Role']?.select?.name || props['Role']?.rich_text?.[0]?.plain_text || null
+      return { id: page.id, name, email, role }
+    })
+  } catch (err) {
+    console.error('Notion team persons fetch error:', err)
+    return []
+  }
+}
+
+export async function addCommentToNotionTask(
+  taskPageId: string,
+  comment: string,
+  apiKey?: string
+): Promise<boolean> {
+  const notion = getNotionClient(apiKey)
+  if (!notion) return false
+
+  try {
+    await (notion as any).comments.create({
+      parent: { page_id: taskPageId },
+      rich_text: [{ type: 'text', text: { content: comment } }],
+    })
+    return true
+  } catch (err) {
+    console.error('Notion add comment error:', err)
+    return false
   }
 }
 

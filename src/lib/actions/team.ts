@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getNotionClient } from '@/lib/notion'
+import { getNotionClient, getNotionTeamPersons, type NotionTeamPerson } from '@/lib/notion'
+export type { NotionTeamPerson }
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -40,6 +41,13 @@ export async function getNotionPersons(): Promise<NotionPerson[]> {
   } catch {
     return []
   }
+}
+
+// Fetch persons from Notion Team Database (not just workspace users)
+// These IDs match the relation IDs used in the 🎨 Assigned to field in Workload
+export async function getNotionTeamPersonsFromDB(): Promise<NotionTeamPerson[]> {
+  const key = await getAdminNotionKey()
+  return getNotionTeamPersons(key)
 }
 
 export async function getTeamMembers() {

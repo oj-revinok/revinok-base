@@ -105,6 +105,7 @@ export async function createProject(formData: FormData) {
     figma_url: (formData.get('figma_url') as string) || null,
     staging_url: (formData.get('staging_url') as string) || null,
     live_url: (formData.get('live_url') as string) || null,
+    google_drive_url: (formData.get('google_drive_url') as string) || null,
     created_by: user.id,
   }
 

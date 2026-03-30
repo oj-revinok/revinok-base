@@ -8,6 +8,7 @@ import ProjectFiles from './ProjectFiles'
 import EditProjectModal from './EditProjectModal'
 import ShareProjectModal from './ShareProjectModal'
 import LaunchChecklist from './LaunchChecklist'
+import TasksView from './TasksView'
 import type { NotionTask } from '@/lib/notion'
 import { isAdminOrPM, isDevRole, isDesignerRole, ROLE_LABELS } from '@/types'
 
@@ -495,53 +496,11 @@ export default function ProjectDetail({
               <p style={{ color: '#555555', fontSize: '13px', margin: 0 }}>No tasks found in Notion for this project.</p>
             </div>
           ) : (
-            <>
-              {/* Primary task statuses */}
-              {TASK_STATUS_ORDER.filter(s => !SECONDARY_STATUSES.includes(s)).map(statusKey => {
-                const group = notionTasks.filter(t => t.status === statusKey)
-                if (group.length === 0) return null
-                return (
-                  <SectionCard key={statusKey} title={`${statusKey} (${group.length})`}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {group.map(task => <TaskRow key={task.id} task={task} />)}
-                    </div>
-                  </SectionCard>
-                )
-              })}
-
-              {/* Secondary statuses (On Hold, Complete) */}
-              {secondaryTasks.length > 0 && (
-                <div>
-                  <button
-                    onClick={() => setShowSecondaryTasks(!showSecondaryTasks)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid #222',
-                      color: '#555555', cursor: 'pointer', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
-                      letterSpacing: '0.5px', padding: '8px 16px', fontFamily: 'Montserrat, sans-serif', width: '100%',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span>{showSecondaryTasks ? 'Hide' : 'Show'} On Hold & Completed ({secondaryTasks.length})</span>
-                    <span>{showSecondaryTasks ? '▲' : '▼'}</span>
-                  </button>
-                  {showSecondaryTasks && (
-                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {SECONDARY_STATUSES.map(statusKey => {
-                        const group = secondaryTasks.filter(t => t.status === statusKey)
-                        if (group.length === 0) return null
-                        return (
-                          <SectionCard key={statusKey} title={`${statusKey} (${group.length})`}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {group.map(task => <TaskRow key={task.id} task={task} isDone={statusKey === 'Complete'} />)}
-                            </div>
-                          </SectionCard>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
+            <TasksView
+              tasks={notionTasks}
+              isAdminOrPM={canEdit}
+              hasNotionPersonId={false}
+            />
           )}
         </div>
       )}

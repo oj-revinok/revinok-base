@@ -32,7 +32,7 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
   const [notionProjects, setNotionProjects] = useState<{ id: string; name: string }[]>([])
   const [loadingNotion, setLoadingNotion] = useState(false)
   const [error, setError] = useState('')
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     createClient()
@@ -52,6 +52,7 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (isPending) return
     setError('')
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
@@ -145,6 +146,7 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
               { name: 'staging_url', label: 'Staging URL' },
               { name: 'live_url', label: 'Live URL' },
               { name: 'notion_url', label: 'Notion URL' },
+              { name: 'google_drive_url', label: 'Google Drive Folder' },
             ].map((field) => (
               <div key={field.name} style={{ marginBottom: '12px' }}>
                 <label style={{ ...labelStyle, color: '#555555' }}>{field.label}</label>
@@ -160,11 +162,11 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
           )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #1a1a1a', color: '#999999', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
+            <button type="button" onClick={onClose} disabled={isPending} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #1a1a1a', color: '#999999', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.5 : 1 }}>
               CANCEL
             </button>
-            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
-              CREATE PROJECT
+            <button type="submit" disabled={isPending} style={{ flex: 2, padding: '14px', backgroundColor: '#BDD630', color: '#080808', border: 'none', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.7 : 1 }}>
+              {isPending ? 'CREATING...' : 'CREATE PROJECT'}
             </button>
           </div>
         </form>

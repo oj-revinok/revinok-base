@@ -39,6 +39,7 @@ interface Project {
   live_url: string | null
   notion_url: string | null
   notion_project_id: string | null
+  google_drive_url?: string | null
   clients?: { id: string; name: string; brand_name: string | null } | null
 }
 
@@ -87,6 +88,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
       staging_url: (fd.get('staging_url') as string) || null,
       live_url: (fd.get('live_url') as string) || null,
       notion_url: (fd.get('notion_url') as string) || null,
+      google_drive_url: (fd.get('google_drive_url') as string) || null,
     }
 
     startTransition(async () => {
@@ -181,6 +183,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
               { name: 'staging_url', label: 'Staging URL', value: project.staging_url },
               { name: 'live_url', label: 'Live URL', value: project.live_url },
               { name: 'notion_url', label: 'Notion URL', value: project.notion_url },
+              { name: 'google_drive_url', label: 'Google Drive Folder', value: project.google_drive_url ?? null },
             ].map((field) => (
               <div key={field.name} style={{ marginBottom: '12px' }}>
                 <label style={{ ...labelStyle, color: '#555555' }}>{field.label}</label>

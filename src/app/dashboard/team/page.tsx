@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, NotionPerson } from '@/lib/actions/team'
+import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
 
 interface TeamMember {
   id: string
@@ -40,7 +40,7 @@ export default function TeamPage() {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
-  const [notionPersons, setNotionPersons] = useState<NotionPerson[]>([])
+  const [notionPersons, setNotionPersons] = useState<(NotionPerson | NotionTeamPerson)[]>([])
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('designer')
@@ -82,7 +82,11 @@ export default function TeamPage() {
       setLoading(false)
 
       // Load Notion persons for the picker (non-blocking)
-      getNotionPersons().then(setNotionPersons).catch(() => {})
+      // Use Team DB members (these IDs match the relation IDs in Notion tasks)
+      getNotionTeamPersonsFromDB().then(setNotionPersons).catch(() => {
+        // Fall back to workspace users if Team DB fetch fails
+        getNotionPersons().then(setNotionPersons).catch(() => {})
+      })
     }
     load()
   }, [])
