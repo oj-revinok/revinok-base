@@ -6,6 +6,24 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-03-31] — 43aa809
+
+### Fixed
+- **Unread badge not clearing** — incoming messages in the open conversation are now marked as read immediately; conversations refresh on UPDATE events; `router.refresh()` syncs nav badge
+- **Typing indicator false positives** — typing state now only broadcasts `typing: true` when input has at least one character; stops immediately on send or when input is cleared; uses stable channel ref instead of creating new channels per keystroke
+- **Push notifications not firing** — moved notification listener from MessagesView (only mounted on messages page) to a global `NotificationListener` component in DashboardShell; fires browser notifications on any page when tab is unfocused, plus in-app toast when on a different page
+- **Read receipts inconsistent** — `markMessagesAsRead` now uses the regular Supabase client (with RLS fallback to admin) so UPDATE events propagate through Realtime to the sender's subscription; set `REPLICA IDENTITY FULL` on messages table so UPDATE events include all columns
+
+### Changed
+- Send button styled uppercase bold (`SEND`, fontWeight 800, letterSpacing 0.5px)
+- `markMessagesAsRead` now calls `revalidatePath` to bust server cache after marking
+
+### SQL Migrations Applied
+- `DROP/CREATE POLICY "Users can mark received messages as read"` — ensures UPDATE policy exists for regular client
+- `ALTER TABLE messages REPLICA IDENTITY FULL` — enables full row data in Realtime UPDATE events
+
+---
+
 ## [2026-03-31] — 75621e4
 
 ### Added
