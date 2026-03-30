@@ -6,7 +6,20 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
-## [2026-03-31] — (read receipts)
+## [2026-03-31] — 5d10a78
+
+### Fixed
+- **Conversations disappearing** — RLS SELECT policy on messages had `deleted_at IS NULL` filter, hiding soft-deleted messages from all queries; when all messages in a conversation were deleted, the conversation vanished entirely
+- Switched `getConversations`, `getMessages`, and layout unread count to use admin client (bypasses RLS)
+- Nav unread badge now updates immediately when opening a conversation (`router.refresh()` triggers layout re-render)
+
+### Changed
+- RLS SELECT policy on messages no longer filters by `deleted_at` — app layer handles deleted state with "This message was deleted" UI
+- SQL migration `20260331_fix_messages_rls_select.sql` applied to production
+
+---
+
+## [2026-03-31] — a21ca2f (read receipts)
 
 ### Added
 - Read receipts for messages — sent messages show "Read" label in accent color when receiver opens the conversation
