@@ -131,7 +131,10 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
     <aside className="desktop-sidebar">
       <div style={{ padding: '0 24px', marginBottom: '48px' }}>
         <img
-          src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
+          src={theme === 'dark'
+            ? 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png'
+            : 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69ca4814d84779b1aa924829_output-onlinepngtools%20(2).png'
+          }
           alt="Revinok"
           style={{ height: '40px', width: 'auto' }}
         />

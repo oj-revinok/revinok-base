@@ -235,7 +235,7 @@ export default function TeamPage() {
             color: theme === 'dark' ? '#080808' : '#000000',
             border: 'none',
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: 700,
             borderRadius: 10000,
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -332,13 +332,13 @@ export default function TeamPage() {
                             <button
                               onClick={() => handleSaveMember(member.id)}
                               disabled={saving}
-                              style={{ padding: '6px 14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: saving ? 0.7 : 1 }}
+                              style={{ padding: '6px 14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: saving ? 0.7 : 1 }}
                             >
                               {saving ? '...' : 'SAVE'}
                             </button>
                             <button
                               onClick={cancelEditing}
-                              style={{ padding: '6px 14px', backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                              style={{ padding: '6px 14px', backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
                             >
                               CANCEL
                             </button>
@@ -347,14 +347,14 @@ export default function TeamPage() {
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                             <button
                               onClick={() => startEditing(member)}
-                              style={{ padding: '6px 14px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                              style={{ padding: '6px 14px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
                             >
                               EDIT
                             </button>
                             {isAdmin && (
                               <button
                                 onClick={() => openPasswordPanel(member)}
-                                style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                                style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
                                 title="Reset password"
                               >
                                 PW
@@ -428,13 +428,13 @@ export default function TeamPage() {
                         <button
                           onClick={() => handleSaveMember(member.id)}
                           disabled={saving}
-                          style={{ flex: 1, padding: '12px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: saving ? 0.7 : 1, minHeight: '44px' }}
+                          style={{ flex: 1, padding: '12px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: saving ? 0.7 : 1, minHeight: '44px' }}
                         >
                           {saving ? 'SAVING...' : 'SAVE'}
                         </button>
                         <button
                           onClick={cancelEditing}
-                          style={{ flex: 1, padding: '12px', backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '44px' }}
+                          style={{ flex: 1, padding: '12px', backgroundColor: 'transparent', color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '44px' }}
                         >
                           CANCEL
                         </button>
@@ -462,14 +462,14 @@ export default function TeamPage() {
                         {isAdmin && (
                           <button
                             onClick={() => openPasswordPanel(member)}
-                            style={{ padding: '8px 14px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
+                            style={{ padding: '8px 14px', backgroundColor: 'transparent', color: '#4a9eff', border: '1px solid #1a3a5c', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
                           >
                             PW
                           </button>
                         )}
                         <button
                           onClick={() => startEditing(member)}
-                          style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
+                          style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px' }}
                         >
                           EDIT
                         </button>
@@ -504,7 +504,7 @@ export default function TeamPage() {
                 <p style={{ fontSize: '32px', margin: '0 0 16px 0' }}>✅</p>
                 <p style={{ color: '#4ade80', fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0' }}>Invite sent!</p>
                 <p style={{ color: colors.textSecondary, fontSize: '13px', margin: '0 0 24px 0' }}>{inviteSuccess}</p>
-                <button onClick={closeModal} style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '44px' }}>
+                <button onClick={closeModal} style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '44px' }}>
                   DONE
                 </button>
               </div>
@@ -554,10 +554,10 @@ export default function TeamPage() {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <button type="button" onClick={closeModal} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
+                  <button type="button" onClick={closeModal} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}>
                     CANCEL
                   </button>
-                  <button type="submit" disabled={inviting} style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: inviting ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: inviting ? 0.7 : 1, minHeight: '48px' }}>
+                  <button type="submit" disabled={inviting} style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: inviting ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: inviting ? 0.7 : 1, minHeight: '48px' }}>
                     {inviting ? 'SENDING...' : 'SEND INVITE'}
                   </button>
                 </div>
@@ -602,7 +602,7 @@ export default function TeamPage() {
                   setPwSuccess('')
                   setPwError('')
                 }}
-                style={{ width: '100%', padding: '10px', backgroundColor: colors.bgTertiary, color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', marginBottom: '20px' }}
+                style={{ width: '100%', padding: '10px', backgroundColor: colors.bgTertiary, color: colors.textSecondary, border: `1px solid ${colors.bgHover}`, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', marginBottom: '20px' }}
               >
                 GENERATE NEW PASSWORD
               </button>
@@ -620,7 +620,7 @@ export default function TeamPage() {
                 <button
                   type="button"
                   onClick={closePasswordPanel}
-                  style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}
+                  style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px' }}
                 >
                   CANCEL
                 </button>
@@ -628,7 +628,7 @@ export default function TeamPage() {
                   type="button"
                   onClick={() => handleResetPassword(pwMemberId)}
                   disabled={pwSaving || !pwValue.trim()}
-                  style={{ flex: 2, padding: '14px', backgroundColor: '#4a9eff', color: '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: (pwSaving || !pwValue.trim()) ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: (pwSaving || !pwValue.trim()) ? 0.6 : 1, minHeight: '48px' }}
+                  style={{ flex: 2, padding: '14px', backgroundColor: '#4a9eff', color: '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: (pwSaving || !pwValue.trim()) ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: (pwSaving || !pwValue.trim()) ? 0.6 : 1, minHeight: '48px' }}
                 >
                   {pwSaving ? 'SAVING...' : 'RESET PASSWORD'}
                 </button>

@@ -186,7 +186,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           </p>
           <button
             onClick={onClose}
-            style={{ padding: '14px 32px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}
+            style={{ padding: '14px 32px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}
           >
             DONE
           </button>
@@ -309,7 +309,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={() => setStep('checklist')}
-              style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`, color: colors.textMuted, fontSize: '11px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+              style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`, color: colors.textMuted, fontSize: '11px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
             >
               BACK
             </button>
@@ -319,7 +319,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
               style={{
                 flex: 2, padding: '14px', backgroundColor: selectedReviewerId ? colors.accent : colors.bgTertiary,
                 color: selectedReviewerId ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textMuted, border: 'none',
-                fontSize: '11px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                fontSize: '11px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                 cursor: selectedReviewerId ? 'pointer' : 'not-allowed', fontFamily: 'Montserrat, sans-serif',
                 opacity: sending ? 0.7 : 1,
               }}
@@ -356,7 +356,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <button
             onClick={() => setStep('send')}
             style={{
-              padding: '6px 16px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', borderRadius: 10000,
+              padding: '6px 16px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', borderRadius: 10000,
               letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
               backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff',
               fontFamily: 'Montserrat, sans-serif',
@@ -367,7 +367,7 @@ export default function LaunchChecklist({ projectId, projectName, currentUserNam
           <button
             onClick={onClose}
             style={{
-              padding: '6px 14px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', borderRadius: 10000,
+              padding: '6px 14px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', borderRadius: 10000,
               letterSpacing: '0.1em', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
               color: colors.textMuted, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
             }}

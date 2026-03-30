@@ -91,7 +91,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
         {canCreate && (
           <button
             onClick={() => setShowCreateModal(true)}
-            style={{ padding: '10px 16px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap', height: '40px', borderRadius: 10000 }}
+            style={{ padding: '10px 16px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap', height: '40px', borderRadius: 10000 }}
           >
             + NEW PROJECT
           </button>
@@ -135,7 +135,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                 style={{ textDecoration: 'none', display: 'block' }}
               >
                 <div
-                  style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s ease', height: '100%', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box' }}
+                  style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`, padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s ease', height: '100%', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box', borderRadius: 16 }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = colors.borderLight }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = colors.border }}
                 >

@@ -155,7 +155,7 @@ export default function FeedbackButton({ userName, userId }: FeedbackButtonProps
                   background: colors.accent,
                   color: '#080808',
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontFamily: 'Montserrat, sans-serif',
                   cursor: !comment.trim() || sending ? 'not-allowed' : 'pointer',
                   opacity: !comment.trim() || sending ? 0.5 : 1,

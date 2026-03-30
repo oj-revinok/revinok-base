@@ -86,6 +86,7 @@ export default function LoginPage() {
                 fontSize: '14px',
                 fontFamily: 'Montserrat, sans-serif',
                 boxSizing: 'border-box',
+                borderRadius: 12,
               }}
               disabled={loading}
             />
@@ -120,6 +121,7 @@ export default function LoginPage() {
                   fontSize: '14px',
                   fontFamily: 'Montserrat, sans-serif',
                   boxSizing: 'border-box',
+                  borderRadius: 12,
                 }}
                 disabled={loading}
               />

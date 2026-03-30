@@ -32,7 +32,7 @@ const btnBase: CSSProperties = {
   borderRadius: 10000,
   fontFamily: 'Montserrat, sans-serif',
   fontSize: 13,
-  fontWeight: 600,
+  fontWeight: 700,
   cursor: 'pointer',
   transition: 'all 0.15s ease',
   textDecoration: 'none',

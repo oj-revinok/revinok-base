@@ -26,6 +26,7 @@ const createStyles = (colors: any) => ({
     fontSize: '14px',
     fontFamily: 'Montserrat, sans-serif',
     boxSizing: 'border-box',
+    borderRadius: 12,
   } as React.CSSProperties,
 })
 
@@ -204,10 +205,10 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
           )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.bgTertiary}`, color: colors.textSecondary, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.bgTertiary}`, color: colors.textSecondary, fontSize: 13, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
               CANCEL
             </button>
-            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: colors.bg, border: 'none', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
+            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: colors.bg, border: 'none', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', borderRadius: 10000 }}>
               SAVE CHANGES
             </button>
           </div>

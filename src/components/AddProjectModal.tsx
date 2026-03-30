@@ -26,6 +26,7 @@ const getInputStyle = (bgSecondary: string, border: string, text: string): React
   fontSize: '14px',
   fontFamily: 'Montserrat, sans-serif',
   boxSizing: 'border-box',
+  borderRadius: 12,
 })
 
 export default function AddProjectModal({ onClose }: { onClose: () => void }) {
@@ -76,7 +77,7 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text, textTransform: 'uppercase' }}>NEW PROJECT</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10000, fontWeight: 600 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10000, fontWeight: 700 }}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -164,10 +165,10 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
           )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={onClose} disabled={isPending} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.5 : 1, borderRadius: 10000 }}>
+            <button type="button" onClick={onClose} disabled={isPending} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, color: colors.textSecondary, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.5 : 1, borderRadius: 10000 }}>
               CANCEL
             </button>
-            <button type="submit" disabled={isPending} style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.7 : 1, borderRadius: 10000 }}>
+            <button type="submit" disabled={isPending} style={{ flex: 2, padding: '14px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: isPending ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '48px', opacity: isPending ? 0.7 : 1, borderRadius: 10000 }}>
               {isPending ? 'CREATING...' : 'CREATE PROJECT'}
             </button>
           </div>

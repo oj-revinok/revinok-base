@@ -254,7 +254,7 @@ export default function ProjectDetail({
               onClick={() => setShowLaunchChecklist(true)}
               style={{
                 padding: '3px 12px', backgroundColor: colors.accent, border: 'none',
-                color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
@@ -267,7 +267,7 @@ export default function ProjectDetail({
               onClick={() => setShowShareModal(true)}
               style={{
                 padding: '3px 12px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
-                color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                color: colors.textSecondary, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
@@ -280,7 +280,7 @@ export default function ProjectDetail({
               onClick={() => setShowEditModal(true)}
               style={{
                 padding: '3px 12px', backgroundColor: 'transparent', border: `1px solid ${colors.borderLight}`,
-                color: colors.textSecondary, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                color: colors.textSecondary, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '28px', borderRadius: 10000
               }}
             >
@@ -298,7 +298,7 @@ export default function ProjectDetail({
               disabled={statusSaving}
               style={{
                 padding: '3px 28px 3px 10px', backgroundColor: STATUS_COLORS[project.status] || colors.textMuted,
-                color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase',
+                color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                 appearance: 'none', WebkitAppearance: 'none',
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='${theme === 'dark' ? '%23080808' : '%23ffffff'}'/%3E%3C/svg%3E")`,
@@ -317,7 +317,7 @@ export default function ProjectDetail({
         {!canEdit && (
           <span style={{
             padding: '3px 10px', backgroundColor: STATUS_COLORS[project.status] || colors.textMuted,
-            color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: 10000
+            color: theme === 'dark' ? '#080808' : '#ffffff', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', borderRadius: 10000
           }}>
             {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
           </span>
@@ -381,13 +381,13 @@ export default function ProjectDetail({
               {editingDesc && canEdit ? (
                 <div>
                   <textarea value={descDraft} onChange={e => setDescDraft(e.target.value)} rows={4} autoFocus
-                    style={{ width: '100%', padding: '12px', backgroundColor: colors.bgTertiary, border: `1px solid ${colors.borderLight}`, color: colors.text, fontSize: '13px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', lineHeight: '1.6', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px', backgroundColor: colors.bgTertiary, border: `1px solid ${colors.borderLight}`, color: colors.text, fontSize: '13px', fontFamily: 'Montserrat, sans-serif', resize: 'vertical', lineHeight: '1.6', boxSizing: 'border-box', borderRadius: 12 }}
                   />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                    <button onClick={handleSaveDesc} disabled={savingDesc} style={{ padding: '8px 16px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}>
+                    <button onClick={handleSaveDesc} disabled={savingDesc} style={{ padding: '8px 16px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000, height: 40 }}>
                       {savingDesc ? 'Saving…' : 'Save'}
                     </button>
-                    <button onClick={() => { setEditingDesc(false); setDescDraft(project.description || '') }} style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.borderLight}`, fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}>
+                    <button onClick={() => { setEditingDesc(false); setDescDraft(project.description || '') }} style={{ padding: '8px 16px', backgroundColor: 'transparent', color: colors.textMuted, border: `1px solid ${colors.borderLight}`, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000, height: 40 }}>
                       Cancel
                     </button>
                   </div>

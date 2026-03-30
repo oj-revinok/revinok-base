@@ -144,7 +144,7 @@ export default function NotificationsPage() {
             style={{
               padding: '8px 18px', backgroundColor: 'transparent',
               border: `1px solid ${colors.bgHover}`, color: colors.textSecondary,
-              fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+              fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
               letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
               transition: 'border-color 0.15s, color 0.15s',
             }}
@@ -245,7 +245,7 @@ export default function NotificationsPage() {
                         style={{
                           padding: '6px 14px', backgroundColor: 'transparent',
                           border: '1px solid #4a9eff', color: '#4a9eff',
-                          fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                          fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                           letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                         }}
                       >
@@ -267,7 +267,7 @@ export default function NotificationsPage() {
                         style={{
                           padding: '6px 14px', backgroundColor: 'transparent',
                           border: '1px solid #a78bfa', color: '#a78bfa',
-                          fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                          fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                           letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                         }}
                       >
@@ -335,7 +335,7 @@ export default function NotificationsPage() {
                   onClick={() => { setActiveReview(null); setActionDone(null) }}
                   style={{
                     padding: '12px 32px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000',
-                    border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                    border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                     letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                   }}
                 >
@@ -475,7 +475,7 @@ export default function NotificationsPage() {
                             flex: 1, padding: '13px', backgroundColor: 'transparent',
                             border: `1px solid ${declineMsg.trim() ? '#ef4444' : colors.bgHover}`,
                             color: declineMsg.trim() ? '#ef4444' : colors.borderLight,
-                            fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                            fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                             letterSpacing: '0.5px', cursor: declineMsg.trim() ? 'pointer' : 'not-allowed',
                             fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.6 : 1,
                             transition: 'border-color 0.15s, color 0.15s',
@@ -488,7 +488,7 @@ export default function NotificationsPage() {
                           disabled={actionPending}
                           style={{
                             flex: 2, padding: '13px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000',
-                            border: 'none', fontSize: '13px', fontWeight: 600, borderRadius: 10000, textTransform: 'uppercase',
+                            border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
                             letterSpacing: '0.5px', cursor: 'pointer',
                             fontFamily: 'Montserrat, sans-serif', opacity: actionPending ? 0.7 : 1,
                           }}

@@ -234,7 +234,7 @@ export default function NotesPage() {
                 width: '30px', height: '30px', backgroundColor: colors.accent, borderRadius: 10000,
                 border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: creating ? 0.6 : 1, flexShrink: 0, fontSize: 13, fontWeight: 600, fontFamily: 'Montserrat, sans-serif',
+                opacity: creating ? 0.6 : 1, flexShrink: 0, fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
               }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -578,7 +578,7 @@ export default function NotesPage() {
               </div>
               <button
                 onClick={() => setShareModalOpen(false)}
-                style={{ background: 'none', border: `1px solid ${colors.bgHover}`, color: colors.textSecondary, cursor: 'pointer', padding: '6px 10px', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000 }}
+                style={{ background: 'none', border: `1px solid ${colors.bgHover}`, color: colors.textSecondary, cursor: 'pointer', padding: '6px 10px', fontFamily: 'Montserrat, sans-serif', borderRadius: 10000, fontWeight: 700 }}
               >
                 ✕
               </button>
@@ -621,7 +621,7 @@ export default function NotesPage() {
                           style={{
                             padding: '4px 8px', fontSize: '11px', backgroundColor: 'transparent',
                             border: `1px solid ${colors.bgTertiary}`, color: colors.textMuted, cursor: 'pointer',
-                            opacity: sharing === share.id ? 0.5 : 1, borderRadius: 10000,
+                            opacity: sharing === share.id ? 0.5 : 1, borderRadius: 10000, fontWeight: 700,
                           }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = colors.bgTertiary; e.currentTarget.style.color = colors.textMuted }}

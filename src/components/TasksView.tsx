@@ -110,7 +110,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
           style={{
             flex: 1, minWidth: '200px', padding: '8px 14px', backgroundColor: colors.bg,
             border: `1px solid ${colors.bgSecondary}`, color: colors.text, fontSize: '13px',
-            fontFamily: 'Montserrat, sans-serif', outline: 'none',
+            fontFamily: 'Montserrat, sans-serif', outline: 'none', borderRadius: 12,
           }}
         />
         {/* View toggle — available to all users */}
@@ -382,7 +382,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
                 width: '100%', backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border}`,
                 color: colors.text, fontSize: '13px', padding: '10px 12px',
                 fontFamily: 'Montserrat, sans-serif', resize: 'none',
-                display: 'block', boxSizing: 'border-box', lineHeight: 1.5,
+                display: 'block', boxSizing: 'border-box', lineHeight: 1.5, borderRadius: 12,
               }}
             />
             <button
@@ -392,9 +392,9 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
                 marginTop: '8px', padding: '8px 18px',
                 backgroundColor: newComment.trim() ? colors.accent : colors.bgTertiary,
                 color: newComment.trim() ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textMuted,
-                border: 'none', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                border: 'none', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.5px', cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                fontFamily: 'Montserrat, sans-serif', opacity: isPending ? 0.7 : 1, borderRadius: 10000,
+                fontFamily: 'Montserrat, sans-serif', opacity: isPending ? 0.7 : 1, borderRadius: 10000, height: 40,
               }}
             >
               {isPending ? 'Posting…' : 'POST COMMENT'}
@@ -506,7 +506,7 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
         display: 'block', width: '100%', textAlign: 'left',
         padding: '12px', backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
         cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-        transition: 'border-color 0.15s', borderRadius: 10000,
+        transition: 'border-color 0.15s', borderRadius: 16,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.borderLight }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border }}

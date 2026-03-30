@@ -157,6 +157,24 @@ export default function ProjectFiles({
     }
   }
 
+  // Helper to get file extension
+  function getFileExtension(filename: string): string {
+    return filename.split('.').pop()?.toLowerCase() || ''
+  }
+
+  // Helper to check if file is an image
+  function isImageFile(filename: string, mimeType: string | null): boolean {
+    const ext = getFileExtension(filename)
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+    return imageExts.includes(ext) || (mimeType?.startsWith('image/') ?? false)
+  }
+
+  // Helper to check if file is a PDF
+  function isPdfFile(filename: string, mimeType: string | null): boolean {
+    const ext = getFileExtension(filename)
+    return ext === 'pdf' || mimeType === 'application/pdf'
+  }
+
   return (
     <div>
       {/* Upload */}
@@ -177,7 +195,7 @@ export default function ProjectFiles({
           backgroundColor: uploading ? colors.bgTertiary : 'transparent',
           color: uploading ? colors.textMuted : colors.accent,
           border: '1px solid', borderColor: uploading ? colors.bgTertiary : colors.accent,
-          fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' as const,
+          fontSize: '13px', fontWeight: 700, textTransform: 'uppercase' as const,
           letterSpacing: '0.5px', cursor: uploading ? 'not-allowed' : 'pointer',
           fontFamily: 'Montserrat, sans-serif', minHeight: '44px', borderRadius: 10000,
           marginBottom: uploading ? '0' : '16px', transition: 'all 0.15s ease',
@@ -210,73 +228,142 @@ export default function ProjectFiles({
         <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No files yet. Upload a PDF, image, or doc.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {files.map((file) => (
-            <div
-              key={file.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                padding: '12px 14px', backgroundColor: colors.bgSecondary,
-                border: `1px solid ${colors.border}`, minHeight: '52px',
-              }}
-            >
-              <FileTypeTag mimeType={file.is_launch_checklist ? 'checklist' : file.file_type} />
+          {files.map((file) => {
+            const hasImagePreview = isImageFile(file.name, file.file_type)
+            const hasPdfPreview = isPdfFile(file.name, file.file_type)
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {file.is_launch_checklist ? (
-                  <button
-                    onClick={() => handleChecklistClick(file)}
-                    disabled={loadingChecklist === file.id}
-                    style={{
-                      display: 'block', width: '100%', textAlign: 'left',
-                      background: 'none', border: 'none', padding: 0,
-                      color: colors.accent, fontSize: '13px', fontWeight: 600,
-                      cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {loadingChecklist === file.id ? 'Loading…' : file.name}
-                  </button>
-                ) : (
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'block', color: colors.text, fontSize: '13px', fontWeight: 600,
-                      textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {file.name}
-                  </a>
+            return (
+              <div
+                key={file.id}
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: '12px',
+                  padding: '12px 14px', backgroundColor: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                }}
+              >
+                {/* Preview section for images and PDFs */}
+                {hasImagePreview && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <img
+                        src={file.url}
+                        alt={file.name}
+                        style={{
+                          maxWidth: '200px',
+                          maxHeight: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '12px',
+                          border: `1px solid ${colors.border}`,
+                          cursor: 'pointer',
+                          transition: 'opacity 0.2s',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.8' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '1' }}
+                      />
+                    </a>
+                  </div>
                 )}
-                <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: colors.textMuted }}>
-                  {file.size_bytes ? formatBytes(file.size_bytes) : '—'}
-                  {' · '}
-                  {new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  {file.is_launch_checklist && <span style={{ color: colors.accent, marginLeft: '6px', fontWeight: 700 }}>Go-Live Checklist</span>}
-                </p>
-              </div>
 
-              {canDelete && (
-                <button
-                  onClick={() => onDelete ? onDelete(file.id) : handleDelete(file)}
-                  disabled={deletingId === file.id}
-                  style={{
-                    background: 'none', border: 'none', color: colors.borderLight, fontSize: '16px',
-                    cursor: 'pointer', padding: '8px', minHeight: '44px', minWidth: '44px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
-                    transition: 'color 0.15s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = colors.borderLight }}
-                  title="Delete file"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
+                {hasPdfPreview && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '80px', height: '100px', flexShrink: 0,
+                      backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`,
+                      borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexDirection: 'column', gap: '4px',
+                    }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="1.8">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span style={{ fontSize: '8px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase' }}>PDF</span>
+                    </div>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block', padding: '8px 12px',
+                        backgroundColor: colors.bgTertiary, border: `1px solid ${colors.border}`,
+                        borderRadius: '8px', color: colors.accent, textDecoration: 'none',
+                        fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = colors.bgHover }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = colors.bgTertiary }}
+                    >
+                      Preview
+                    </a>
+                  </div>
+                )}
+
+                {/* File info and controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <FileTypeTag mimeType={file.is_launch_checklist ? 'checklist' : file.file_type} />
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {file.is_launch_checklist ? (
+                      <button
+                        onClick={() => handleChecklistClick(file)}
+                        disabled={loadingChecklist === file.id}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          background: 'none', border: 'none', padding: 0,
+                          color: colors.accent, fontSize: '13px', fontWeight: 700,
+                          cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {loadingChecklist === file.id ? 'Loading…' : file.name}
+                      </button>
+                    ) : (
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'block', color: colors.text, fontSize: '13px', fontWeight: 600,
+                          textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {file.name}
+                      </a>
+                    )}
+                    <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: colors.textMuted }}>
+                      {file.size_bytes ? formatBytes(file.size_bytes) : '—'}
+                      {' · '}
+                      {new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {file.is_launch_checklist && <span style={{ color: colors.accent, marginLeft: '6px', fontWeight: 700 }}>Go-Live Checklist</span>}
+                    </p>
+                  </div>
+
+                  {canDelete && (
+                    <button
+                      onClick={() => onDelete ? onDelete(file.id) : handleDelete(file)}
+                      disabled={deletingId === file.id}
+                      style={{
+                        background: 'none', border: 'none', color: colors.borderLight, fontSize: '16px',
+                        cursor: 'pointer', padding: '8px', minHeight: '44px', minWidth: '44px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, fontFamily: 'Montserrat, sans-serif',
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = colors.borderLight }}
+                      title="Delete file"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -360,7 +447,7 @@ function ChecklistViewModal({
             style={{
               background: 'none', border: `1px solid ${colors.bgHover}`, color: colors.textMuted,
               fontSize: '14px', cursor: 'pointer', padding: '6px 10px', lineHeight: 1,
-              fontFamily: 'Montserrat, sans-serif', flexShrink: 0, borderRadius: 10000, fontWeight: 600,
+              fontFamily: 'Montserrat, sans-serif', flexShrink: 0, borderRadius: 10000, fontWeight: 700,
             }}
           >
             ✕

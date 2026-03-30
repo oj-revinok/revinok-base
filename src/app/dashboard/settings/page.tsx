@@ -63,6 +63,7 @@ export default function SettingsPage() {
   // Sync interval state
   const [syncInterval, setSyncInterval] = useState('1')
   const [savingSyncInterval, setSavingSyncInterval] = useState(false)
+  const [notionOpen, setNotionOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -243,47 +244,101 @@ export default function SettingsPage() {
               </form>
             </div>
 
-            {/* Notion Sync Interval */}
-            <div style={getCardStyle(colors)}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION SYNC</h2>
-                <span className="tag" style={{ padding: '2px 8px', backgroundColor: colors.bgTertiary, color: colors.accent, fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
-              </div>
-              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: colors.textSecondary, lineHeight: 1.5 }}>
-                How often the Tasks page pulls fresh data from Notion. Lower intervals mean more up-to-date tasks but slightly more API usage.
-              </p>
-
-              <form onSubmit={handleSaveSyncInterval}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={getLabelStyle(colors)}>SYNC INTERVAL</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
-                    {SYNC_INTERVALS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setSyncInterval(opt.value)}
-                        style={{
-                          padding: '12px 16px', borderRadius: 10000,
-                          backgroundColor: syncInterval === opt.value ? colors.accent : colors.bgSecondary,
-                          color: syncInterval === opt.value ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textSecondary,
-                          border: syncInterval === opt.value ? `1px solid ${colors.accent}` : `1px solid ${colors.bgTertiary}`,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.3px',
-                          cursor: 'pointer',
-                          fontFamily: 'Montserrat, sans-serif',
-                          textAlign: 'left',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
+            {/* Notion Sync Interval - Collapsible */}
+            <div style={{ backgroundColor: colors.bgSecondary, border: `1px solid ${colors.border || colors.bgTertiary}`, borderRadius: 16, overflow: 'hidden' }}>
+              {/* Header - Always visible */}
+              <button
+                type="button"
+                onClick={() => setNotionOpen(!notionOpen)}
+                style={{
+                  width: '100%',
+                  padding: '16px 20px',
+                  backgroundColor: colors.bgSecondary,
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.bgTertiary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.bgSecondary
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>NOTION SYNC</h2>
+                  <span className="tag" style={{ padding: '2px 8px', backgroundColor: colors.bgTertiary, color: colors.accent, fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMIN ONLY</span>
                 </div>
-                <SaveButton loading={savingSyncInterval} label="SAVE SYNC INTERVAL" colors={colors} theme={theme} />
-              </form>
+                {/* Chevron Arrow */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={colors.text}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    transform: notionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              {/* Content - Collapsible */}
+              <div
+                style={{
+                  maxHeight: notionOpen ? '1000px' : '0',
+                  overflow: 'hidden',
+                  transition: 'max-height 0.3s ease',
+                }}
+              >
+                <div style={{ padding: '0 20px 20px 20px', borderTop: `1px solid ${colors.border || colors.bgTertiary}` }}>
+                  <p style={{ margin: '16px 0 20px 0', fontSize: '12px', color: colors.textSecondary, lineHeight: 1.5 }}>
+                    How often the Tasks page pulls fresh data from Notion. Lower intervals mean more up-to-date tasks but slightly more API usage.
+                  </p>
+
+                  <form onSubmit={handleSaveSyncInterval}>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={getLabelStyle(colors)}>SYNC INTERVAL</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
+                        {SYNC_INTERVALS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setSyncInterval(opt.value)}
+                            style={{
+                              padding: '12px 16px', borderRadius: 10000,
+                              backgroundColor: syncInterval === opt.value ? colors.accent : colors.bgSecondary,
+                              color: syncInterval === opt.value ? (theme === 'dark' ? '#080808' : '#ffffff') : colors.textSecondary,
+                              border: syncInterval === opt.value ? `1px solid ${colors.accent}` : `1px solid ${colors.bgTertiary}`,
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              cursor: 'pointer',
+                              fontFamily: 'Montserrat, sans-serif',
+                              textAlign: 'left',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <SaveButton loading={savingSyncInterval} label="SAVE SYNC INTERVAL" colors={colors} theme={theme} />
+                  </form>
+                </div>
+              </div>
             </div>
           </>
         )}
@@ -297,7 +352,7 @@ function SaveButton({ loading, label, colors, theme }: { loading: boolean; label
     <button
       type="submit"
       disabled={loading}
-      style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: loading ? 0.7 : 1, borderRadius: 10000 }}
+      style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff', border: 'none', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: loading ? 0.7 : 1, borderRadius: 10000 }}
     >
       {loading ? 'SAVING...' : label}
     </button>

@@ -127,7 +127,7 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
                         disabled={removing === m.profile_id}
                         style={{
                           background: 'none', border: `1px solid ${colors.borderLight}`, color: colors.textSecondary,
-                          cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                          cursor: 'pointer', fontSize: 13, fontWeight: 700,
                           textTransform: 'uppercase', padding: '4px 10px', flexShrink: 0,
                           fontFamily: 'Montserrat, sans-serif',
                           borderRadius: 10000,
@@ -176,7 +176,7 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
                           background: adding === m.id ? colors.bgHover : colors.accent,
                           border: 'none',
                           color: adding === m.id ? colors.textMuted : colors.bg,
-                          cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                          cursor: 'pointer', fontSize: 13, fontWeight: 700,
                           textTransform: 'uppercase', padding: '4px 12px', flexShrink: 0,
                           fontFamily: 'Montserrat, sans-serif',
                           borderRadius: 10000,
