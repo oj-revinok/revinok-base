@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
+import { useToast } from './Toast'
 import { createClient } from '@/lib/supabase/client'
 import {
   getMessages,
@@ -52,6 +53,7 @@ export default function MessagesView({
 }: MessagesViewProps) {
   const { colors, theme } = useTheme()
   const router = useRouter()
+  const { showToast } = useToast()
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -61,9 +63,13 @@ export default function MessagesView({
   const [search, setSearch] = useState('')
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [newMessageSearch, setNewMessageSearch] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabaseClient = createClient()
   const deleteTimersRef = useRef<Record<string, NodeJS.Timeout>>({})
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const notificationPermissionRef = useRef(false)
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -71,6 +77,83 @@ export default function MessagesView({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 50)
   }, [])
+
+  // Request browser notification permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        notificationPermissionRef.current = true
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((perm) => {
+          notificationPermissionRef.current = perm === 'granted'
+        })
+      }
+    }
+  }, [])
+
+  // Typing indicator via Supabase Presence
+  useEffect(() => {
+    if (!selectedUserId) return
+
+    const channelName = `typing:${[currentUserId, selectedUserId].sort().join(':')}`
+    const presenceChannel = supabaseClient.channel(channelName)
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState()
+        const isOtherTyping = Object.values(state).some((presences) =>
+          (presences as unknown as { user_id: string; typing: boolean }[]).some(
+            (p) => p.user_id === selectedUserId && p.typing
+          )
+        )
+        setTypingUsers((prev) => ({ ...prev, [selectedUserId]: isOtherTyping }))
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ user_id: currentUserId, typing: false })
+        }
+      })
+
+    return () => {
+      supabaseClient.removeChannel(presenceChannel)
+    }
+  }, [selectedUserId, currentUserId, supabaseClient])
+
+  // Broadcast typing state
+  function handleTyping() {
+    if (!selectedUserId) return
+    const channelName = `typing:${[currentUserId, selectedUserId].sort().join(':')}`
+    const channel = supabaseClient.channel(channelName)
+
+    // Track as typing
+    channel.track({ user_id: currentUserId, typing: true })
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+
+    // Stop typing after 2s of no input
+    typingTimeoutRef.current = setTimeout(() => {
+      channel.track({ user_id: currentUserId, typing: false })
+    }, 2000)
+  }
+
+  // Send browser notification for incoming messages
+  function sendNotification(senderName: string, content: string) {
+    if (!notificationPermissionRef.current) return
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    // Only notify if tab is not focused
+    if (document.hasFocus()) return
+
+    try {
+      new Notification(`${senderName}`, {
+        body: content || 'Sent a file',
+        icon: '/favicon.ico',
+        tag: 'revinok-message',
+      })
+    } catch {
+      // Notification may fail in some environments
+    }
+  }
 
   // Load messages for selected user + mark as read
   useEffect(() => {
@@ -124,6 +207,14 @@ export default function MessagesView({
               return [...prev, newMsg]
             })
             scrollToBottom()
+          }
+          // Send browser notification for messages from others
+          if (newMsg.sender_id !== currentUserId) {
+            const senderProfile = teamMembers.find((m) => m.id === newMsg.sender_id)
+            sendNotification(
+              senderProfile?.full_name || 'New message',
+              newMsg.content || ''
+            )
           }
           // Update conversation list
           refreshConversations()
@@ -221,11 +312,21 @@ export default function MessagesView({
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setMessageInput(content)
+      showToast('Failed to send message. Please try again.', 'error')
     }
     setSending(false)
   }
 
   async function handleDeleteMessage(messageId: string) {
+    // If not yet confirmed, show confirmation
+    if (confirmDeleteId !== messageId) {
+      setConfirmDeleteId(messageId)
+      // Auto-dismiss confirmation after 5s
+      setTimeout(() => setConfirmDeleteId((prev) => prev === messageId ? null : prev), 5000)
+      return
+    }
+    // Confirmed — proceed with delete
+    setConfirmDeleteId(null)
     const ok = await softDeleteMessage(messageId)
     if (ok) {
       setMessages((prev) =>
@@ -235,11 +336,12 @@ export default function MessagesView({
             : m
         )
       )
-      // Clear the delete timer if it exists
       if (deleteTimersRef.current[messageId]) {
         clearTimeout(deleteTimersRef.current[messageId])
         delete deleteTimersRef.current[messageId]
       }
+    } else {
+      showToast('Failed to delete message. Please try again.', 'error')
     }
   }
 
@@ -740,10 +842,7 @@ export default function MessagesView({
                             position: 'relative',
                           }}
                           onContextMenu={(e) => {
-                            if (isOwn && !isDeleted) {
-                              e.preventDefault()
-                              handleDeleteMessage(msg.id)
-                            }
+                            // Disabled right-click delete — use the delete button with confirmation instead
                           }}
                         >
                           {isDeleted ? (
@@ -800,31 +899,67 @@ export default function MessagesView({
                             </span>
                           )}
                           {isOwn && !isDeleted && (
-                            <button
-                              onClick={() => handleDeleteMessage(msg.id)}
-                              title="Delete message"
-                              style={{
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                color: colors.textMuted,
-                                cursor: 'pointer',
-                                fontSize: '10px',
-                                padding: '2px 4px',
-                                fontFamily: 'Montserrat, sans-serif',
-                                opacity: 0.6,
-                                transition: 'opacity 0.2s',
-                              }}
-                              onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.opacity = '1'
-                                ;(e.currentTarget as HTMLButtonElement).style.color = '#ef4444'
-                              }}
-                              onMouseLeave={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'
-                                ;(e.currentTarget as HTMLButtonElement).style.color = colors.textMuted
-                              }}
-                            >
-                              delete
-                            </button>
+                            confirmDeleteId === msg.id ? (
+                              <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                                <button
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  style={{
+                                    backgroundColor: '#ef4444',
+                                    border: 'none',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '10px',
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    fontFamily: 'Montserrat, sans-serif',
+                                    fontWeight: 700,
+                                    transition: 'opacity 0.15s',
+                                  }}
+                                >
+                                  confirm
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  style={{
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    color: colors.textMuted,
+                                    cursor: 'pointer',
+                                    fontSize: '10px',
+                                    padding: '2px 4px',
+                                    fontFamily: 'Montserrat, sans-serif',
+                                  }}
+                                >
+                                  cancel
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                title="Delete message"
+                                style={{
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  color: colors.textMuted,
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                  padding: '2px 4px',
+                                  fontFamily: 'Montserrat, sans-serif',
+                                  opacity: 0.6,
+                                  transition: 'opacity 0.2s',
+                                }}
+                                onMouseEnter={(e) => {
+                                  (e.currentTarget as HTMLButtonElement).style.opacity = '1'
+                                  ;(e.currentTarget as HTMLButtonElement).style.color = '#ef4444'
+                                }}
+                                onMouseLeave={(e) => {
+                                  (e.currentTarget as HTMLButtonElement).style.opacity = '0.6'
+                                  ;(e.currentTarget as HTMLButtonElement).style.color = colors.textMuted
+                                }}
+                              >
+                                delete
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
@@ -834,6 +969,51 @@ export default function MessagesView({
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Typing Indicator */}
+            {selectedUserId && typingUsers[selectedUserId] && (
+              <div
+                style={{
+                  padding: '4px 28px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        backgroundColor: colors.accent,
+                        opacity: 0.7,
+                        animation: `typingDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: colors.textMuted,
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  typing...
+                </span>
+                <style>{`
+                  @keyframes typingDot {
+                    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+                    30% { transform: translateY(-4px); opacity: 1; }
+                  }
+                `}</style>
+              </div>
+            )}
 
             {/* Input Bar */}
             <div
@@ -848,7 +1028,10 @@ export default function MessagesView({
             >
               <input
                 value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
+                onChange={(e) => {
+                  setMessageInput(e.target.value)
+                  handleTyping()
+                }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()

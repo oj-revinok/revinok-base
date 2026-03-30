@@ -2,6 +2,7 @@
 
 import { useTheme } from '@/context/ThemeContext';
 import NavigationLoader from './NavigationLoader';
+import { ToastProvider } from './Toast';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -13,16 +14,18 @@ export default function DashboardShell({ children, userId, userName }: Dashboard
   const { colors } = useTheme();
 
   return (
-    <div
-      style={{
-        backgroundColor: colors.bg,
-        fontFamily: 'Montserrat, sans-serif',
-        minHeight: '100vh',
-        transition: 'background-color 0.2s ease',
-      }}
-    >
-      <NavigationLoader />
-      {children}
-    </div>
+    <ToastProvider>
+      <div
+        style={{
+          backgroundColor: colors.bg,
+          fontFamily: 'Montserrat, sans-serif',
+          minHeight: '100vh',
+          transition: 'background-color 0.2s ease',
+        }}
+      >
+        <NavigationLoader />
+        {children}
+      </div>
+    </ToastProvider>
   );
 }
