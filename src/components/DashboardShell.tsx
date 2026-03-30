@@ -3,6 +3,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import NavigationLoader from './NavigationLoader';
 import { ToastProvider } from './Toast';
+import NotificationListener from './NotificationListener';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export default function DashboardShell({ children, userId, userName }: Dashboard
 
   return (
     <ToastProvider>
+      <NotificationListener currentUserId={userId} currentUserName={userName} />
       <div
         style={{
           backgroundColor: colors.bg,

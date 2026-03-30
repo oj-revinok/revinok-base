@@ -69,7 +69,6 @@ export default function MessagesView({
   const supabaseClient = createClient()
   const deleteTimersRef = useRef<Record<string, NodeJS.Timeout>>({})
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const notificationPermissionRef = useRef(false)
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -78,32 +77,25 @@ export default function MessagesView({
     }, 50)
   }, [])
 
-  // Request browser notification permission on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'granted') {
-        notificationPermissionRef.current = true
-      } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission().then((perm) => {
-          notificationPermissionRef.current = perm === 'granted'
-        })
-      }
-    }
-  }, [])
+  // Note: Browser notification permission is now requested by NotificationListener
+  // in DashboardShell, which handles notifications globally across all pages.
 
   // Typing indicator via Supabase Presence
+  const presenceChannelRef = useRef<ReturnType<typeof supabaseClient.channel> | null>(null)
+
   useEffect(() => {
     if (!selectedUserId) return
 
     const channelName = `typing:${[currentUserId, selectedUserId].sort().join(':')}`
     const presenceChannel = supabaseClient.channel(channelName)
+    presenceChannelRef.current = presenceChannel
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState()
         const isOtherTyping = Object.values(state).some((presences) =>
           (presences as unknown as { user_id: string; typing: boolean }[]).some(
-            (p) => p.user_id === selectedUserId && p.typing
+            (p) => p.user_id === selectedUserId && p.typing === true
           )
         )
         setTypingUsers((prev) => ({ ...prev, [selectedUserId]: isOtherTyping }))
@@ -115,45 +107,38 @@ export default function MessagesView({
       })
 
     return () => {
+      presenceChannelRef.current = null
       supabaseClient.removeChannel(presenceChannel)
     }
   }, [selectedUserId, currentUserId, supabaseClient])
 
-  // Broadcast typing state
-  function handleTyping() {
-    if (!selectedUserId) return
-    const channelName = `typing:${[currentUserId, selectedUserId].sort().join(':')}`
-    const channel = supabaseClient.channel(channelName)
+  // Broadcast typing state — only when there's actual text
+  function handleTyping(inputValue: string) {
+    if (!selectedUserId || !presenceChannelRef.current) return
 
-    // Track as typing
-    channel.track({ user_id: currentUserId, typing: true })
+    const hasText = inputValue.trim().length > 0
 
-    // Clear previous timeout
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    if (hasText) {
+      // Track as typing
+      presenceChannelRef.current.track({ user_id: currentUserId, typing: true })
 
-    // Stop typing after 2s of no input
-    typingTimeoutRef.current = setTimeout(() => {
-      channel.track({ user_id: currentUserId, typing: false })
-    }, 2000)
-  }
+      // Clear previous timeout
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
 
-  // Send browser notification for incoming messages
-  function sendNotification(senderName: string, content: string) {
-    if (!notificationPermissionRef.current) return
-    if (typeof window === 'undefined' || !('Notification' in window)) return
-    // Only notify if tab is not focused
-    if (document.hasFocus()) return
-
-    try {
-      new Notification(`${senderName}`, {
-        body: content || 'Sent a file',
-        icon: '/favicon.ico',
-        tag: 'revinok-message',
-      })
-    } catch {
-      // Notification may fail in some environments
+      // Stop typing after 2s of no input
+      typingTimeoutRef.current = setTimeout(() => {
+        if (presenceChannelRef.current) {
+          presenceChannelRef.current.track({ user_id: currentUserId, typing: false })
+        }
+      }, 2000)
+    } else {
+      // Input is empty — stop typing immediately
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      presenceChannelRef.current.track({ user_id: currentUserId, typing: false })
     }
   }
+
+  // Note: Browser notifications are now handled globally by NotificationListener
 
   // Load messages for selected user + mark as read
   useEffect(() => {
@@ -170,11 +155,18 @@ export default function MessagesView({
       setConversations((prev) =>
         prev.map((c) => c.user.id === selectedUserId ? { ...c, unreadCount: 0 } : c)
       )
-      // Refresh the layout so the nav unread badge updates
+      // Refresh the server layout so the nav unread badge updates
       router.refresh()
     }
     loadMessages()
   }, [selectedUserId, scrollToBottom])
+
+  // When a new incoming message arrives in the currently open conversation, mark it as read immediately
+  const markIncomingAsReadRef = useRef<NodeJS.Timeout | null>(null)
+  const selectedUserIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    selectedUserIdRef.current = selectedUserId
+  }, [selectedUserId])
 
   // Subscribe to real-time updates
   useEffect(() => {
@@ -208,13 +200,13 @@ export default function MessagesView({
             })
             scrollToBottom()
           }
-          // Send browser notification for messages from others
-          if (newMsg.sender_id !== currentUserId) {
-            const senderProfile = teamMembers.find((m) => m.id === newMsg.sender_id)
-            sendNotification(
-              senderProfile?.full_name || 'New message',
-              newMsg.content || ''
-            )
+          // If incoming message is in the currently open conversation, mark as read immediately
+          if (newMsg.sender_id !== currentUserId && newMsg.sender_id === selectedUserIdRef.current) {
+            if (markIncomingAsReadRef.current) clearTimeout(markIncomingAsReadRef.current)
+            markIncomingAsReadRef.current = setTimeout(async () => {
+              await markMessagesAsRead(newMsg.sender_id)
+              router.refresh()
+            }, 500)
           }
           // Update conversation list
           refreshConversations()
@@ -230,8 +222,10 @@ export default function MessagesView({
         (payload) => {
           const updatedMsg = payload.new as Message
           setMessages((prev) =>
-            prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m))
+            prev.map((m) => (m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m))
           )
+          // Also refresh conversations — this handles read receipt updates and badge changes
+          refreshConversations()
         }
       )
       .subscribe()
@@ -275,6 +269,12 @@ export default function MessagesView({
     setSending(true)
     const content = messageInput.trim()
     setMessageInput('')
+
+    // Stop typing indicator immediately on send
+    if (presenceChannelRef.current) {
+      presenceChannelRef.current.track({ user_id: currentUserId, typing: false })
+    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
 
     // Optimistic update
     const tempId = `temp_${Date.now()}`
@@ -1030,7 +1030,7 @@ export default function MessagesView({
                 value={messageInput}
                 onChange={(e) => {
                   setMessageInput(e.target.value)
-                  handleTyping()
+                  handleTyping(e.target.value)
                 }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -1064,15 +1064,17 @@ export default function MessagesView({
                   color: theme === 'dark' ? '#080808' : '#ffffff',
                   padding: '10px 20px',
                   fontSize: '12px',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: sending || !messageInput.trim() ? 'not-allowed' : 'pointer',
                   borderRadius: 10000,
                   fontFamily: 'Montserrat, sans-serif',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.5px',
                   opacity: sending || !messageInput.trim() ? 0.6 : 1,
                   transition: 'opacity 0.15s',
                 }}
               >
-                {sending ? '…' : 'Send'}
+                {sending ? '…' : 'SEND'}
               </button>
             </div>
           </>

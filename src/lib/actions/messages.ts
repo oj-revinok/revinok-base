@@ -187,15 +187,31 @@ export async function markMessagesAsRead(senderUserId: string): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  // Use admin client to bypass RLS
-  const admin = createAdminClient()
-  await admin
+  // Use the regular client so Supabase Realtime picks up the UPDATE events
+  // and delivers them to the sender's subscription (for read receipts).
+  // The RLS UPDATE policy allows receivers to set read_at on messages sent to them.
+  const { error } = await supabase
     .from('messages')
     .update({ read_at: new Date().toISOString() })
     .eq('sender_id', senderUserId)
     .eq('receiver_id', user.id)
     .is('read_at', null)
     .is('deleted_at', null)
+
+  if (error) {
+    console.error('markMessagesAsRead:', error)
+    // Fall back to admin client if RLS blocks it
+    const admin = createAdminClient()
+    await admin
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('sender_id', senderUserId)
+      .eq('receiver_id', user.id)
+      .is('read_at', null)
+      .is('deleted_at', null)
+  }
+
+  revalidatePath('/dashboard/messages')
 }
 
 export async function getTeamMembersForMessaging(): Promise<Profile[]> {
