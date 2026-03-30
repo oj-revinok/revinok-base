@@ -125,10 +125,10 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
             const clientObj = Array.isArray(project.clients) ? project.clients[0] : project.clients
             const clientName = clientObj?.brand_name || clientObj?.name
             const quickLinks = [
-              project.live_url && { href: project.live_url, label: '↗ Live' },
-              project.staging_url && { href: project.staging_url, label: '⚙ Staging' },
-              project.figma_url && { href: project.figma_url, label: '✦ Figma' },
-              project.notion_url && { href: project.notion_url, label: '☰ Notion' },
+              project.live_url && { href: project.live_url, label: 'Live' },
+              project.staging_url && { href: project.staging_url, label: 'Staging' },
+              project.figma_url && { href: project.figma_url, label: 'Figma' },
+              project.notion_url && { href: project.notion_url, label: 'Notion' },
             ].filter(Boolean) as { href: string; label: string }[]
 
             return (
@@ -152,7 +152,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   <div style={{ paddingRight: '90px' }}>
                     {clientName ? (
                       <>
-                        <h2 style={{ fontSize: '18px', fontWeight: 800, color: colors.text, margin: '0 0 4px 0', lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
+                        <h2 style={{ fontSize: '22px', fontWeight: 800, color: colors.text, margin: '0 0 4px 0', lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
                           {clientName}
                         </h2>
                         <p style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
@@ -160,7 +160,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                         </p>
                       </>
                     ) : (
-                      <h2 style={{ fontSize: '18px', fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
+                      <h2 style={{ fontSize: '22px', fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
                         {project.name}
                       </h2>
                     )}
@@ -186,10 +186,10 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                   <div style={{ paddingTop: '10px', borderTop: `1px solid ${colors.border}`, fontSize: '11px', color: colors.textMuted, marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                       {(project.project_members?.length ?? 0) > 0 && (
-                        <span title="Team members">👤 {project.project_members!.length}</span>
+                        <span title="Team members">{project.project_members!.length} member{project.project_members!.length !== 1 ? 's' : ''}</span>
                       )}
                       {(project.notes?.length ?? 0) > 0 && (
-                        <span title="Notes">📝 {project.notes!.length}</span>
+                        <span title="Notes">{project.notes!.length} note{project.notes!.length !== 1 ? 's' : ''}</span>
                       )}
                     </div>
                     <span>

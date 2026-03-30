@@ -54,7 +54,7 @@ export default function AddClientModal() {
           window.location.reload()
         }, 800)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add client')
+        setError(err instanceof Error ? err.message : 'Failed to onboard client')
       }
     })
   }
@@ -80,7 +80,7 @@ export default function AddClientModal() {
           borderRadius: 10000,
         }}
       >
-        + ADD CLIENT
+        + ONBOARD CLIENT
       </button>
 
       {/* Modal overlay */}
@@ -113,7 +113,7 @@ export default function AddClientModal() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: colors.text, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
-                Add Client
+                Onboard Client
               </h2>
               <button
                 onClick={() => setOpen(false)}
@@ -125,7 +125,7 @@ export default function AddClientModal() {
 
             {success ? (
               <div style={{ textAlign: 'center', padding: '20px 0', color: colors.accent, fontSize: '14px', fontWeight: 600 }}>
-                ✓ Client added!
+                ✓ Client onboarded!
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -223,7 +223,7 @@ export default function AddClientModal() {
                       borderRadius: 10000,
                     }}
                   >
-                    {isPending ? 'Adding…' : 'Add Client'}
+                    {isPending ? 'Onboarding…' : 'Onboard Client'}
                   </button>
                 </div>
               </form>

@@ -238,7 +238,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
             display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
             textTransform: 'uppercase', letterSpacing: '0.5px',
             backgroundColor: colors.bgTertiary, color: STATUS_COLORS[task.status] || '#666',
-            border: `1px solid ${STATUS_COLORS[task.status] || colors.borderLight}22`,
+            border: `1px solid ${STATUS_COLORS[task.status] || colors.borderLight}22`, borderRadius: 10000,
           }}>
             {task.status}
           </span>
@@ -246,9 +246,9 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
             <span style={{
               display: 'inline-block', padding: '4px 10px', fontSize: '10px', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '0.5px',
-              backgroundColor: colors.bgTertiary, color: PRIORITY_COLORS[task.priority] || colors.textMuted,
+              backgroundColor: colors.bgTertiary, color: PRIORITY_COLORS[task.priority] || colors.textMuted, borderRadius: 10000,
             }}>
-              ● {task.priority}
+              {task.priority}
             </span>
           )}
         </div>
@@ -288,7 +288,7 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
                     fontSize: '9px', fontWeight: 700, color: colors.textSecondary,
                     backgroundColor: colors.bgTertiary, padding: '3px 8px',
                     textTransform: 'uppercase', letterSpacing: '0.5px',
-                    border: `1px solid ${colors.bgHover}`,
+                    border: `1px solid ${colors.bgHover}`, borderRadius: 10000,
                   }}>
                     {tag}
                   </span>
@@ -515,7 +515,7 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         {task.priority && (
           <span style={{ fontSize: '11px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
-            ● {task.priority}
+            {task.priority}
           </span>
         )}
         {task.dueDate && (
@@ -524,7 +524,7 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
           </span>
         )}
         {task.tags.slice(0, 1).map(tag => (
-          <span key={tag} style={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgTertiary, padding: '3px 6px', textTransform: 'uppercase' }}>
+          <span key={tag} style={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgTertiary, padding: '3px 6px', textTransform: 'uppercase', borderRadius: 10000 }}>
             {tag}
           </span>
         ))}
@@ -653,7 +653,7 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
       </p>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
         {task.tags.slice(0, 2).map(tag => (
-          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', border: `1px solid ${colors.border}` }}>
+          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', border: `1px solid ${colors.border}`, borderRadius: 10000 }}>
             {tag}
           </span>
         ))}

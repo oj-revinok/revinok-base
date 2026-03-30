@@ -358,10 +358,10 @@ export async function deleteProject(projectId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Role check — admin only
+  // Role check — admin or PM
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') {
-    throw new Error('Only admins can delete projects')
+  if (profile?.role !== 'admin' && profile?.role !== 'project_manager') {
+    throw new Error('Only admins and project managers can delete projects')
   }
 
   // Delete related records first (cascade)

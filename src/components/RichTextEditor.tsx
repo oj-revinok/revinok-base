@@ -7,7 +7,7 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useTheme } from '@/context/ThemeContext'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 interface RichTextEditorProps {
   content: string
@@ -51,6 +51,13 @@ export default function RichTextEditor({
     },
     editable,
   })
+
+  // Clear editor when content is set to empty externally (e.g. after saving a note)
+  useEffect(() => {
+    if (editor && content === '' && editor.getHTML() !== '<p></p>') {
+      editor.commands.clearContent()
+    }
+  }, [content, editor])
 
   if (!editor) return null
 

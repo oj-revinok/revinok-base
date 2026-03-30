@@ -231,10 +231,10 @@ export default function ProjectDetail({
   }
 
   const builtInLinks = [
-    project.live_url && { label: '↗ Live Site', url: project.live_url },
-    project.staging_url && { label: '⚙ Staging', url: project.staging_url },
-    project.figma_url && { label: '✦ Figma', url: project.figma_url },
-    project.notion_url && { label: '☰ Notion', url: project.notion_url },
+    project.live_url && { label: 'Live Site', url: project.live_url },
+    project.staging_url && { label: 'Staging', url: project.staging_url },
+    project.figma_url && { label: 'Figma', url: project.figma_url },
+    project.notion_url && { label: 'Notion', url: project.notion_url },
   ].filter(Boolean) as { label: string; url: string }[]
 
   const allLinks = [...builtInLinks, ...(links || [])]
@@ -300,8 +300,8 @@ export default function ProjectDetail({
               EDIT
             </button>
           )}
-          {/* Delete — admin only */}
-          {userRole === 'admin' && (
+          {/* Delete — admin/PM only */}
+          {canDelete && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               style={{
@@ -647,7 +647,7 @@ function TaskRow({ task, isDone = false }: { task: NotionTask; isDone?: boolean 
       </p>
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
         {task.tags.slice(0, 2).map(tag => (
-          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase' }}>
+          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', borderRadius: 10000 }}>
             {tag}
           </span>
         ))}
