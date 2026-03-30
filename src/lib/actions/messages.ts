@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { Message, Conversation, Profile } from '@/types'
 
 export async function getConversations(): Promise<Conversation[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -70,7 +70,7 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function getMessages(otherUserId: string): Promise<Message[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -98,7 +98,7 @@ export async function sendMessage(
   fileName?: string,
   fileType?: string
 ): Promise<Message | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -129,7 +129,7 @@ export async function sendMessage(
 }
 
 export async function softDeleteMessage(messageId: string): Promise<boolean> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
@@ -152,7 +152,7 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
 }
 
 export async function getTeamMembersForMessaging(): Promise<Profile[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 

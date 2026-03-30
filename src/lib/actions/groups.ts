@@ -13,7 +13,7 @@ export interface Group {
 }
 
 export async function getGroups(): Promise<Group[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -37,7 +37,7 @@ export async function getGroups(): Promise<Group[]> {
 }
 
 export async function createGroup(name: string, memberIds: string[]): Promise<Group | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -95,7 +95,7 @@ export async function createGroup(name: string, memberIds: string[]): Promise<Gr
 }
 
 export async function updateGroup(groupId: string, name: string, memberIds: string[]): Promise<boolean> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
@@ -152,7 +152,7 @@ export async function updateGroup(groupId: string, name: string, memberIds: stri
 }
 
 export async function deleteGroup(groupId: string): Promise<boolean> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
@@ -182,7 +182,7 @@ export async function deleteGroup(groupId: string): Promise<boolean> {
 }
 
 export async function getGroupMembers(groupId: string): Promise<Profile[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('group_members')
