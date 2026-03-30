@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -50,6 +51,7 @@ export default function MessagesView({
   currentUserProfile,
 }: MessagesViewProps) {
   const { colors, theme } = useTheme()
+  const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -85,6 +87,8 @@ export default function MessagesView({
       setConversations((prev) =>
         prev.map((c) => c.user.id === selectedUserId ? { ...c, unreadCount: 0 } : c)
       )
+      // Refresh the layout so the nav unread badge updates
+      router.refresh()
     }
     loadMessages()
   }, [selectedUserId, scrollToBottom])

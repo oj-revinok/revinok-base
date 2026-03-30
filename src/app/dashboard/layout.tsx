@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
@@ -10,6 +11,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Use admin client for messages count to bypass RLS deleted_at filter
+  const admin = createAdminClient()
+
   const [{ data: profile }, { count: unreadCount }, { count: unreadMsgCount }] = await Promise.all([
     supabase.from('profiles').select('full_name, email, role, initials, avatar_url').eq('id', user.id).single(),
     supabase
@@ -17,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .select('*', { count: 'exact', head: true })
       .eq('recipient_id', user.id)
       .eq('is_read', false),
-    supabase
+    admin
       .from('messages')
       .select('*', { count: 'exact', head: true })
       .eq('receiver_id', user.id)

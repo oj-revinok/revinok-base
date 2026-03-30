@@ -10,8 +10,10 @@ export async function getConversations(): Promise<Conversation[]> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // Get all unique users the current user has conversations with
-  const { data: rawMessages, error } = await supabase
+  // Use admin client to bypass RLS — the SELECT policy filters out deleted messages,
+  // but we need them to keep conversations visible (we show "message deleted" in UI)
+  const admin = createAdminClient()
+  const { data: rawMessages, error } = await admin
     .from('messages')
     .select('sender_id, receiver_id, content, created_at, deleted_at, read_at')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
@@ -47,8 +49,8 @@ export async function getConversations(): Promise<Conversation[]> {
     }
   }
 
-  // Fetch profile info for all other users
-  const { data: profiles, error: profileError } = await supabase
+  // Fetch profile info for all other users (use admin to avoid any RLS issues)
+  const { data: profiles, error: profileError } = await admin
     .from('profiles')
     .select('id, email, full_name, role, avatar_initials, created_at')
     .in('id', Array.from(otherUserIds))
@@ -91,7 +93,10 @@ export async function getMessages(otherUserId: string): Promise<Message[]> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data, error } = await supabase
+  // Use admin client to bypass RLS — SELECT policy hides deleted messages,
+  // but we want to show "This message was deleted" in the UI
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('messages')
     .select(`
       *,
