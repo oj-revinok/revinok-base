@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTheme } from '@/context/ThemeContext'
 import AddProjectModal from './AddProjectModal'
+import { createClient } from '@/lib/supabase/client'
 
 interface Project {
   id: string
@@ -77,8 +79,21 @@ function QuickLink({ href, label, colors }: { href: string; label: string; color
 
 export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
   const { colors, theme } = useTheme()
+  const router = useRouter()
   const [activeFilter, setActiveFilter] = useState('All')
   const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Live updates — refresh server data whenever projects table changes
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('projects-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+        router.refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [router])
 
   const filtered = activeFilter === 'All'
     ? projects

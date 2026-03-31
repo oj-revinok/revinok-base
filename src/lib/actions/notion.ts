@@ -1,7 +1,21 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getTasksForProject, getNotionProjectsPage, getAllTasks, getNotionTeamPersons, NotionTask, getNotionClient } from '@/lib/notion'
+
+// Cached wrappers — 5-minute TTL so the Tasks page doesn't hit Notion on every load
+const getCachedAllTasks = unstable_cache(
+  async (notionKey: string | undefined, personId: string | null) => getAllTasks(notionKey, personId),
+  ['notion-all-tasks'],
+  { revalidate: 300 }
+)
+
+const getCachedTeamPersons = unstable_cache(
+  async (notionKey: string | undefined) => getNotionTeamPersons(notionKey),
+  ['notion-team-persons'],
+  { revalidate: 300 }
+)
 
 // Enrich tasks with assignee names resolved from the Team DB
 async function enrichTasksWithNames(tasks: NotionTask[], notionKey?: string): Promise<NotionTask[]> {
@@ -10,7 +24,7 @@ async function enrichTasksWithNames(tasks: NotionTask[], notionKey?: string): Pr
   const hasAssignees = tasks.some(t => t.assignedTo.length > 0)
   if (!hasAssignees) return tasks
   try {
-    const teamPersons = await getNotionTeamPersons(notionKey)
+    const teamPersons = await getCachedTeamPersons(notionKey)
     const nameMap = new Map(teamPersons.map(p => [p.id, p.name]))
     return tasks.map(t => ({
       ...t,
@@ -73,10 +87,10 @@ export async function fetchAllNotionTasks(): Promise<NotionTask[]> {
 
   let tasks: NotionTask[]
   if (isAdminOrPM) {
-    tasks = await getAllTasks(notionKey, null)
+    tasks = await getCachedAllTasks(notionKey, null)
   } else {
     const notionPersonId = profile?.notion_person_id || null
-    tasks = await getAllTasks(notionKey, notionPersonId)
+    tasks = await getCachedAllTasks(notionKey, notionPersonId)
   }
   return enrichTasksWithNames(tasks, notionKey)
 }

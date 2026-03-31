@@ -125,6 +125,18 @@ export default function TeamPage() {
     setTeamMembers(members || [])
   }
 
+  // Live updates — refresh team list when profiles change (new invite, role update, etc.)
+  useEffect(() => {
+    if (loading) return
+    const channel = supabase
+      .channel('team-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        refreshMembers()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [loading])
+
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
     setInviting(true)

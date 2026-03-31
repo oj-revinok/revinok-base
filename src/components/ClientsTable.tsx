@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import { updateClientRecord, deleteClientRecord } from '@/lib/actions/clients'
+import { createClient } from '@/lib/supabase/client'
 
 interface Client {
   id: string
@@ -24,10 +26,23 @@ interface ClientsTableProps {
 
 export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
   const { colors, theme } = useTheme()
+  const router = useRouter()
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  // Live updates — refresh server data whenever clients table changes
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('clients-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => {
+        router.refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [router])
 
   function getInitials(client: Client) {
     return (client.name)

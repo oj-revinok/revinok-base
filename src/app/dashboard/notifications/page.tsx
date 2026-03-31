@@ -64,6 +64,7 @@ export default function NotificationsPage() {
   const { colors, theme } = useTheme()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
   const [activeReview, setActiveReview] = useState<any>(null)
   const [loadingReview, setLoadingReview] = useState(false)
   const [declineMsg, setDeclineMsg] = useState('')
@@ -74,12 +75,30 @@ export default function NotificationsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+      setUserId(user.id)
       const notifs = await getMyNotifications()
       setNotifications(notifs)
       setLoading(false)
     }
     load()
   }, [])
+
+  // Live updates — append new notifications as they arrive
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${userId}` },
+        async () => {
+          const notifs = await getMyNotifications()
+          setNotifications(notifs)
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
 
   async function handleMarkAllRead() {
     await markAllRead()
