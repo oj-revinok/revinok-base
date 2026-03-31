@@ -123,7 +123,7 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
         {filtered && filtered.length > 0 ? (
           filtered.map((project) => {
             const clientObj = Array.isArray(project.clients) ? project.clients[0] : project.clients
-            const clientName = clientObj?.brand_name || clientObj?.name
+            const clientName = clientObj?.name
             const quickLinks = [
               project.live_url && { href: project.live_url, label: 'Live' },
               project.staging_url && { href: project.staging_url, label: 'Staging' },
