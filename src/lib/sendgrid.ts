@@ -60,6 +60,10 @@ export async function sendEmail({
         from: { email: FROM_EMAIL, name: FROM_NAME },
         subject,
         template_id: TEMPLATE_ID,
+        // Disable click tracking so URLs with query params (e.g. Supabase recovery links) aren't broken by HTML-encoding
+        tracking_settings: {
+          click_tracking: { enable: false },
+        },
       }),
     })
 
