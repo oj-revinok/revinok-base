@@ -6,6 +6,7 @@ import { getNotionClient, getNotionTeamPersons, type NotionTeamPerson } from '@/
 export type { NotionTeamPerson }
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { sendEmail, adminPasswordResetTemplate } from '@/lib/sendgrid'
 
 export interface NotionPerson {
   id: string
@@ -211,8 +212,29 @@ export async function resetMemberPassword(
 
   try {
     const adminClient = createAdminClient()
+
+    // Fetch member profile for email + name
+    const { data: memberProfile } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', memberId)
+      .single()
+
     const { error } = await adminClient.auth.admin.updateUserById(memberId, { password: newPassword })
     if (error) return { success: false, error: error.message }
+
+    // Send email notification to the member (non-blocking)
+    if (memberProfile?.email) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://base.revinok.com'
+      const firstName = memberProfile.full_name?.split(' ')[0] || 'there'
+      sendEmail({
+        to: memberProfile.email,
+        subject: 'Your Revinok Portal password has been reset',
+        html: adminPasswordResetTemplate(firstName, newPassword, `${siteUrl}/login`),
+        text: `Hi ${firstName}, your Revinok Portal password has been reset.\n\nNew password: ${newPassword}\n\nLog in at: ${siteUrl}/login\n\nPlease change your password after logging in.`,
+      }).catch(err => console.error('[Admin Reset] Email error:', err))
+    }
+
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to reset password' }

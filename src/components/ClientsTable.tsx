@@ -31,6 +31,19 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredClients = searchQuery.trim()
+    ? clients.filter((c) => {
+        const q = searchQuery.toLowerCase()
+        return (
+          c.name.toLowerCase().includes(q) ||
+          (c.email ?? '').toLowerCase().includes(q) ||
+          (c.industry ?? '').toLowerCase().includes(q) ||
+          (c.website ?? '').toLowerCase().includes(q)
+        )
+      })
+    : clients
 
   // Live updates — refresh server data whenever clients table changes
   useEffect(() => {
@@ -100,6 +113,19 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
     )
   }
 
+  const searchInputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '11px 16px 11px 40px',
+    backgroundColor: colors.bgSecondary,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 12,
+    color: colors.text,
+    fontSize: '13px',
+    fontFamily: 'Montserrat, sans-serif',
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 14px',
@@ -125,7 +151,54 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
 
   return (
     <>
+      {/* Search bar */}
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Search clients…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={searchInputStyle}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted,
+              display: 'flex', alignItems: 'center', padding: '4px',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* No results message */}
+      {filteredClients.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center', padding: '60px 40px',
+            backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 16, color: 'var(--text-muted)', fontSize: '14px',
+          }}
+        >
+          No clients match &ldquo;{searchQuery}&rdquo;
+        </div>
+      )}
+
       {/* Desktop table */}
+      {filteredClients.length > 0 && (
       <div className="clients-table-wrap" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Montserrat, sans-serif', minWidth: '500px' }}>
           <thead>
@@ -150,11 +223,11 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {clients.map((client, index) => (
+            {filteredClients.map((client, index) => (
               <tr
                 key={client.id}
                 style={{
-                  borderBottom: index < clients.length - 1 ? '1px solid var(--border)' : 'none',
+                  borderBottom: index < filteredClients.length - 1 ? '1px solid var(--border)' : 'none',
                 }}
               >
                 <td style={{ padding: '16px 20px' }}>
@@ -219,10 +292,12 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Mobile cards */}
+      {filteredClients.length > 0 && (
       <div className="clients-mobile-list">
-        {clients.map((client) => (
+        {filteredClients.map((client) => (
           <div
             key={client.id}
             style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', padding: '16px', marginBottom: '12px', borderRadius: 12 }}
@@ -281,6 +356,7 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
           </div>
         ))}
       </div>
+      )}
 
       {/* Edit Modal */}
       {editingClient && (
