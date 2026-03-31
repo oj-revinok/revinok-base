@@ -68,8 +68,8 @@ export default function ForgotPasswordPage() {
                 <polyline points="22,6 12,13 2,6" />
               </svg>
             </div>
-            <h2 style={{ margin: '0 0 12px', fontSize: '20px', fontWeight: 700, color: colors.text }}>
-              Check your inbox
+            <h2 style={{ margin: '0 0 12px', fontSize: '20px', fontWeight: 700, color: colors.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              CHECK YOUR INBOX
             </h2>
             <p style={{ margin: '0 0 32px', fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 }}>
               If an account exists for <strong style={{ color: colors.text }}>{email}</strong>, you'll receive a password reset link shortly.

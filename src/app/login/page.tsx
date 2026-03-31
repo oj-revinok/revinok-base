@@ -93,7 +93,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px' }}>
               <label
                 style={{
                   fontSize: '11px',
@@ -105,18 +105,6 @@ export default function LoginPage() {
               >
                 PASSWORD
               </label>
-              <a
-                href="/forgot-password"
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: colors.textSecondary,
-                  textDecoration: 'none',
-                  letterSpacing: '0.3px',
-                }}
-              >
-                Forgot password?
-              </a>
             </div>
             <div style={{ position: 'relative' }}>
               <input
@@ -217,12 +205,12 @@ export default function LoginPage() {
             fontWeight: 500,
           }}
         >
-          Lost your password?{' '}
+          FORGOT YOUR PASSWORD?{' '}
           <a
             href="/forgot-password"
-            style={{ color: colors.accent, textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: colors.accent, textDecoration: 'none', fontWeight: 700 }}
           >
-            Reset it here
+            RESET IT HERE
           </a>
         </p>
       </div>
