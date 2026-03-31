@@ -153,10 +153,10 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
                     {clientName ? (
                       <>
                         <h2 style={{ fontSize: '22px', fontWeight: 800, color: colors.text, margin: '0 0 4px 0', lineHeight: 1.2, letterSpacing: '-0.3px', wordBreak: 'break-word', textTransform: 'uppercase' }}>
-                          {clientName}
+                          {project.name}
                         </h2>
                         <p style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
-                          {project.name}
+                          {clientName}
                         </p>
                       </>
                     ) : (
