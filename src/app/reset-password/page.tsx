@@ -20,15 +20,38 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Supabase puts the recovery tokens in the URL hash after redirecting from the email link.
-    // Calling getSession() triggers the client to read the hash and set the session automatically.
+    // @supabase/ssr uses cookie-based storage and doesn't auto-parse the URL hash.
+    // When Supabase redirects from the verify endpoint it puts tokens in the hash:
+    // #access_token=...&refresh_token=...&type=recovery
+    // We parse it manually and call setSession() so the client establishes the session.
+    const hash = window.location.hash
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+      const type = params.get('type')
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ data, error }) => {
+            if (error || !data.session) {
+              setStage('error')
+            } else {
+              setStage('form')
+            }
+          })
+        return
+      }
+    }
+
+    // Fallback: check if there's already an active session (e.g. navigated back to page)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setStage('form')
       } else {
         // Also listen for the auth state change event — sometimes it fires slightly after mount
         const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-          if (event === 'PASSWORD_RECOVERY') {
+          if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
             setStage('form')
           }
         })
