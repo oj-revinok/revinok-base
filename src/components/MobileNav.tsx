@@ -82,8 +82,19 @@ const ALL_NAV_ITEMS = [
     ),
   },
   {
+    href: '/dashboard/messages',
+    label: 'Messages',
+    restricted: false,
+    isBell: false,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/notifications',
-    label: 'Alerts',
+    label: 'Notifications',
     restricted: false,
     isBell: true,
     icon: (
@@ -113,14 +124,27 @@ export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavPr
   const isRestricted = RESTRICTED_ROLES.has(role || '')
   const navItems = ALL_NAV_ITEMS.filter(item => !item.restricted || !isRestricted)
 
+  const currentItem = ALL_NAV_ITEMS.find(item => pathname?.startsWith(item.href))
+
   return (
     <>
-      <div className="mobile-topbar">
+      <div className="mobile-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
         <img
           src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
           alt="Revinok"
-          style={{ height: '40px', width: 'auto' }}
+          style={{ height: '36px', width: 'auto' }}
         />
+        {currentItem && (
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: colors.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            {currentItem.label}
+          </span>
+        )}
       </div>
 
       <nav className="mobile-bottomnav" aria-label="Main navigation">

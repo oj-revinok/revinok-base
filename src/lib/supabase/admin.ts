@@ -6,7 +6,7 @@ export function createAdminClient() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   if (!url || !serviceKey) {
-    throw new Error('Missing Supabase service role env vars')
+    throw new Error('Invite failed: the SUPABASE_SERVICE_ROLE_KEY environment variable is not set. Add it in Netlify → Site settings → Environment variables, then redeploy.')
   }
 
   return createClient(url, serviceKey, {

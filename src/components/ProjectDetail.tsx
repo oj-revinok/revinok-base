@@ -581,6 +581,7 @@ export default function ProjectDetail({
           projectName={clientName || project.name}
           currentMembers={members}
           onClose={() => setShowShareModal(false)}
+          onMembersChange={(updated) => setMembers(updated)}
         />
       )}
 

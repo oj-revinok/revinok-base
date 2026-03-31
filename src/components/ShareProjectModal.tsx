@@ -27,9 +27,10 @@ interface Props {
   projectName: string
   currentMembers: CurrentMember[]
   onClose: () => void
+  onMembersChange?: (members: CurrentMember[]) => void
 }
 
-export default function ShareProjectModal({ projectId, projectName, currentMembers, onClose }: Props) {
+export default function ShareProjectModal({ projectId, projectName, currentMembers, onClose, onMembersChange }: Props) {
   const { colors, theme } = useTheme()
   const [allMembers, setAllMembers] = useState<TeamMember[]>([])
   const [groups, setGroups] = useState<Group[]>([])
@@ -60,11 +61,17 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
       await addProjectMember(projectId, memberId)
       const added = allMembers.find(m => m.id === memberId)
       if (added) {
-        setMembers(prev => [...prev, {
-          id: `temp-${memberId}`,
-          profile_id: memberId,
-          profiles: added,
-        }])
+        setMembers(prev => {
+          // Guard against duplicates — don't add if already present
+          if (prev.some(m => m.profile_id === memberId)) return prev
+          const updated = [...prev, {
+            id: `temp-${memberId}`,
+            profile_id: memberId,
+            profiles: added,
+          }]
+          onMembersChange?.(updated)
+          return updated
+        })
       }
     } catch (err) {
       console.error(err)
@@ -77,7 +84,11 @@ export default function ShareProjectModal({ projectId, projectName, currentMembe
     setRemoving(memberId)
     try {
       await removeProjectMember(projectId, memberId)
-      setMembers(prev => prev.filter(m => m.profile_id !== memberId))
+      setMembers(prev => {
+        const updated = prev.filter(m => m.profile_id !== memberId)
+        onMembersChange?.(updated)
+        return updated
+      })
     } catch (err) {
       console.error(err)
     } finally {

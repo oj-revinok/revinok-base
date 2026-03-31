@@ -192,10 +192,15 @@ export default function TeamPage() {
 
   async function openPasswordPanel(member: TeamMember) {
     setPwMemberId(member.id)
-    const suggested = await generatePassword(member.full_name || member.email || 'User')
-    setPwValue(suggested)
+    setPwValue('')
     setPwError('')
     setPwSuccess('')
+    try {
+      const suggested = await generatePassword(member.full_name || member.email || 'User')
+      setPwValue(suggested)
+    } catch {
+      // Leave password empty — user can type manually
+    }
   }
 
   function closePasswordPanel() {

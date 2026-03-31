@@ -65,14 +65,23 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
     )
   }, [tasks, search])
 
-  const groupedByStatus = useMemo(() => {
+  const { groupedByStatus, kanbanColumns } = useMemo(() => {
     const groups: Record<string, NotionTask[]> = {}
+    const knownStatuses = new Set(STATUS_COLUMNS)
     STATUS_COLUMNS.forEach(s => {
       groups[s] = filteredTasks
         .filter(t => t.status === s)
         .sort((a, b) => (PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] ?? 3) - (PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER] ?? 3))
     })
-    return groups
+    // Catch any tasks whose status doesn't match a predefined column
+    const extraStatuses = [...new Set(filteredTasks.map(t => t.status).filter(s => s && !knownStatuses.has(s)))]
+    extraStatuses.forEach(s => {
+      groups[s] = filteredTasks
+        .filter(t => t.status === s)
+        .sort((a, b) => (PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] ?? 3) - (PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER] ?? 3))
+    })
+    const allColumns = [...STATUS_COLUMNS, ...extraStatuses]
+    return { groupedByStatus: groups, kanbanColumns: allColumns }
   }, [filteredTasks])
 
   const primaryTasks = filteredTasks.filter(t => PRIMARY_STATUSES.includes(t.status))
@@ -140,7 +149,7 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>No tasks found{search ? ` for "${search}"` : ''}.</p>
         </div>
       ) : viewMode === 'kanban' ? (
-        <KanbanView groupedByStatus={groupedByStatus} onTaskClick={setSelectedTask} getVisible={getVisible} loadMore={loadMore} />
+        <KanbanView groupedByStatus={groupedByStatus} kanbanColumns={kanbanColumns} onTaskClick={setSelectedTask} getVisible={getVisible} loadMore={loadMore} />
       ) : (
         <ListView
           primaryTasks={primaryTasks}
@@ -298,52 +307,56 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
           )}
         </div>
 
-        {/* Description */}
-        {(loadingDesc || description) && (
-          <div style={{ marginBottom: '20px' }}>
-            <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Description
+        {/* Description — always render while loading; show placeholder when empty */}
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Description
+          </p>
+          {loadingDesc ? (
+            <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0 }}>Loading…</p>
+          ) : description ? (
+            <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+              {description}
             </p>
-            {loadingDesc ? (
-              <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0 }}>Loading…</p>
-            ) : (
-              <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-                {description}
-              </p>
-            )}
-          </div>
-        )}
+          ) : (
+            <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0, fontStyle: 'italic' }}>
+              No description added in Notion.
+            </p>
+          )}
+        </div>
 
         {/* Divider */}
         <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: '20px' }} />
 
-        {/* Notion Comments section */}
-        {(loadingNotionComments || notionComments.length > 0) && (
-          <div style={{ marginBottom: '20px' }}>
-            <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Notion Comments {notionComments.length > 0 ? `(${notionComments.length})` : ''}
-            </p>
-            {loadingNotionComments ? (
-              <p style={{ fontSize: '12px', color: colors.textMuted }}>Loading…</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {notionComments.map((c, i) => (
-                  <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040', borderRadius: 12 }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
-                      <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
-                      {c.text}
+        {/* Notion Comments section — always render while loading */}
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Notion Comments {notionComments.length > 0 ? `(${notionComments.length})` : ''}
+          </p>
+          {loadingNotionComments ? (
+            <p style={{ fontSize: '12px', color: colors.textMuted }}>Loading…</p>
+          ) : notionComments.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {notionComments.map((c, i) => (
+                <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040', borderRadius: 12 }}>
+                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
+                    <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
+                    {c.text}
+                  </p>
+                  {c.date && (
+                    <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
+                      {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    {c.date && (
-                      <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
-                        {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0, fontStyle: 'italic' }}>
+              No comments in Notion for this task.
+            </p>
+          )}
+        </div>
 
         {/* Comments section */}
         <div style={{ marginBottom: '20px' }}>
@@ -428,18 +441,20 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 function KanbanView({
   groupedByStatus,
+  kanbanColumns,
   onTaskClick,
   getVisible,
   loadMore,
 }: {
   groupedByStatus: Record<string, NotionTask[]>
+  kanbanColumns: string[]
   onTaskClick: (t: NotionTask) => void
   getVisible: (s: string) => number
   loadMore: (s: string) => void
 }) {
   const { colors } = useTheme()
   // Only show columns that have tasks
-  const visibleColumns = STATUS_COLUMNS.filter(s => (groupedByStatus[s] || []).length > 0)
+  const visibleColumns = kanbanColumns.filter(s => (groupedByStatus[s] || []).length > 0)
 
   if (visibleColumns.length === 0) {
     return (
