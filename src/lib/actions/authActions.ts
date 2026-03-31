@@ -39,7 +39,7 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
       to: email.trim().toLowerCase(),
       subject: 'Reset your Revinok Portal password',
       templateData: {
-        email_heading: 'Reset your password',
+        email_heading: 'RESET YOUR PASSWORD',
         email_body: 'We received a request to reset your Revinok Portal password. Click the button below to choose a new one. This link expires in 1 hour.',
         cta_url: resetLink,
         cta_text: 'Reset Password',

@@ -134,10 +134,10 @@ export default function ResetPasswordPage() {
                 color: colors.bg,
                 textDecoration: 'none',
                 borderRadius: 10000,
-                fontSize: '12px',
+                fontSize: '16px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: '0',
               }}
             >
               Request New Link
@@ -259,10 +259,10 @@ export default function ResetPasswordPage() {
                   backgroundColor: colors.accent,
                   color: colors.bg,
                   border: 'none',
-                  fontSize: '12px',
+                  fontSize: '16px',
                   fontWeight: 700,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   fontFamily: 'Montserrat, sans-serif',
                   transition: 'all 0.2s ease',

@@ -22,6 +22,7 @@ export interface TemplateData {
   cta_url?: string
   cta_text?: string
   extra_note?: string
+  subject?: string
 }
 
 export interface SendEmailOptions {
@@ -53,7 +54,7 @@ export async function sendEmail({
         personalizations: [
           {
             to: [{ email: to }],
-            dynamic_template_data: templateData,
+            dynamic_template_data: { ...templateData, subject },
           },
         ],
         from: { email: FROM_EMAIL, name: FROM_NAME },
