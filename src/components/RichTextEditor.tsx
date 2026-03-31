@@ -133,6 +133,7 @@ export default function RichTextEditor({
         >
           {/* Bold */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             disabled={!editor.can().chain().focus().toggleBold().run()}
             style={toolbarBtnStyle(editor.isActive('bold'))}
@@ -143,6 +144,7 @@ export default function RichTextEditor({
 
           {/* Italic */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             disabled={!editor.can().chain().focus().toggleItalic().run()}
             style={toolbarBtnStyle(editor.isActive('italic'))}
@@ -153,6 +155,7 @@ export default function RichTextEditor({
 
           {/* Underline */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             disabled={!editor.can().chain().focus().toggleUnderline().run()}
             style={toolbarBtnStyle(editor.isActive('underline'))}
@@ -165,6 +168,7 @@ export default function RichTextEditor({
 
           {/* H1 */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             style={toolbarBtnStyle(editor.isActive('heading', { level: 1 }))}
             title="Heading 1"
@@ -174,6 +178,7 @@ export default function RichTextEditor({
 
           {/* H2 */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             style={toolbarBtnStyle(editor.isActive('heading', { level: 2 }))}
             title="Heading 2"
@@ -185,6 +190,7 @@ export default function RichTextEditor({
 
           {/* Bullet List */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             style={toolbarBtnStyle(editor.isActive('bulletList'))}
             title="Bullet list"
@@ -194,6 +200,7 @@ export default function RichTextEditor({
 
           {/* Ordered List */}
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             style={toolbarBtnStyle(editor.isActive('orderedList'))}
             title="Ordered list"
@@ -205,6 +212,7 @@ export default function RichTextEditor({
 
           {/* Link */}
           <button
+            type="button"
             onClick={() => {
               const url = window.prompt('URL')
               if (url) {
@@ -219,6 +227,7 @@ export default function RichTextEditor({
 
           {/* Image */}
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             style={{

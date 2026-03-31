@@ -57,8 +57,9 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
   const styles = createStyles(colors)
   const { labelStyle, inputStyle } = styles
   const [clients, setClients] = useState<{ id: string; name: string; brand_name: string | null }[]>([])
+  const [loadingClients, setLoadingClients] = useState(true)
   const [notionProjects, setNotionProjects] = useState<{ id: string; name: string }[]>([])
-  const [loadingNotion, setLoadingNotion] = useState(false)
+  const [loadingNotion, setLoadingNotion] = useState(true)
   const [error, setError] = useState('')
   const [, startTransition] = useTransition()
   // Controlled state so async-loaded options don't reset the selection
@@ -70,7 +71,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
       .from('clients')
       .select('id, name, brand_name')
       .order('name')
-      .then(({ data }) => setClients(data || []))
+      .then(({ data }) => { setClients(data || []); setLoadingClients(false) })
 
     // Load Notion projects with a timeout so the dropdown never hangs indefinitely
     setLoadingNotion(true)
@@ -132,9 +133,13 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
             <label style={labelStyle}>CLIENT</label>
             <select name="client_id" value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">No client</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.brand_name || c.name}</option>
-              ))}
+              {loadingClients && selectedClientId && project.clients ? (
+                <option value={project.clients.id}>{project.clients.brand_name || project.clients.name}</option>
+              ) : (
+                clients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.brand_name || c.name}</option>
+                ))
+              )}
             </select>
           </div>
 
@@ -178,7 +183,11 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
             <select name="notion_project_id" value={selectedNotionProjectId} onChange={(e) => setSelectedNotionProjectId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">— Not linked —</option>
               {loadingNotion ? (
-                <option disabled>Loading Notion projects…</option>
+                selectedNotionProjectId ? (
+                  <option value={selectedNotionProjectId}>Loading…</option>
+                ) : (
+                  <option disabled>Loading Notion projects…</option>
+                )
               ) : notionProjects.length === 0 ? (
                 <option disabled>No Notion projects found — set a Notion API key in Settings</option>
               ) : (

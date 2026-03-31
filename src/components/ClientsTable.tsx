@@ -30,7 +30,7 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
   const [error, setError] = useState<string | null>(null)
 
   function getInitials(client: Client) {
-    return (client.brand_name || client.name)
+    return (client.name)
       .split(' ')
       .map((n: string) => n[0])
       .join('')
@@ -157,7 +157,7 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
                     </div>
                     <div>
                       <p style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        {client.brand_name || client.name}
+                        {client.name}
                       </p>
                       {client.website && (
                         <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: 'var(--text-secondary)' }}>
@@ -221,7 +221,7 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)', fontSize: '16px', lineHeight: 1.2, wordBreak: 'break-word', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                  {client.brand_name || client.name}
+                  {client.name}
                 </p>
                 {client.website && (
                   <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--text-secondary)' }}>
@@ -280,16 +280,8 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
             </div>
             <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={labelStyle}>Brand Name *</label>
-                <input name="name" required defaultValue={editingClient.brand_name || editingClient.name} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Trading / Legal Name</label>
-                <input name="brand_name" defaultValue={editingClient.brand_name || ''} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Primary Contact Name</label>
-                <input name="contact_name" defaultValue={(editingClient as any).contact_name || ''} placeholder="e.g. Jane Smith" style={inputStyle} />
+                <label style={labelStyle}>Full Name *</label>
+                <input name="name" required defaultValue={editingClient.name} style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Email</label>
@@ -300,12 +292,12 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
                 <input name="phone" type="tel" defaultValue={(editingClient as any).phone || ''} placeholder="+1 (555) 000-0000" style={inputStyle} />
               </div>
               <div>
-                <label style={labelStyle}>Industry</label>
-                <input name="industry" defaultValue={editingClient.industry || ''} style={inputStyle} />
-              </div>
-              <div>
                 <label style={labelStyle}>Website</label>
                 <input name="website" type="url" defaultValue={editingClient.website || ''} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Industry</label>
+                <input name="industry" defaultValue={editingClient.industry || ''} style={inputStyle} />
               </div>
               {error && <p style={{ margin: 0, color: '#ef4444', fontSize: '12px' }}>{error}</p>}
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>

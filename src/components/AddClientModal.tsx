@@ -130,31 +130,13 @@ export default function AddClientModal() {
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label style={labelStyle}>Brand Name *</label>
+                  <label style={labelStyle}>Full Name *</label>
                   <input
                     name="name"
                     required
                     placeholder="e.g. Paragon Capital"
                     style={inputStyle}
                     autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Trading / Legal Name</label>
-                  <input
-                    name="brand_name"
-                    placeholder="e.g. Paragon Capital Partners Ltd"
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Primary Contact Name</label>
-                  <input
-                    name="contact_name"
-                    placeholder="e.g. Jane Smith"
-                    style={inputStyle}
                   />
                 </div>
 
@@ -179,20 +161,20 @@ export default function AddClientModal() {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Industry</label>
-                  <input
-                    name="industry"
-                    placeholder="e.g. Finance, Tech, Retail"
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div>
                   <label style={labelStyle}>Website</label>
                   <input
                     name="website"
                     type="url"
                     placeholder="https://example.com"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Industry</label>
+                  <input
+                    name="industry"
+                    placeholder="e.g. Finance, Tech, Retail"
                     style={inputStyle}
                   />
                 </div>

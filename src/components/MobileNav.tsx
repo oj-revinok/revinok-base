@@ -128,7 +128,7 @@ export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavPr
 
   return (
     <>
-      <div className="mobile-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
+      <div className="mobile-topbar" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
         <img
           src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
           alt="Revinok"
