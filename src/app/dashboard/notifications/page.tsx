@@ -44,7 +44,11 @@ function notifTitle(n: Notification) {
     const access = n.data?.access_level || 'view'
     return `${sender} shared "${noteTitle}" with you (${access} access)`
   }
-  return 'New notification'
+  // Fallback: use any message/body from data, or humanise the type
+  if (n.data?.message) return n.data.message as string
+  if (n.data?.body) return n.data.body as string
+  const humanType = n.type ? n.type.replace(/_/g, ' ') : ''
+  return humanType ? `Notification: ${humanType}` : 'New notification'
 }
 
 function formatDate(iso: string) {

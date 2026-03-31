@@ -150,11 +150,30 @@ export default function AddClientModal() {
                 </div>
 
                 <div>
+                  <label style={labelStyle}>Primary Contact Name</label>
+                  <input
+                    name="contact_name"
+                    placeholder="e.g. Jane Smith"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
                   <label style={labelStyle}>Email</label>
                   <input
                     name="email"
                     type="email"
                     placeholder="client@company.com"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Phone</label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
                     style={inputStyle}
                   />
                 </div>

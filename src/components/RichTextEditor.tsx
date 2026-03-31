@@ -25,6 +25,8 @@ export default function RichTextEditor({
   const { colors, theme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  // Track last HTML sent to onChange so toolbar-only state changes don't reset the debounce
+  const lastHtmlRef = useRef<string>(content)
 
   const editor = useEditor({
     extensions: [
@@ -47,7 +49,14 @@ export default function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      const html = editor.getHTML()
+      // Only fire onChange when the actual HTML content changed — toolbar clicks
+      // (Bold, Italic, etc.) change cursor/mark state but not the serialised HTML,
+      // so this prevents the autosave debounce from resetting on every toolbar click.
+      if (html !== lastHtmlRef.current) {
+        lastHtmlRef.current = html
+        onChange(html)
+      }
     },
     editable,
   })

@@ -61,6 +61,9 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
   const [loadingNotion, setLoadingNotion] = useState(false)
   const [error, setError] = useState('')
   const [, startTransition] = useTransition()
+  // Controlled state so async-loaded options don't reset the selection
+  const [selectedClientId, setSelectedClientId] = useState(project.clients?.id || '')
+  const [selectedNotionProjectId, setSelectedNotionProjectId] = useState(project.notion_project_id || '')
 
   useEffect(() => {
     createClient()
@@ -69,12 +72,15 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
       .order('name')
       .then(({ data }) => setClients(data || []))
 
+    // Load Notion projects with a timeout so the dropdown never hangs indefinitely
     setLoadingNotion(true)
-    fetch('/api/notion/projects')
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000) // 8s max
+    fetch('/api/notion/projects', { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setNotionProjects(data) })
-      .catch(() => {})
-      .finally(() => setLoadingNotion(false))
+      .catch(() => {}) // silently fail — dropdown will show empty state
+      .finally(() => { clearTimeout(timeout); setLoadingNotion(false) })
   }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -124,7 +130,7 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
           {/* Client */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>CLIENT</label>
-            <select name="client_id" defaultValue={project.clients?.id || ''} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <select name="client_id" value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">No client</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.brand_name || c.name}</option>
@@ -169,12 +175,17 @@ export default function EditProjectModal({ project, onClose, onSave }: Props) {
           {/* Notion project link */}
           <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: `1px solid ${colors.bgTertiary}` }}>
             <label style={labelStyle}>☰ NOTION PROJECT</label>
-            <select name="notion_project_id" defaultValue={project.notion_project_id || ''} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <select name="notion_project_id" value={selectedNotionProjectId} onChange={(e) => setSelectedNotionProjectId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">— Not linked —</option>
-              {loadingNotion && <option disabled>Loading Notion projects…</option>}
-              {notionProjects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
+              {loadingNotion ? (
+                <option disabled>Loading Notion projects…</option>
+              ) : notionProjects.length === 0 ? (
+                <option disabled>No Notion projects found — set a Notion API key in Settings</option>
+              ) : (
+                notionProjects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))
+              )}
             </select>
             <p style={{ fontSize: '11px', color: colors.textMuted, marginTop: '6px', marginBottom: 0 }}>
               Link to pull tasks automatically from Notion Workload

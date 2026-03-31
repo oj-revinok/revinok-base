@@ -123,6 +123,11 @@ export async function inviteMember(formData: FormData) {
   })
 
   if (authError) {
+    // Surface a clear, actionable message for common misconfigurations
+    const msg = authError.message || ''
+    if (msg.includes('service role') || msg.includes('service_role') || msg.toLowerCase().includes('unauthorized') || authError.status === 401 || authError.status === 503) {
+      throw new Error('Invite failed: the SUPABASE_SERVICE_ROLE_KEY environment variable is missing or incorrect. Add it in your Netlify site settings under Environment Variables, then redeploy.')
+    }
     throw new Error(`Failed to send invite: ${authError.message}`)
   }
 

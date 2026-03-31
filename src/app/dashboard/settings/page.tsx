@@ -54,6 +54,7 @@ export default function SettingsPage() {
 
   const [userRole, setUserRole] = useState<string>('')
   const [fullName, setFullName] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [notionKey, setNotionKey] = useState('')
@@ -115,14 +116,25 @@ export default function SettingsPage() {
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
     clearMessages()
+    if (!currentPassword) { setError('Please enter your current password'); return }
     if (newPassword !== confirmPassword) { setError('Passwords do not match'); return }
     if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     try {
+      // Verify current password via reauthentication
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) { setError('Unable to verify your account'); return }
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+      if (signInError) { setError('Current password is incorrect'); return }
+      // Now update to the new password
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) setError(error.message)
       else {
-        setSuccess('Password updated.')
+        setSuccess('Password updated successfully.')
+        setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
       }
@@ -202,12 +214,16 @@ export default function SettingsPage() {
           <h2 style={{ fontSize: '13px', fontWeight: 700, color: colors.text, margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SECURITY</h2>
           <form onSubmit={handleChangePassword}>
             <div style={{ marginBottom: '16px' }}>
+              <label style={getLabelStyle(colors)}>CURRENT PASSWORD</label>
+              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} autoComplete="current-password" />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
               <label style={getLabelStyle(colors)}>NEW PASSWORD</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} />
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} autoComplete="new-password" />
             </div>
             <div style={{ marginBottom: '20px' }}>
-              <label style={getLabelStyle(colors)}>CONFIRM PASSWORD</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} />
+              <label style={getLabelStyle(colors)}>CONFIRM NEW PASSWORD</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" style={getInputStyle(colors)} disabled={loading} autoComplete="new-password" />
             </div>
             <SaveButton loading={loading} label="UPDATE PASSWORD" colors={colors} theme={theme} />
           </form>
