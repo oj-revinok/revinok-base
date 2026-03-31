@@ -223,26 +223,30 @@ export default function NotesPage() {
       }}>
         {/* Header */}
         <div style={{ padding: '24px 20px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: colors.text, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
               Notes
             </h1>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              title="New note"
-              style={{
-                width: '30px', height: '30px', backgroundColor: colors.accent, borderRadius: 10000,
-                border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: creating ? 0.6 : 1, flexShrink: 0, fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
           </div>
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            style={{
+              width: '100%', padding: '10px 16px',
+              backgroundColor: colors.accent, borderRadius: 10000,
+              border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              opacity: creating ? 0.6 : 1, marginBottom: '16px',
+              fontSize: '11px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
+              color: theme === 'dark' ? '#080808' : '#ffffff',
+              textTransform: 'uppercase', letterSpacing: '0.5px',
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+            {creating ? 'Creating…' : 'New Note'}
+          </button>
 
           {/* Search */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>

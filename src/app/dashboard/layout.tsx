@@ -11,23 +11,29 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Use admin client for messages count to bypass RLS deleted_at filter
-  const admin = createAdminClient()
-
-  const [{ data: profile }, { count: unreadCount }, { count: unreadMsgCount }] = await Promise.all([
+  const [{ data: profile }, { count: unreadCount }] = await Promise.all([
     supabase.from('profiles').select('full_name, email, role, initials, avatar_url').eq('id', user.id).single(),
     supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
       .eq('recipient_id', user.id)
       .eq('is_read', false),
-    admin
+  ])
+
+  // Use admin client for messages count — falls back to 0 if service role key is missing
+  let unreadMsgCount: number | null = 0
+  try {
+    const admin = createAdminClient()
+    const { count } = await admin
       .from('messages')
       .select('*', { count: 'exact', head: true })
       .eq('receiver_id', user.id)
       .is('read_at', null)
-      .is('deleted_at', null),
-  ])
+      .is('deleted_at', null)
+    unreadMsgCount = count
+  } catch {
+    // SUPABASE_SERVICE_ROLE_KEY not set — messaging badge will show 0
+  }
 
   const role = profile?.role ?? 'viewer'
   const unread = unreadCount ?? 0
