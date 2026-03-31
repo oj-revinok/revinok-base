@@ -1,3 +1,8 @@
+// Explicitly load .env.local so env vars are available on cPanel/Passenger hosting
+// (Passenger does not always pass Apache SetEnv vars to Node.js processes)
+const { loadEnvConfig } = require('@next/env')
+loadEnvConfig(process.cwd())
+
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
