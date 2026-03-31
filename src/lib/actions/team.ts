@@ -6,7 +6,7 @@ import { getNotionClient, getNotionTeamPersons, type NotionTeamPerson } from '@/
 export type { NotionTeamPerson }
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { sendEmail, adminPasswordResetTemplate } from '@/lib/sendgrid'
+import { sendEmail } from '@/lib/sendgrid'
 
 export interface NotionPerson {
   id: string
@@ -230,8 +230,13 @@ export async function resetMemberPassword(
       sendEmail({
         to: memberProfile.email,
         subject: 'Your Revinok Portal password has been reset',
-        html: adminPasswordResetTemplate(firstName, newPassword, `${siteUrl}/login`),
-        text: `Hi ${firstName}, your Revinok Portal password has been reset.\n\nNew password: ${newPassword}\n\nLog in at: ${siteUrl}/login\n\nPlease change your password after logging in.`,
+        templateData: {
+          email_heading: `Hi ${firstName}, your password has been reset`,
+          email_body: `An admin has reset your Revinok Portal password. Your new temporary password is:\n\n${newPassword}\n\nPlease log in and change it as soon as possible.`,
+          cta_url: `${siteUrl}/login`,
+          cta_text: 'Log In Now',
+          extra_note: "If you didn't expect this, contact your admin immediately.",
+        },
       }).catch(err => console.error('[Admin Reset] Email error:', err))
     }
 

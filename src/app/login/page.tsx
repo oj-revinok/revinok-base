@@ -217,12 +217,12 @@ export default function LoginPage() {
             fontWeight: 500,
           }}
         >
-          Need an account?{' '}
+          Lost your password?{' '}
           <a
-            href="mailto:hello@revinok.com"
+            href="/forgot-password"
             style={{ color: colors.accent, textDecoration: 'none', fontWeight: 600 }}
           >
-            CONTACT SUPPORT
+            Reset it here
           </a>
         </p>
       </div>
