@@ -227,23 +227,23 @@ export default function NotesPage() {
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: colors.text, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
               Notes
             </h1>
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              title="New Note"
+              style={{
+                width: '28px', height: '28px', flexShrink: 0,
+                backgroundColor: colors.accent, borderRadius: '50%',
+                border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: creating ? 0.6 : 1,
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            title="New Note"
-            style={{
-              width: '100%', padding: '10px',
-              backgroundColor: colors.accent, borderRadius: 10000,
-              border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: creating ? 0.6 : 1, marginBottom: '16px',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
-          </button>
 
           {/* Search */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>

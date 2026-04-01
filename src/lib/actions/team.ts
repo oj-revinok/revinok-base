@@ -86,10 +86,17 @@ export async function updateMemberNotionId(profileId: string, notionPersonId: st
 
 export async function inviteMember(formData: FormData) {
   const supabase = createClient()
-  const admin = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Create admin client inside try/catch — throws synchronously if env var is missing
+  let admin: ReturnType<typeof createAdminClient>
+  try {
+    admin = createAdminClient()
+  } catch (err: any) {
+    throw new Error(err.message || 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is missing.')
+  }
 
   const email = (formData.get('email') as string)?.trim().toLowerCase()
   const role = formData.get('role') as string
@@ -268,6 +275,38 @@ export async function resetMemberPassword(
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to reset password' }
+  }
+}
+
+export async function removeMember(memberId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Only admins can remove members
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { success: false, error: 'Unauthorized' }
+
+  // Cannot remove yourself
+  if (memberId === user.id) return { success: false, error: 'You cannot remove yourself' }
+
+  try {
+    const adminClient = createAdminClient()
+    // Delete the auth user — Supabase cascade deletes the profile via DB trigger
+    const { error } = await adminClient.auth.admin.deleteUser(memberId)
+    if (error) return { success: false, error: error.message }
+
+    // Also delete the profile row directly in case there's no cascade
+    await supabase.from('profiles').delete().eq('id', memberId)
+
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to remove member' }
   }
 }
 

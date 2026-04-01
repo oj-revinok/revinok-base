@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import GroupModal from '@/components/GroupModal'
-import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, resetMemberPassword, generatePassword, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
+import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, resetMemberPassword, generatePassword, removeMember, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
 import { getGroups, deleteGroup } from '@/lib/actions/groups'
 import type { Group, Profile } from '@/types'
 
@@ -62,6 +62,26 @@ export default function TeamPage() {
   const [editNotionPersonId, setEditNotionPersonId] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+
+  // Per-member remove state
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+
+  async function handleRemoveMember(memberId: string, name: string) {
+    if (!confirm(`Remove ${name} from the team? This cannot be undone.`)) return
+    setRemovingMemberId(memberId)
+    try {
+      const result = await removeMember(memberId)
+      if (!result.success) {
+        alert(result.error || 'Failed to remove member')
+      } else {
+        await refreshMembers()
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to remove member')
+    } finally {
+      setRemovingMemberId(null)
+    }
+  }
 
   // Per-member password state
   const [pwMemberId, setPwMemberId] = useState<string | null>(null)
@@ -577,6 +597,16 @@ export default function TeamPage() {
                                 PW
                               </button>
                             )}
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleRemoveMember(member.id, member.full_name || member.email || 'this member')}
+                                disabled={removingMemberId === member.id}
+                                style={{ padding: '6px 10px', backgroundColor: 'transparent', color: '#ff6b6b', border: '1px solid #4a1515', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: removingMemberId === member.id ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', opacity: removingMemberId === member.id ? 0.5 : 1 }}
+                                title="Remove member"
+                              >
+                                {removingMemberId === member.id ? '...' : '✕'}
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>
@@ -690,6 +720,15 @@ export default function TeamPage() {
                         >
                           EDIT
                         </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleRemoveMember(member.id, member.full_name || member.email || 'this member')}
+                            disabled={removingMemberId === member.id}
+                            style={{ padding: '8px 12px', backgroundColor: 'transparent', color: '#ff6b6b', border: '1px solid #4a1515', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: removingMemberId === member.id ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '36px', opacity: removingMemberId === member.id ? 0.5 : 1 }}
+                          >
+                            {removingMemberId === member.id ? '...' : 'REMOVE'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

@@ -702,7 +702,7 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
       </p>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
         {task.assignedNames.length > 0 && (
-          <span style={{ fontSize: '10px', color: colors.textMuted, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '10px', color: colors.textMuted, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {task.assignedNames.join(', ')}
           </span>
         )}
