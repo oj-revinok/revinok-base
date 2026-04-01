@@ -390,9 +390,8 @@ export default function MessagesView({
             </h1>
             <button
               onClick={() => setShowNewMessage(!showNewMessage)}
-              title={showNewMessage ? 'Cancel' : 'New message'}
               style={{
-                padding: '6px 12px',
+                padding: '6px 10px',
                 backgroundColor: showNewMessage ? 'transparent' : colors.accent,
                 color: showNewMessage ? colors.textSecondary : (theme === 'dark' ? '#080808' : '#ffffff'),
                 border: showNewMessage ? `1px solid ${colors.border}` : 'none',
@@ -400,17 +399,17 @@ export default function MessagesView({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                justifyContent: 'center',
                 flexShrink: 0,
-                fontSize: 11,
-                fontWeight: 700,
-                fontFamily: 'Montserrat, sans-serif',
-                textTransform: 'uppercase',
-                letterSpacing: '0.3px',
                 minHeight: '30px',
+                minWidth: '30px',
               }}
+              title={showNewMessage ? 'Cancel' : 'New message'}
             >
-              {showNewMessage ? '✕ Cancel' : '+ New Message'}
+              {showNewMessage
+                ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                : <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2.5" strokeLinecap="round"/></svg>
+              }
             </button>
           </div>
 

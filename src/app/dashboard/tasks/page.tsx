@@ -30,12 +30,9 @@ export default async function TasksPage() {
     <div style={{ padding: '20px 16px 80px' }}>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '-1px' }}>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: 'var(--text-primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px' }}>
           TASKS
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          {adminOrPM ? 'All tasks across all projects' : hasNotionPersonId ? 'Your assigned tasks' : 'Tasks — link your Notion profile in Settings to filter'}
-        </p>
       </div>
 
       {tasks.length === 0 && !adminOrPM && !hasNotionPersonId ? (

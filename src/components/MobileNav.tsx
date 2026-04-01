@@ -130,21 +130,34 @@ export default function MobileNav({ role, unreadNotifications = 0 }: MobileNavPr
     <>
       <div className="mobile-topbar" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
         <img
-          src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
+          src={theme === 'dark'
+            ? 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png'
+            : 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69ca4814d84779b1aa924829_output-onlinepngtools%20(2).png'
+          }
           alt="Revinok"
           style={{ height: '36px', width: 'auto' }}
         />
-        {currentItem && (
-          <span style={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: colors.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            {currentItem.label}
-          </span>
-        )}
+        {/* Bell icon in top-right — links to Notifications */}
+        <a
+          href="/dashboard/notifications"
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', color: colors.textMuted, textDecoration: 'none' }}
+          aria-label="Notifications"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {unreadNotifications > 0 && (
+            <span style={{
+              position: 'absolute', top: '-4px', right: '-6px',
+              backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#ffffff',
+              fontSize: '8px', fontWeight: 800,
+              borderRadius: '10px', padding: '1px 4px', minWidth: '14px', textAlign: 'center',
+            }}>
+              {unreadNotifications > 9 ? '9+' : unreadNotifications}
+            </span>
+          )}
+        </a>
       </div>
 
       <nav className="mobile-bottomnav" aria-label="Main navigation">

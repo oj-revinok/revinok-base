@@ -231,21 +231,18 @@ export default function NotesPage() {
           <button
             onClick={handleCreate}
             disabled={creating}
+            title="New Note"
             style={{
-              width: '100%', padding: '10px 16px',
+              width: '100%', padding: '10px',
               backgroundColor: colors.accent, borderRadius: 10000,
               border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               opacity: creating ? 0.6 : 1, marginBottom: '16px',
-              fontSize: '11px', fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-              color: theme === 'dark' ? '#080808' : '#ffffff',
-              textTransform: 'uppercase', letterSpacing: '0.5px',
             }}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke={theme === 'dark' ? '#080808' : '#ffffff'} strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
-            {creating ? 'Creating…' : 'New Note'}
           </button>
 
           {/* Search */}

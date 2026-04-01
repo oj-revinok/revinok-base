@@ -49,7 +49,8 @@ export default function TeamPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('designer')
-  const [inviteFullName, setInviteFullName] = useState('')
+  const [inviteFirstName, setInviteFirstName] = useState('')
+  const [inviteLastName, setInviteLastName] = useState('')
   const [inviteNotionPersonId, setInviteNotionPersonId] = useState('')
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState('')
@@ -147,14 +148,16 @@ export default function TeamPage() {
       const fd = new FormData()
       fd.set('email', inviteEmail)
       fd.set('role', inviteRole)
-      fd.set('full_name', inviteFullName)
+      fd.set('first_name', inviteFirstName.trim())
+      fd.set('last_name', inviteLastName.trim())
       if (inviteNotionPersonId.trim()) {
         fd.set('notion_person_id', inviteNotionPersonId.trim())
       }
       await inviteMember(fd)
       setInviteSuccess(`Invite sent to ${inviteEmail}`)
       setInviteEmail('')
-      setInviteFullName('')
+      setInviteFirstName('')
+      setInviteLastName('')
       setInviteRole('designer')
       setInviteNotionPersonId('')
       await refreshMembers()
@@ -170,7 +173,8 @@ export default function TeamPage() {
     setInviteError('')
     setInviteSuccess('')
     setInviteEmail('')
-    setInviteFullName('')
+    setInviteFirstName('')
+    setInviteLastName('')
     setInviteRole('designer')
     setInviteNotionPersonId('')
   }
@@ -297,8 +301,8 @@ export default function TeamPage() {
         </button>
       </div>
 
-      {/* Groups Section */}
-      {isAdmin || true && (
+      {/* Groups Section — removed per v4.4 */}
+      {false && (
         <div style={{ marginBottom: '40px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 900, color: colors.text, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -723,9 +727,15 @@ export default function TeamPage() {
               </div>
             ) : (
               <form onSubmit={handleInvite}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={labelStyle}>FULL NAME (optional)</label>
-                  <input type="text" value={inviteFullName} onChange={(e) => setInviteFullName(e.target.value)} placeholder="Jane Smith" style={getInputStyle(colors)} />
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>FIRST NAME (optional)</label>
+                    <input type="text" value={inviteFirstName} onChange={(e) => setInviteFirstName(e.target.value)} placeholder="Jane" style={getInputStyle(colors)} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>LAST NAME (optional)</label>
+                    <input type="text" value={inviteLastName} onChange={(e) => setInviteLastName(e.target.value)} placeholder="Smith" style={getInputStyle(colors)} />
+                  </div>
                 </div>
                 <div style={{ marginBottom: '20px' }}>
                   <label style={labelStyle}>EMAIL ADDRESS *</label>
@@ -886,6 +896,7 @@ function getInputStyle(colors: any): React.CSSProperties {
     fontSize: '14px',
     fontFamily: 'Montserrat, sans-serif',
     boxSizing: 'border-box',
+    borderRadius: '12px',
   }
 }
 

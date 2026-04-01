@@ -153,30 +153,22 @@ export default function NotificationsPage() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', gap: '12px', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: 'clamp(22px, 5vw, 30px)', fontWeight: 900, color: colors.text, margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
-            Notifications
-          </h1>
-          <p style={{ margin: 0, fontSize: '12px', color: colors.borderLight }}>
-            {unread > 0 ? `${unread} unread` : 'All caught up'}
-          </p>
-        </div>
-        {unread > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            style={{
-              padding: '8px 18px', backgroundColor: 'transparent',
-              border: `1px solid ${colors.bgHover}`, color: colors.textSecondary,
-              fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
-              letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-              transition: 'border-color 0.15s, color 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = colors.borderLight; e.currentTarget.style.color = colors.textSecondary }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = colors.bgHover; e.currentTarget.style.color = colors.textSecondary }}
-          >
-            Mark all read
-          </button>
-        )}
+        <h1 className="notifications-heading" style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 900, color: colors.text, margin: 0, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+          Notifications
+        </h1>
+        <button
+          onClick={handleMarkAllRead}
+          disabled={unread === 0}
+          style={{
+            padding: '8px 18px', backgroundColor: 'transparent',
+            border: `1px solid ${colors.bgHover}`, color: unread > 0 ? colors.textSecondary : colors.borderLight,
+            fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
+            letterSpacing: '0.5px', cursor: unread > 0 ? 'pointer' : 'default',
+            fontFamily: 'Montserrat, sans-serif', opacity: unread > 0 ? 1 : 0.4,
+          }}
+        >
+          Mark All as Read
+        </button>
       </div>
 
       {/* Empty state */}

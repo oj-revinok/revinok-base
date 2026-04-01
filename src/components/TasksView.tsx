@@ -3,8 +3,9 @@
 import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
 import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
-import { getTaskDescription, getTaskNotionComments } from '@/lib/actions/notion'
+import { getTaskDescription, getTaskNotionComments, syncNotionTasksNow } from '@/lib/actions/notion'
 import { useTheme } from '@/context/ThemeContext'
+import { useRouter } from 'next/navigation'
 
 type ViewMode = 'list' | 'kanban'
 
@@ -32,8 +33,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PRIORITY_COLORS: Record<string, string> = {
   'High':   '#ef4444',
-  'Medium': '#ff9d4a',
-  'Low':    '#555555',
+  'Medium': '#22c55e',
+  'Low':    '#eab308',
 }
 
 const PRIMARY_STATUSES = ['Not started', 'In progress', 'Waiting for info', 'Inhouse Review', 'Feedback']
@@ -47,11 +48,14 @@ interface Props {
 
 export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Props) {
   const { colors, theme } = useTheme()
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<ViewMode>('kanban')
   const [search, setSearch] = useState('')
   const [showSecondary, setShowSecondary] = useState(false)
   const [loadMoreCount, setLoadMoreCount] = useState<Record<string, number>>({})
   const [selectedTask, setSelectedTask] = useState<NotionTask | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [lastSynced, setLastSynced] = useState<string | null>(null)
 
   const INITIAL_VISIBLE = 10
 
@@ -142,6 +146,36 @@ export default function TasksView({ tasks, isAdminOrPM, hasNotionPersonId }: Pro
         <span style={{ color: colors.textMuted, fontSize: '11px', whiteSpace: 'nowrap' }}>
           {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
         </span>
+        {/* Sync button — top right */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {lastSynced && (
+            <span style={{ fontSize: '10px', color: colors.textMuted, whiteSpace: 'nowrap' }}>
+              Last synced: {new Date(lastSynced).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <button
+            onClick={async () => {
+              setSyncing(true)
+              try {
+                const result = await syncNotionTasksNow()
+                setLastSynced(result.timestamp)
+                router.refresh()
+              } finally {
+                setSyncing(false)
+              }
+            }}
+            disabled={syncing}
+            style={{
+              padding: '8px 16px', backgroundColor: 'transparent',
+              border: `1px solid ${colors.bgSecondary}`, color: colors.textMuted,
+              fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px',
+              cursor: syncing ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif',
+              borderRadius: 10000, opacity: syncing ? 0.6 : 1, whiteSpace: 'nowrap',
+            }}
+          >
+            {syncing ? '↻ Syncing…' : '↻ Sync'}
+          </button>
+        </div>
       </div>
 
       {filteredTasks.length === 0 ? (
@@ -667,6 +701,11 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
         {task.name}
       </p>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+        {task.assignedNames.length > 0 && (
+          <span style={{ fontSize: '10px', color: colors.textMuted, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {task.assignedNames.join(', ')}
+          </span>
+        )}
         {task.tags.slice(0, 2).map(tag => (
           <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', border: `1px solid ${colors.border}`, borderRadius: 10000 }}>
             {tag}

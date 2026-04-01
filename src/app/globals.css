@@ -324,3 +324,8 @@ button, a {
   pointer-events: none;
   height: 0;
 }
+
+/* ── Mobile: hide Notifications page h1 (bell in topbar is sufficient) */
+@media (max-width: 768px) {
+  .notifications-heading { display: none; }
+}

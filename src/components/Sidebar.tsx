@@ -111,8 +111,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/team',          label: 'TEAM',          restricted: true,  icon: Icons.team },
   { href: '/dashboard/notes',         label: 'NOTES',         restricted: false, icon: Icons.notes },
   { href: '/dashboard/messages',      label: 'MESSAGES',      restricted: false, icon: Icons.messages },
-  { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false, clientHidden: true, icon: Icons.settings },
   { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false, icon: Icons.notifications },
+  { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false, clientHidden: true, icon: Icons.settings },
 ]
 
 export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0, unreadMessages = 0 }: SidebarProps) {

@@ -15,12 +15,22 @@ export interface TaskComment {
 
 export async function getTaskComments(taskNotionId: string): Promise<TaskComment[]> {
   const supabase = createClient()
+  // Join with profiles to get the current display name (dynamic — reflects profile name changes)
   const { data } = await supabase
     .from('task_comments')
-    .select('id, task_notion_id, author_name, content, created_at')
+    .select('id, task_notion_id, content, created_at, author_id, profiles(full_name, email)')
     .eq('task_notion_id', taskNotionId)
     .order('created_at', { ascending: true })
-  return (data || []) as TaskComment[]
+
+  if (!data) return []
+
+  return data.map((row: any) => ({
+    id: row.id,
+    task_notion_id: row.task_notion_id,
+    author_name: row.profiles?.full_name || row.profiles?.email || 'Unknown',
+    content: row.content,
+    created_at: row.created_at,
+  }))
 }
 
 export async function addTaskComment(

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 
 export default function LoginPage() {
-  const { colors } = useTheme()
+  const { colors, theme } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -51,7 +51,10 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '420px' }}>
         <div style={{ marginBottom: '56px', textAlign: 'center' }}>
           <img
-            src="https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png"
+            src={theme === 'dark'
+              ? 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69c145e944d6cf8a1de59438_Logo%20(1).png'
+              : 'https://cdn.prod.website-files.com/6862752441a47ff6d8e0dab5/69ca4814d84779b1aa924829_output-onlinepngtools%20(2).png'
+            }
             alt="Revinok"
             style={{ height: '48px', width: 'auto', display: 'block', margin: '0 auto' }}
           />

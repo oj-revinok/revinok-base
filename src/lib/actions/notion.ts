@@ -1,6 +1,6 @@
 'use server'
 
-import { unstable_cache } from 'next/cache'
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getTasksForProject, getNotionProjectsPage, getAllTasks, getNotionTeamPersons, NotionTask, getNotionClient } from '@/lib/notion'
 
@@ -115,6 +115,12 @@ export async function getTaskNotionComments(taskId: string): Promise<{ author: s
   } catch {
     return []
   }
+}
+
+// Force a manual sync — busts the Notion task cache so the next fetch hits Notion directly
+export async function syncNotionTasksNow(): Promise<{ synced: true; timestamp: string }> {
+  revalidateTag('notion-all-tasks')
+  return { synced: true, timestamp: new Date().toISOString() }
 }
 
 // Fetch the page body (description) for a single Notion task
