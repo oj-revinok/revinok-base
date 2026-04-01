@@ -84,50 +84,47 @@ export async function updateMemberNotionId(profileId: string, notionPersonId: st
   revalidatePath('/dashboard/team')
 }
 
-export async function inviteMember(formData: FormData) {
-  const supabase = createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // Create admin client inside try/catch — throws synchronously if env var is missing
-  let admin: ReturnType<typeof createAdminClient>
+export async function inviteMember(formData: FormData): Promise<{ success: boolean; email?: string; error?: string }> {
   try {
-    admin = createAdminClient()
-  } catch (err: any) {
-    throw new Error(err.message || 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is missing.')
-  }
+    const supabase = createClient()
 
-  const email = (formData.get('email') as string)?.trim().toLowerCase()
-  const role = formData.get('role') as string
-  const firstName = (formData.get('first_name') as string)?.trim() || ''
-  const lastName = (formData.get('last_name') as string)?.trim() || ''
-  const fullName = [firstName, lastName].filter(Boolean).join(' ') || null
-  const notionPersonId = (formData.get('notion_person_id') as string)?.trim() || null
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
 
-  if (!email || !role) {
-    throw new Error('Email and role are required')
-  }
+    const email = (formData.get('email') as string)?.trim().toLowerCase()
+    const role = formData.get('role') as string
+    const firstName = (formData.get('first_name') as string)?.trim() || ''
+    const lastName = (formData.get('last_name') as string)?.trim() || ''
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || null
+    const notionPersonId = (formData.get('notion_person_id') as string)?.trim() || null
 
-  // Check if user already exists
-  const { data: existingProfile } = await supabase
-    .from('profiles')
-    .select('id, email')
-    .eq('email', email)
-    .maybeSingle()
+    if (!email || !role) {
+      return { success: false, error: 'Email and role are required' }
+    }
 
-  if (existingProfile) {
-    throw new Error('A team member with this email already exists')
-  }
+    // Create admin client — throws synchronously if env var is missing
+    let admin: ReturnType<typeof createAdminClient>
+    try {
+      admin = createAdminClient()
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is missing.' }
+    }
 
-  // Send invite via Supabase Auth Admin API (uses service role)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://base.revinok.com'
+    // Check if user already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('email', email)
+      .maybeSingle()
 
-  let inviteData: any = null
-  let authError: any = null
+    if (existingProfile) {
+      return { success: false, error: 'A team member with this email already exists' }
+    }
 
-  try {
-    const result = await admin.auth.admin.inviteUserByEmail(email, {
+    // Send invite via Supabase Auth Admin API (uses service role)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://base.revinok.com'
+
+    const { data: inviteData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
       data: {
         role,
         full_name: fullName,
@@ -135,57 +132,50 @@ export async function inviteMember(formData: FormData) {
       },
       redirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
     })
-    inviteData = result.data
-    authError = result.error
-  } catch (err: any) {
-    throw new Error(`Failed to send invite: ${err.message || 'Unknown error'}`)
-  }
 
-  if (authError) {
-    const msg = authError.message || ''
-    if (msg.includes('service role') || msg.includes('service_role') || msg.toLowerCase().includes('unauthorized') || authError.status === 401 || authError.status === 503) {
-      throw new Error('Invite failed: the SUPABASE_SERVICE_ROLE_KEY environment variable is missing or incorrect.')
+    if (authError) {
+      return { success: false, error: `Failed to send invite: ${authError.message}` }
     }
-    throw new Error(`Failed to send invite: ${authError.message}`)
+
+    // Store invitation record
+    await supabase
+      .from('invitations')
+      .insert({ email, role, invited_by: user.id })
+      .select()
+      .maybeSingle()
+
+    // Pre-set the role in profiles
+    if (inviteData?.user?.id) {
+      await admin
+        .from('profiles')
+        .update({ role, full_name: fullName, email, notion_person_id: notionPersonId } as never)
+        .eq('id', inviteData.user.id)
+    }
+
+    // Send branded welcome email via SendGrid (non-blocking)
+    try {
+      const setupUrl = inviteData?.user?.action_link || `${siteUrl}/login`
+      const greeting = firstName || 'there'
+      await sendEmail({
+        to: email,
+        subject: `You've been invited to Revinok Base`,
+        templateData: {
+          email_heading: `Hey ${greeting}, welcome to Revinok Base`,
+          email_body: `You've been invited to join Revinok Base — our internal project management portal. Use it to track your tasks, stay across projects, manage your notes, and access key documents.\n\nGet started by setting up your password below.`,
+          cta_url: setupUrl,
+          cta_text: 'Set Up Your Password',
+          extra_note: `Portal: ${siteUrl}`,
+        },
+      })
+    } catch (emailErr) {
+      console.error('[Invite] Welcome email error:', emailErr)
+    }
+
+    revalidatePath('/dashboard/team')
+    return { success: true, email }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'An unexpected error occurred' }
   }
-
-  // Store invitation record
-  await supabase
-    .from('invitations')
-    .insert({ email, role, invited_by: user.id })
-    .select()
-    .maybeSingle()
-
-  // Pre-set the role in profiles
-  if (inviteData?.user?.id) {
-    await admin
-      .from('profiles')
-      .update({ role, full_name: fullName, email, notion_person_id: notionPersonId } as never)
-      .eq('id', inviteData.user.id)
-  }
-
-  // Send branded welcome email via SendGrid (non-blocking)
-  try {
-    const setupUrl = inviteData?.user?.action_link || `${siteUrl}/login`
-    const greeting = firstName || 'there'
-    await sendEmail({
-      to: email,
-      subject: `You've been invited to Revinok Base`,
-      templateData: {
-        email_heading: `Hey ${greeting}, welcome to Revinok Base`,
-        email_body: `You've been invited to join Revinok Base — our internal project management portal. Use it to track your tasks, stay across projects, manage your notes, and access key documents.\n\nGet started by setting up your password below.`,
-        cta_url: setupUrl,
-        cta_text: 'Set Up Your Password',
-        extra_note: `Portal: ${siteUrl}`,
-      },
-    })
-  } catch (emailErr) {
-    // Email failure should not prevent the invite from succeeding
-    console.error('[Invite] Welcome email error:', emailErr)
-  }
-
-  revalidatePath('/dashboard/team')
-  return { success: true, email }
 }
 
 export async function getClients() {

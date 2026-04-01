@@ -173,14 +173,18 @@ export default function TeamPage() {
       if (inviteNotionPersonId.trim()) {
         fd.set('notion_person_id', inviteNotionPersonId.trim())
       }
-      await inviteMember(fd)
-      setInviteSuccess(`Invite sent to ${inviteEmail}`)
-      setInviteEmail('')
-      setInviteFirstName('')
-      setInviteLastName('')
-      setInviteRole('designer')
-      setInviteNotionPersonId('')
-      await refreshMembers()
+      const result = await inviteMember(fd)
+      if (!result.success) {
+        setInviteError(result.error || 'Failed to send invite')
+      } else {
+        setInviteSuccess(`Invite sent to ${inviteEmail}`)
+        setInviteEmail('')
+        setInviteFirstName('')
+        setInviteLastName('')
+        setInviteRole('designer')
+        setInviteNotionPersonId('')
+        await refreshMembers()
+      }
     } catch (err: unknown) {
       setInviteError(err instanceof Error ? err.message : 'Failed to send invite')
     } finally {
