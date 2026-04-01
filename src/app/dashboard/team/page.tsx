@@ -761,7 +761,6 @@ export default function TeamPage() {
 
             {inviteSuccess ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <p style={{ fontSize: '32px', margin: '0 0 16px 0' }}>✅</p>
                 <p style={{ color: '#4ade80', fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0' }}>Invite sent!</p>
                 <p style={{ color: colors.textSecondary, fontSize: '13px', margin: '0 0 24px 0' }}>{inviteSuccess}</p>
                 <button onClick={closeModal} style={{ padding: '12px 24px', backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#000000', border: 'none', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', minHeight: '44px' }}>

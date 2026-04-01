@@ -121,21 +121,30 @@ export async function inviteMember(formData: FormData): Promise<{ success: boole
       return { success: false, error: 'A team member with this email already exists' }
     }
 
-    // Send invite via Supabase Auth Admin API (uses service role)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://base.revinok.com'
 
-    const { data: inviteData, error: authError } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: {
-        role,
-        full_name: fullName,
-        invited_by: user.id,
+    // Generate an invite link without sending Supabase's own email.
+    // This creates the user in the pending-invite state and returns the action_link
+    // we then send ourselves via SendGrid.
+    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+      type: 'invite',
+      email,
+      options: {
+        data: {
+          role,
+          full_name: fullName,
+          invited_by: user.id,
+        },
+        redirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
       },
-      redirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
     })
 
-    if (authError) {
-      return { success: false, error: `Failed to send invite: ${authError.message}` }
+    if (linkError) {
+      return { success: false, error: `Failed to generate invite: ${linkError.message}` }
     }
+
+    const invitedUserId = linkData?.user?.id
+    const setupUrl = (linkData as any)?.properties?.action_link || `${siteUrl}/login`
 
     // Store invitation record
     await supabase
@@ -145,30 +154,30 @@ export async function inviteMember(formData: FormData): Promise<{ success: boole
       .maybeSingle()
 
     // Pre-set the role in profiles
-    if (inviteData?.user?.id) {
+    if (invitedUserId) {
       await admin
         .from('profiles')
         .update({ role, full_name: fullName, email, notion_person_id: notionPersonId } as never)
-        .eq('id', inviteData.user.id)
+        .eq('id', invitedUserId)
     }
 
-    // Send branded welcome email via SendGrid (non-blocking)
-    try {
-      const setupUrl = inviteData?.user?.action_link || `${siteUrl}/login`
-      const greeting = firstName || 'there'
-      await sendEmail({
-        to: email,
-        subject: `You've been invited to Revinok Base`,
-        templateData: {
-          email_heading: `Hey ${greeting}, welcome to Revinok Base`,
-          email_body: `You've been invited to join Revinok Base — our internal project management portal. Use it to track your tasks, stay across projects, manage your notes, and access key documents.\n\nGet started by setting up your password below.`,
-          cta_url: setupUrl,
-          cta_text: 'Set Up Your Password',
-          extra_note: `Portal: ${siteUrl}`,
-        },
-      })
-    } catch (emailErr) {
-      console.error('[Invite] Welcome email error:', emailErr)
+    // Send branded invite email via SendGrid (the only email the invitee receives)
+    const greeting = firstName || 'there'
+    const emailResult = await sendEmail({
+      to: email,
+      subject: `You've been invited to Revinok Base`,
+      templateData: {
+        email_heading: `Hey ${greeting}, welcome to Revinok Base`,
+        email_body: `You've been invited to join Revinok Base — our internal project management portal. Use it to track your tasks, stay across projects, manage your notes, and access key documents.\n\nGet started by setting up your password below.`,
+        cta_url: setupUrl,
+        cta_text: 'Set Up Your Password',
+        extra_note: `Portal: ${siteUrl}`,
+      },
+    })
+
+    if (!emailResult.success) {
+      console.error('[Invite] SendGrid error:', emailResult.error)
+      // Don't fail the whole invite — user was created, link was generated
     }
 
     revalidatePath('/dashboard/team')
