@@ -1,3 +1,4 @@
+'use server'
 // Non-circular helper: fans out notifications to all project members
 // Imported by files.ts and notes.ts
 import { createClient } from '@/lib/supabase/server'
