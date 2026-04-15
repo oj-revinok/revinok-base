@@ -20,6 +20,8 @@ function notifAccent(type: string) {
   if (type === 'launch_declined') return '#ef4444'
   if (type === 'project_added') return '#4a9eff'
   if (type === 'note_shared') return '#a78bfa'
+  if (type === 'file_uploaded') return '#f59e0b'
+  if (type === 'note_added') return '#a78bfa'
   return '#333333'
 }
 
@@ -29,6 +31,8 @@ function notifTypeLabel(type: string) {
   if (type === 'launch_declined') return 'Declined'
   if (type === 'project_added') return 'Project'
   if (type === 'note_shared') return 'Note Shared'
+  if (type === 'file_uploaded') return 'File Uploaded'
+  if (type === 'note_added') return 'Note Added'
   return 'Notification'
 }
 
@@ -39,6 +43,14 @@ function notifTitle(n: Notification) {
   if (n.type === 'launch_approved') return `${sender} approved the Go-Live checklist for ${project}`
   if (n.type === 'launch_declined') return `${sender} declined the Go-Live checklist for ${project}`
   if (n.type === 'project_added') return `${sender} added you to ${project}`
+  if (n.type === 'file_uploaded') {
+    const fileName = n.data?.file_name || 'a file'
+    return `${sender} uploaded "${fileName}" to ${project}`
+  }
+  if (n.type === 'note_added') {
+    const preview = n.data?.note_preview || ''
+    return `${sender} added a note to ${project}${preview ? `: "${preview}"` : ''}`
+  }
   if (n.type === 'note_shared') {
     const noteTitle = n.data?.note_title || 'a note'
     const access = n.data?.access_level || 'view'
