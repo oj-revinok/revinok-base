@@ -262,7 +262,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
         borderTop: `1px solid ${colors.bgSecondary}`,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start',
         gap: '4px',
       }}>
         <span style={{ fontSize: '9px', color: colors.textMuted, opacity: 0.5, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3px' }}>
