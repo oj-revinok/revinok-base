@@ -19,9 +19,7 @@ export async function addNote(projectId: string, content: string) {
     .single()
   if (error) throw error
 
-  const { data: project } = await supabase
-    .from('projects').select('name').eq('id', projectId).single()
-
+  const { data: project } = await supabase.from('projects').select('name').eq('id', projectId).single()
   const authorName = (note as any)?.profiles?.full_name ?? 'Someone'
   const plainPreview = trimmed.replace(/<[^>]+>/g, '').slice(0, 60) + (trimmed.length > 60 ? '…' : '')
 
@@ -39,6 +37,12 @@ export async function deleteNote(noteId: string, projectId: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Verify current user is the note author before deleting
+  const { data: note } = await supabase.from('notes').select('author_id').eq('id', noteId).single()
+  if (!note) throw new Error('Note not found')
+  if (note.author_id !== user.id) throw new Error('Unauthorized: you can only delete your own notes')
+
   const { error } = await supabase.from('notes').delete().eq('id', noteId)
   if (error) throw error
   revalidatePath(`/dashboard/projects/${projectId}`)
