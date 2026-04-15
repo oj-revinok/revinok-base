@@ -1,66 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminSupa } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
 
-/**
- * POST /api/feedback
- * Receives { userId, userName, comment } and creates a notification
- * for every admin user so they see the feedback in their notifications.
- */
 export async function POST(req: Request) {
   try {
-    const { userId, userName, comment } = await req.json();
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    if (!userId || !userName || !comment) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-    }
+    const { comment } = await req.json()
+    if (!comment?.trim()) return NextResponse.json({ error: 'Missing comment' }, { status: 400 })
 
-    // Use service role to bypass RLS — we need to find all admins
-    // and insert notifications for them.
-    const supabase = createClient(
+    const { data: senderProfile } = await supabase
+      .from('profiles').select('full_name, email').eq('id', user.id).single()
+    const senderName = senderProfile?.full_name || senderProfile?.email || 'Unknown'
+
+    const adminSupa = createAdminSupa(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    )
+    const { data: admins, error: adminErr } = await adminSupa.from('profiles').select('id').eq('role', 'admin')
+    if (adminErr) return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    if (!admins || admins.length === 0) return NextResponse.json({ success: true })
 
-    // 1. Get all admin users
-    const { data: admins, error: adminErr } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'admin');
-
-    if (adminErr) {
-      console.error('Feedback: failed to fetch admins', adminErr);
-      return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    }
-
-    if (!admins || admins.length === 0) {
-      // No admins found — still accept the feedback silently
-      return NextResponse.json({ success: true });
-    }
-
-    // 2. Insert a notification for each admin
-    const notifications = admins.map((admin) => ({
-      recipient_id: admin.id,
-      sender_id: userId,
-      type: 'feedback',
-      is_read: false,
-      data: {
-        user_name: userName,
-        comment,
-      },
-    }));
-
-    const { error: insertErr } = await supabase
-      .from('notifications')
-      .insert(notifications);
-
-    if (insertErr) {
-      console.error('Feedback: failed to insert notifications', insertErr);
-      return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
+    const { error: insertErr } = await adminSupa.from('notifications').insert(
+      admins.map(a => ({ recipient_id: a.id, sender_id: user.id, type: 'feedback', is_read: false, data: { user_name: senderName, comment: comment.trim() } }))
+    )
+    if (insertErr) return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('Feedback route error:', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error('Feedback route error:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
