@@ -61,6 +61,17 @@ export async function getProjects() {
 // ── Fetch single project ──
 export async function getProject(id: string) {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  // Allow admin/PM to see any project; others must be a member
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const isAdminOrPM = profile?.role === 'admin' || profile?.role === 'project_manager'
+  if (!isAdminOrPM) {
+    const { data: membership } = await supabase.from('project_members').select('project_id').eq('project_id', id).eq('profile_id', user.id).single()
+    if (!membership) return null
+  }
+
   const { data, error } = await supabase
     .from('projects')
     .select(`
