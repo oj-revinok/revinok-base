@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { logActivity } from '@/lib/actions/activity'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
@@ -9,6 +10,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Log portal access (rate-limited to once per 5 min)
+  logActivity('/dashboard').catch(() => {})
 
   const [{ data: profile }, { count: unreadCount }] = await Promise.all([
     supabase.from('profiles').select('full_name, email, role, initials, avatar_url').eq('id', user.id).single(),
