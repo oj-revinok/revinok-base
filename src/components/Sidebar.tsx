@@ -255,6 +255,20 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
           SIGN OUT
         </button>
       </div>
+    
+      {/* Version badge */}
+      <div style={{
+        padding: '8px 16px',
+        borderTop: `1px solid ${{colors.bgSecondary}}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: '4px',
+      }}>
+        <span style={{ fontSize: '9px', color: colors.textMuted, opacity: 0.5, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3px' }}>
+          Revinok Base &copy; Build 5.2.0
+        </span>
+      </div>
     </aside>
   )
 }
