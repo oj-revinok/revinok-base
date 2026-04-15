@@ -12,7 +12,6 @@ interface SidebarProps {
   email: string
   role: string
   unreadNotifications?: number
-  unreadMessages?: number
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -78,7 +77,6 @@ const Icons = {
       <polyline points="10 9 9 9 8 9"/>
     </svg>
   ),
-  messages: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
@@ -110,12 +108,12 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/clients',       label: 'CLIENTS',       restricted: true,  icon: Icons.clients },
   { href: '/dashboard/team',          label: 'TEAM',          restricted: true,  icon: Icons.team },
   { href: '/dashboard/notes',         label: 'NOTES',         restricted: false, icon: Icons.notes },
-  { href: '/dashboard/messages',      label: 'MESSAGES',      restricted: false, icon: Icons.messages },
+
   { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false, icon: Icons.notifications },
   { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false, clientHidden: true, icon: Icons.settings },
 ]
 
-export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0, unreadMessages = 0 }: SidebarProps) {
+export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -153,8 +151,8 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
           const isActive = pathname?.startsWith(item.href)
           const isNotif = item.href === '/dashboard/notifications'
           const isMessages = item.href === '/dashboard/messages'
-          const showBadge = (isNotif && unreadNotifications > 0) || (isMessages && unreadMessages > 0)
-          const badgeCount = isNotif ? unreadNotifications : unreadMessages
+          const showBadge = (isNotif && unreadNotifications > 0) || (isMessages &&)
+          const badgeCount = isNotif ? unreadNotifications :
           return (
             <Link
               key={item.href}
