@@ -104,6 +104,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within <ThemeProvider>');
+  // Return dark defaults during SSR / static generation when provider isn't mounted yet
+  if (!ctx) return { theme: 'dark' as const, toggleTheme: () => {}, colors: darkColors };
   return ctx;
 }
