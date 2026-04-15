@@ -15,9 +15,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
-
   const handleSignIn = async (e: React.FormEvent) => {
+    const supabase = createClient()
     e.preventDefault()
     setError('')
     setLoading(true)
