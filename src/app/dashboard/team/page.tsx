@@ -7,6 +7,7 @@ import { useTheme } from '@/context/ThemeContext'
 import GroupModal from '@/components/GroupModal'
 import { inviteMember, updateMemberRole, updateMemberNotionId, getNotionPersons, getNotionTeamPersonsFromDB, resetMemberPassword, generatePassword, removeMember, NotionPerson, type NotionTeamPerson } from '@/lib/actions/team'
 import { getGroups, deleteGroup } from '@/lib/actions/groups'
+import { getTeamActivity } from '@/lib/actions/activity'
 import type { Group, Profile } from '@/types'
 
 interface TeamMember {
@@ -44,6 +45,8 @@ export default function TeamPage() {
   const { colors, theme } = useTheme()
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [teamActivity, setTeamActivity] = useState<Record<string, { created_at: string; page: string | null }[]>>({})
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [notionPersons, setNotionPersons] = useState<(NotionPerson | NotionTeamPerson)[]>([])
   const [showInviteModal, setShowInviteModal] = useState(false)
@@ -139,7 +142,9 @@ export default function TeamPage() {
       })
     }
     load()
-  }, [])
+  
+  getTeamActivity().then(setTeamActivity).catch(() => {})
+}, [])
 
   async function refreshMembers() {
     const { data: members } = await supabase.from('profiles').select('*').order('full_name')
