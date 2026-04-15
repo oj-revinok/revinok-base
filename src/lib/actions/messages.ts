@@ -89,9 +89,13 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function getMessages(otherUserId: string): Promise<Message[]> {
+  if (!otherUserId || typeof otherUserId !== 'string' || otherUserId.length < 10) return []
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
+  // Verify otherUserId is a real profile the current user has messaged or could message
+  const { data: otherProfile } = await supabase.from('profiles').select('id').eq('id', otherUserId).single()
+  if (!otherProfile) return []
 
   // Use admin client to bypass RLS — SELECT policy hides deleted messages,
   // but we want to show "This message was deleted" in the UI
@@ -155,8 +159,13 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
-  // Use admin client to bypass RLS — we verify ownership via sender_id check
+  // Use admin client to bypass RLS
   const admin = createAdminClient()
+
+  // Pre-fetch to verify ownership before mutating
+  const { data: existing } = await admin.from('messages').select('id, sender_id').eq('id', messageId).single()
+  if (!existing || existing.sender_id !== user.id) return false
+
   const { data, error } = await admin
     .from('messages')
     .update({
@@ -165,7 +174,7 @@ export async function softDeleteMessage(messageId: string): Promise<boolean> {
       deleted_by: user.id,
     })
     .eq('id', messageId)
-    .eq('sender_id', user.id) // Only delete own messages
+    .eq('sender_id', user.id)
     .select('id')
 
   if (error) {
