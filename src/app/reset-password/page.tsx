@@ -22,6 +22,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    const supabase = createClient()
     // @supabase/ssr uses cookie-based storage and doesn't auto-parse the URL hash.
     // When Supabase redirects from the verify endpoint it puts tokens in the hash:
     // #access_token=...&refresh_token=...&type=recovery
@@ -67,6 +68,7 @@ export default function ResetPasswordPage() {
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const supabase = createClient()
     e.preventDefault()
     setError('')
 
