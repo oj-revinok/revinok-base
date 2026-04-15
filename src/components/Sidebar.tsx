@@ -259,7 +259,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
       {/* Version badge */}
       <div style={{
         padding: '8px 16px',
-        borderTop: `1px solid ${{colors.bgSecondary}}`,
+        borderTop: `1px solid ${colors.bgSecondary}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
