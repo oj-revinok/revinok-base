@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 import { requestPasswordReset } from '@/lib/actions/authActions'
