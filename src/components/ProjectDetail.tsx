@@ -13,6 +13,15 @@ import TasksView from './TasksView'
 import type { NotionTask } from '@/lib/notion'
 import { isAdminOrPM, isDevRole, isDesignerRole, ROLE_LABELS } from '@/types'
 
+// Strip dangerous HTML to prevent XSS from note content
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\s+on\w+="[^"]*"/gi, '')
+    .replace(/\s+on\w+='[^']*'/gi, '')
+    .replace(/javascript:/gi, '')
+}
+
 type Tab = 'overview' | 'tasks' | 'activity'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -442,7 +451,7 @@ export default function ProjectDetail({
                     const author = note.profiles?.full_name
                     return (
                       <div key={note.id} style={{ padding: '14px', backgroundColor: colors.bgTertiary, borderLeft: `3px solid ${colors.borderLight}`, position: 'relative', borderRadius: 12 }}>
-                        <div className="tiptap-editor" style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: note.content }} />
+                        <div className="tiptap-editor" style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(note.content) }} />
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             {author && <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 600 }}>{author}</span>}
