@@ -5,15 +5,16 @@ import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
 import DashboardShell from '@/components/DashboardShell'
 
+// Required: all pages use Supabase auth (cookies) — never cache this layout
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Log portal access (rate-limited to once per 5 min per user)
-  logActivity('/dashboard').catch(() => {})
-
+  // Parallel fetch — profile + unread count in one round-trip
   const [{ data: profile }, { count: unreadCount }] = await Promise.all([
     supabase.from('profiles').select('full_name, email, role, initials, avatar_url').eq('id', user.id).single(),
     supabase
@@ -22,6 +23,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq('recipient_id', user.id)
       .eq('is_read', false),
   ])
+
+  // Log activity in the background — do NOT await, never block render
+  void logActivity('/dashboard')
 
   const role = profile?.role ?? 'viewer'
   const userInitials =
@@ -49,4 +53,3 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </DashboardShell>
   )
 }
-
