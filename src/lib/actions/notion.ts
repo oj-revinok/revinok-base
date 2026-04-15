@@ -6,13 +6,13 @@ import { getTasksForProject, getNotionProjectsPage, getAllTasks, getNotionTeamPe
 const getCachedAllTasks = unstable_cache(
   async (notionKey: string | undefined, personId: string | null) => getAllTasks(notionKey, personId),
   ['notion-all-tasks'],
-  { revalidate: 300 }
+  { revalidate: 900 }
 )
 
 const getCachedTeamPersons = unstable_cache(
   async (notionKey: string | undefined) => getNotionTeamPersons(notionKey),
   ['notion-team-persons'],
-  { revalidate: 300 }
+  { revalidate: 900 }
 )
 
 // Enrich tasks with assignee names — Team DB first, Supabase profiles as fallback
