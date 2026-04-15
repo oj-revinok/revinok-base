@@ -12,7 +12,6 @@ type Stage = 'loading' | 'form' | 'success' | 'error'
 export default function ResetPasswordPage() {
   const { colors } = useTheme()
   const router = useRouter()
-  const supabase = createClient()
 
   const [stage, setStage] = useState<Stage>('loading')
   const [password, setPassword] = useState('')
