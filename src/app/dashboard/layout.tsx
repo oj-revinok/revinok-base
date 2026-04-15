@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
@@ -20,33 +19,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq('is_read', false),
   ])
 
-  // Use admin client for messages count — falls back to 0 if service role key is missing
-  let unreadMsgCount: number | null = 0
-  try {
-    const admin = createAdminClient()
-    const { count } = await admin
-      .from('messages')
-      .select('*', { count: 'exact', head: true })
-      .eq('receiver_id', user.id)
-      .is('read_at', null)
-      .is('deleted_at', null)
-    unreadMsgCount = count
-  } catch {
-    // SUPABASE_SERVICE_ROLE_KEY not set — messaging badge will show 0
-  }
-
-  const role = profile?.role ?? 'viewer'
-  const unread = unreadCount ?? 0
-  const unreadMessages = unreadMsgCount ?? 0
-
-  const userInitials = profile
-    ? (profile.full_name || user.email || 'U')
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : 'U'
 
   return (
     <DashboardShell
