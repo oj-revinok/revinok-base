@@ -12,6 +12,7 @@ interface SidebarProps {
   email: string
   role: string
   unreadNotifications?: number
+  unreadMessages?: number
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -77,7 +78,7 @@ const Icons = {
       <polyline points="10 9 9 9 8 9"/>
     </svg>
   ),
-    
+  
   settings: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/>
@@ -105,12 +106,11 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/clients',       label: 'CLIENTS',       restricted: true,  icon: Icons.clients },
   { href: '/dashboard/team',          label: 'TEAM',          restricted: true,  icon: Icons.team },
   { href: '/dashboard/notes',         label: 'NOTES',         restricted: false, icon: Icons.notes },
-
   { href: '/dashboard/notifications', label: 'NOTIFICATIONS', restricted: false, icon: Icons.notifications },
   { href: '/dashboard/settings',      label: 'SETTINGS',      restricted: false, clientHidden: true, icon: Icons.settings },
 ]
 
-export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0) {
+export default function Sidebar({ userInitials, fullName, email, role, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -144,7 +144,64 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
       </div>
 
       <nav style={{ flex: 1, padding: '0 12px' }}>
-        {navItems.map((item) =>)}
+        {navItems.map((item) => {
+          const isActive = pathname?.startsWith(item.href)
+          const isNotif = item.href === '/dashboard/notifications'
+          const showBadge = isNotif && unreadNotifications > 0
+          const badgeCount = unreadNotifications
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={true}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                color: isActive ? colors.accent : colors.textMuted,
+                backgroundColor: isActive ? colors.bgSecondary : 'transparent',
+                textDecoration: 'none',
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.5px',
+                marginBottom: '2px',
+                transition: 'color 0.15s, background-color 0.15s',
+                borderLeft: `2px solid ${isActive ? colors.accent : 'transparent'}`,
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = colors.bgHover
+                  e.currentTarget.style.color = colors.accent
+                  e.currentTarget.style.borderLeftColor = colors.textMuted
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = colors.textMuted
+                  e.currentTarget.style.borderLeftColor = 'transparent'
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {item.icon}
+                {item.label}
+              </span>
+              {showBadge && (
+                <span style={{
+                  backgroundColor: colors.accent, color: theme === 'dark' ? '#080808' : '#1a1a1a',
+                  fontSize: '9px', fontWeight: 800,
+                  borderRadius: '10px', padding: '2px 6px', minWidth: '18px', textAlign: 'center',
+                }}>
+                  {badgeCount > 9 ? '9+' : badgeCount}
+                </span>
+              )}
+            </Link>
+          )
+        })}
       </nav>
 
       {/* User info + Theme Toggle + Sign Out */}
