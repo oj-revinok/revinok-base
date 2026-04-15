@@ -502,7 +502,7 @@ export default function TeamPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Montserrat, sans-serif', minWidth: '600px' }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
-                  {['MEMBER', 'ROLE', 'NOTION ID', 'JOINED', ''].map((h) => (
+                  {['MEMBER', 'ROLE', 'NOTION ID', 'JOINED', 'LAST SEEN', ''].map((h) => (
                     <th key={h} style={{ padding: '16px 20px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -570,6 +570,37 @@ export default function TeamPage() {
                       </td>
                       <td style={{ padding: '16px 20px', fontSize: '13px', color: colors.textSecondary, whiteSpace: 'nowrap' }}>
                         {new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '16px 20px', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                        {(() => {
+                          const entries = teamActivity[member.id] || [];
+                          const last = entries[0];
+                          if (!last) return <span style={{ fontSize: '11px', color: colors.textMuted }}>Never</span>;
+                          const diff = Date.now() - new Date(last.created_at).getTime();
+                          const mins = Math.floor(diff / 60000);
+                          const hrs = Math.floor(mins / 60);
+                          const days = Math.floor(hrs / 24);
+                          const ago = days > 0 ? days + 'd ago' : hrs > 0 ? hrs + 'h ago' : mins > 0 ? mins + 'm ago' : 'Just now';
+                          return (
+                            <div>
+                              <button onClick={() => setExpandedActivity(expandedActivity === member.id ? null : member.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: colors.accent }}>{ago}</span>
+                                <span style={{ fontSize: '10px', color: colors.textMuted }}>{expandedActivity === member.id ? '▲' : '▼'}</span>
+                              </button>
+                              {expandedActivity === member.id && (
+                                <div style={{ marginTop: '6px', maxHeight: '160px', overflowY: 'auto', minWidth: '180px', border: `1px solid ${colors.border}`, borderRadius: 8, padding: '6px 0', backgroundColor: colors.bg }}>
+                                  {entries.slice(0, 20).map((entry, i) => (
+                                    <div key={i} style={{ fontSize: '10px', color: colors.textMuted, padding: '4px 10px', borderBottom: i < entries.length - 1 ? `1px solid ${colors.bgSecondary}` : 'none' }}>
+                                      {new Date(entry.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                  ))}
+                                  {entries.length === 0 && <div style={{ fontSize: '10px', color: colors.textMuted, padding: '4px 10px' }}>No activity yet</div>}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: '16px 20px', whiteSpace: 'nowrap' }}>
                         {isEditing ? (
