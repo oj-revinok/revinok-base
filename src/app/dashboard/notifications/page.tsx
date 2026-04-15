@@ -261,7 +261,23 @@ export default function NotificationsPage() {
                   )}
 
                   {/* Project-added CTA */}
-                  {n.type === 'project_added' && n.project_id && (
+{/* File uploaded / note added — open project */}
+                  {(n.type === 'file_uploaded' || n.type === 'note_added') && n.project_id && (
+                    <div style={{ marginTop: '10px' }}>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await markRead(n.id)
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x))
+                          router.push(`/dashboard/projects/${n.project_id}`)
+                        }}
+                        style={{ padding: '6px 14px', backgroundColor: 'transparent', border: '1px solid #f59e0b', color: '#f59e0b', fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                      >
+                        Open Project →
+                      </button>
+                    </div>
+                  )}
+                                    {n.type === 'project_added' && n.project_id && (
                     <div style={{ marginTop: '10px' }}>
                       <button
                         onClick={async (e) => {
