@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Log portal access (rate-limited to once per 5 min)
+  // Log portal access (rate-limited to once per 5 min per user)
   logActivity('/dashboard').catch(() => {})
 
   const [{ data: profile }, { count: unreadCount }] = await Promise.all([
@@ -23,6 +23,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq('is_read', false),
   ])
 
+  const role = profile?.role ?? 'viewer'
+  const userInitials =
+    profile?.initials ||
+    (profile?.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()) ||
+    'U'
+  const unread = unreadCount ?? 0
 
   return (
     <DashboardShell
@@ -35,7 +41,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email={user.email ?? ''}
         role={role}
         unreadNotifications={unread}
-        unreadMessages={unreadMessages}
       />
       <MobileNav role={role} unreadNotifications={unread} />
       <main className="main-content">
@@ -44,3 +49,4 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </DashboardShell>
   )
 }
+
