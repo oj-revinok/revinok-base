@@ -6,6 +6,34 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-01] — v5.4.0 (Notion fallback cache)
+
+### Added
+- **`notion_tasks_cache` table** (migration 004) — persistent mirror of every Notion task. Acts as a fallback so the Tasks page never goes empty when Notion is slow or unreachable. Indexed on `assigned_to` and `project_notion_ids` (both GIN) and on `synced_at` for the freshness badge.
+- **`notion_sync_meta` table** (singleton, migration 004) — tracks `last_synced_at`, `last_error_at`, and `last_error_message`. Powers the "✓ Synced 2m ago" / "⚠ Stale · 18m ago" badge on the Tasks page.
+- **8-second timeout on every Notion API call** in `src/lib/actions/notion.ts` (`withTimeout` helper). Without this, a slow Notion can hang the request long enough that the user sees a blank page.
+- **Write-through cache** in `fetchAllNotionTasks`, `fetchNotionTasksForProject`, and `syncNotionTasksNow`:
+  - Admin/PM: full replace (propagates Notion deletions to the cache).
+  - Other roles: partial upsert (won't wipe other users' rows from their narrower view).
+  - Project detail: replace only that project's rows.
+- **`getLastNotionSync()` server action** — returns the sync meta to render the freshness badge.
+
+### Changed
+- **`fetchAllNotionTasks` and `fetchNotionTasksForProject` no longer throw.** On Notion failure they record the error to `notion_sync_meta` and return whatever is in the cache. Callers can drop their try/catch.
+- **Tasks page (`src/app/dashboard/tasks/page.tsx`)** — removed the unreachable "Notion is unreachable" failure block. Replaced with an inline status badge that turns orange when we're showing stale cache data.
+- **`getTaskNotionComments` and `getTaskDescription`** wrapped in `withTimeout` — they fail closed (return empty) instead of hanging.
+
+### Fixed
+- **Duplicate task comments** — every comment was rendered twice in the task detail modal: once under "Notion Comments" (fetched live from Notion) and once under "Comments" (read from Supabase `task_comments`). Cause: `addTaskComment` writes through to both the local table and Notion, then both reads happen on render. Fix: removed the "Notion Comments" UI section in `TasksView.tsx`. The Notion write-through is preserved (so the conversation still surfaces in Notion for designers/PMs working there); the portal now shows a single Comments list backed by Supabase.
+
+### Migration to apply
+- `migrations/004_notion_tasks_cache.sql` — run in Supabase SQL Editor before deploying. The new code reads/writes these tables on every Tasks page render; missing tables = silent failures (cache reads return empty, writes are swallowed).
+
+### Sync rule
+- Sidebar version const, in-repo HANDOVER.md, and the external `Revinok_Portal_Handover_v5.docx` + README.md are all bumped to **5.4.0**.
+
+---
+
 ## [2026-03-31] — 43aa809
 
 ### Fixed

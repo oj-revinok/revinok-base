@@ -1,6 +1,6 @@
 # Revinok Portal — Developer Handover
 
-Last updated: 2026-03-31
+Last updated: 2026-05-01 (v5.4.0)
 
 ## Stack
 
@@ -43,6 +43,21 @@ Every page that uses Supabase auth **must** have `export const dynamic = 'force-
 ### Toast System
 `ToastProvider` wraps the dashboard in `DashboardShell`. Any component can call `useToast().showToast(text, type)` for error/success/info notifications.
 
+### Notion Tasks — Fallback Cache (added in 5.4.0)
+Tasks live in Notion, not Supabase, so when Notion is slow or down the Tasks page used to render an empty kanban. The fix is a write-through cache.
+
+- Two tables in Postgres: `notion_tasks_cache` (full mirror, one row per Notion page) and `notion_sync_meta` (singleton row, tracks `last_synced_at` + `last_error_at` + `last_error_message`).
+- All Notion calls in `src/lib/actions/notion.ts` are wrapped in `withTimeout(..., 8000)` so a slow Notion can't hang the page.
+- `fetchAllNotionTasks` / `fetchNotionTasksForProject` no longer throw. They try Notion first, write through to the cache on success, and fall back to the cache on any failure (including timeout).
+- The Tasks page reads `getLastNotionSync()` and renders a small badge: green "✓ Synced 2m ago" when the last sync succeeded, orange "⚠ Stale · 18m ago" when the last error is more recent than the last success and within the last 30 minutes.
+- Cache-write strategy:
+  - Admin/PM (sees the full task set) → full replace (`replaceAllTasksInCache`). Propagates Notion deletions.
+  - Other roles (sees only their own slice) → upsert without delete (`upsertPartialTasksInCache`) so we don't wipe rows visible only to admins.
+  - Single-project page → `replaceProjectTasksInCache` deletes only that project's stale rows.
+- `syncNotionTasksNow()` (the existing manual-refresh server action) now also force-refreshes the cache after busting the in-memory `unstable_cache` tag.
+
+If the migration hasn't run yet, every cache read returns empty and every cache write is swallowed silently — the page degrades to live-only behavior with no error, but you also get no fallback. So make sure `004_notion_tasks_cache.sql` is applied.
+
 ## Database: Key RLS Policies on `messages`
 
 | Policy | Type | Rule |
@@ -54,14 +69,18 @@ The SELECT policy does **not** filter by `deleted_at` — that's handled in the 
 
 ## SQL Migrations
 
-All in `supabase/migrations/`. Run manually in Supabase SQL Editor:
+All in `supabase/migrations/` and `migrations/`. Run manually in Supabase SQL Editor:
 
 1. `20260331_add_read_at_to_messages.sql` — adds `read_at` column, index, and UPDATE policy
 2. `20260331_fix_messages_rls_select.sql` — removes `deleted_at IS NULL` from SELECT policy
 3. `20260331_ensure_read_at_update_policy.sql` — ensures UPDATE policy for regular client usage
 4. `20260331_enable_realtime_full_replica.sql` — `REPLICA IDENTITY FULL` for Realtime UPDATE events
+5. `migrations/001_update_roles_and_create_users.sql` — role constraint, `notion_person_id` on profiles, project RLS
+6. `migrations/002_app_settings.sql` — app-wide key/value settings table
+7. `migrations/003_notifications.sql` — task_comments, notifications, launch_reviews
+8. `migrations/004_notion_tasks_cache.sql` — Notion fallback cache (`notion_tasks_cache`, `notion_sync_meta`)
 
-All migrations have been applied to production as of 2026-03-31.
+Through `003`: applied to production. **`004`: not yet applied — must run before deploying 5.4.0.**
 
 ## Key Files
 

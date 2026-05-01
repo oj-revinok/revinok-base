@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react'
 import type { NotionTask } from '@/lib/notion'
 import { getTaskComments, addTaskComment, type TaskComment } from '@/lib/actions/taskComments'
-import { getTaskDescription, getTaskNotionComments, syncNotionTasksNow } from '@/lib/actions/notion'
+import { getTaskDescription, syncNotionTasksNow } from '@/lib/actions/notion'
 import { useTheme } from '@/context/ThemeContext'
 import { useRouter } from 'next/navigation'
 
@@ -215,8 +215,6 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
   const [isPending, startTransition] = useTransition()
   const [description, setDescription] = useState<string | null>(null)
   const [loadingDesc, setLoadingDesc] = useState(true)
-  const [notionComments, setNotionComments] = useState<{ author: string; text: string; date: string }[]>([])
-  const [loadingNotionComments, setLoadingNotionComments] = useState(true)
 
   useEffect(() => {
     getTaskComments(task.id)
@@ -230,10 +228,6 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
       .then(setDescription)
       .catch(() => setDescription(''))
       .finally(() => setLoadingDesc(false))
-    getTaskNotionComments(task.id)
-      .then(setNotionComments)
-      .catch(() => setNotionComments([]))
-      .finally(() => setLoadingNotionComments(false))
   }, [task.id])
 
   function handleAddComment(e: React.FormEvent) {
@@ -362,37 +356,12 @@ function TaskDetailModal({ task, onClose }: { task: NotionTask; onClose: () => v
         {/* Divider */}
         <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: '20px' }} />
 
-        {/* Notion Comments section — always render while loading */}
-        <div style={{ marginBottom: '20px' }}>
-          <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Notion Comments {notionComments.length > 0 ? `(${notionComments.length})` : ''}
-          </p>
-          {loadingNotionComments ? (
-            <p style={{ fontSize: '12px', color: colors.textMuted }}>Loading…</p>
-          ) : notionComments.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {notionComments.map((c, i) => (
-                <div key={i} style={{ padding: '10px 14px', backgroundColor: colors.bgSecondary, borderLeft: '3px solid #2d2040', borderRadius: 12 }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5 }}>
-                    <span style={{ color: '#a78bfa', fontWeight: 700 }}>{c.author}:</span>{' '}
-                    {c.text}
-                  </p>
-                  {c.date && (
-                    <p style={{ margin: 0, fontSize: '10px', color: colors.textMuted }}>
-                      {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0, fontStyle: 'italic' }}>
-              No comments in Notion for this task.
-            </p>
-          )}
-        </div>
-
-        {/* Comments section */}
+        {/* Comments section — single source of truth (Supabase task_comments).
+            Notion comments were removed from the UI in 5.4.0 because every
+            comment was being displayed twice: addTaskComment writes through to
+            Notion, then the next render fetched and showed the same content
+            both as "Notion Comments" and "Comments". The Notion write-through
+            is preserved so Notion users still see the conversation. */}
         <div style={{ marginBottom: '20px' }}>
           <p style={{ margin: '0 0 12px 0', fontSize: '11px', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Comments {comments.length > 0 ? `(${comments.length})` : ''}

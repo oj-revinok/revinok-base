@@ -8,3 +8,4 @@ node_modules/
 # Untrack specific next paths we want included
 !.next/standalone/
 !.next/standalone/**
+tsconfig.tsbuildinfo
