@@ -572,7 +572,7 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.borderLight }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border }}
     >
-      <p style={{ fontSize: '14px', color: colors.text, margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
+      <p style={{ fontSize: '14px', fontWeight: 600, color: colors.text, margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         {task.priority && (
           <span style={{ fontSize: '11px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
@@ -713,7 +713,6 @@ function ListView({
 function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
   const { colors } = useTheme()
   const tint = priorityCardTint(task.priority, 'transparent')
-  const accent = priorityRowAccent(task.priority)
   const overdue = isTaskOverdue(task.dueDate, task.status)
   const statusColor = STATUS_COLORS[task.status] || colors.textMuted
   const dueDateText = task.dueDate
@@ -723,9 +722,11 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
     <button
       onClick={onClick}
       style={{
+        // No coloured left border / radius on list rows — the rounded corners
+        // were rendering the colour as little crescent slivers down the page.
+        // Priority is read off the bg tint + status dot + priority pill.
         display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px',
         width: '100%', textAlign: 'left', background: tint.background, border: 'none',
-        borderLeft: `4px solid ${accent === 'transparent' ? colors.bgSecondary : accent}`,
         borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
         opacity: faded ? 0.5 : 1, borderRadius: 12,

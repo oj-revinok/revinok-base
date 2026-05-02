@@ -93,28 +93,49 @@ export async function getAllTasks(
   }
 }
 
+// Pick the first property whose name matches any of the candidates. Notion
+// schemas in this workspace are emoji-prefixed and frequently include trailing
+// whitespace ('🏆 Projects ', 'Status '), and either of those can silently
+// break a property lookup if the property is later renamed. Defensive: try a
+// few common variants so a rename doesn't quietly hide every relation.
+function pickProp(props: any, candidates: string[]): any {
+  if (!props) return undefined
+  for (const name of candidates) {
+    if (props[name] !== undefined) return props[name]
+  }
+  // Last-ditch: fuzzy match — strip emoji + trim + lowercase, compare to each
+  // candidate's normalized form. Catches cases like a rename from
+  // '🏆 Projects ' to 'Projects' or 'Project' even if the candidate list
+  // missed the exact new name.
+  const normalize = (s: string) => s.replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase()
+  const targets = candidates.map(normalize)
+  for (const key of Object.keys(props)) {
+    if (targets.includes(normalize(key))) return props[key]
+  }
+  return undefined
+}
+
 function parseNotionTask(page: any): NotionTask {
   const props = page.properties
 
   const name =
-    props['Task Name']?.title?.[0]?.plain_text ||
-    props['Name']?.title?.[0]?.plain_text ||
+    pickProp(props, ['Task Name', 'Name'])?.title?.[0]?.plain_text ||
     'Untitled'
 
-  const status = props['Status ']?.status?.name || 'Not started'
-  const priority = props['Priority Level']?.select?.name || null
-  const dueDate = props['Due Date']?.date?.start || null
+  const status = pickProp(props, ['Status ', 'Status'])?.status?.name || 'Not started'
+  const priority = pickProp(props, ['Priority Level', 'Priority'])?.select?.name || null
+  const dueDate = pickProp(props, ['Due Date', 'Due'])?.date?.start || null
 
-  const assignedTo = (props['🎨 Assigned to']?.relation || []).map(
-    (r: any) => r.id
-  )
+  const assignedTo = (pickProp(props, ['🎨 Assigned to', 'Assigned to', 'Assignees', 'Assignee'])?.relation || [])
+    .map((r: any) => r.id)
 
-  // Try to get assigned person names if available
+  // Resolved later by enrichTasksWithNames against the team DB / profiles.
   const assignedNames: string[] = []
 
-  const tags = (props['Tags']?.multi_select || []).map((t: any) => t.name)
+  const tags = (pickProp(props, ['Tags', 'Tag'])?.multi_select || []).map((t: any) => t.name)
 
-  const projectIds = (props['🏆 Projects ']?.relation || []).map((r: any) => r.id)
+  const projectIds = (pickProp(props, ['🏆 Projects ', '🏆 Projects', 'Projects', 'Project'])?.relation || [])
+    .map((r: any) => r.id)
 
   return {
     id: page.id,

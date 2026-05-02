@@ -421,36 +421,56 @@ export async function fetchNotionTasksForProject(projectId: string): Promise<Not
     getAdminNotionKey(),
   ])
   if (!project?.notion_project_id) return []
+  const targetProjectId = project.notion_project_id
 
+  // 1. Cache first. Populated by the global Tasks-page sync, so as long as
+  //    an admin/PM has visited recently we have a fresh slice.
+  const cached = await loadProjectTasksFromCache(targetProjectId)
+  if (cached.length > 0) return enrichTasksWithNames(cached, notionKey)
+
+  // 2. Cache miss — try the relation-filtered Notion query.
   let liveTasks: NotionTask[] = []
   let liveThrew = false
   try {
     liveTasks = await withTimeout(
-      getTasksForProject(project.notion_project_id, notionKey),
+      getTasksForProject(targetProjectId, notionKey),
       NOTION_TIMEOUT_MS,
       'Notion getTasksForProject'
     )
   } catch (err) {
     liveThrew = true
-    console.error('Notion getTasksForProject failed, falling back to cache:', err)
+    console.error('Notion getTasksForProject failed:', err)
     recordNotionError(`getTasksForProject: ${(err as Error).message}`).catch(() => {})
   }
 
-  // Live fetch returned data → update cache + return.
   if (liveTasks.length > 0) {
-    replaceProjectTasksInCache(project.notion_project_id, liveTasks).catch(() => {})
+    replaceProjectTasksInCache(targetProjectId, liveTasks).catch(() => {})
     return enrichTasksWithNames(liveTasks, notionKey)
   }
 
-  // Live threw OR returned empty (often a silent Notion error since the
-  // underlying fn swallows them). Prefer the persistent cache if it has
-  // anything — that's the whole point of the fallback layer. If cache is
-  // empty too, return the empty live result (this project genuinely has
-  // no tasks, or has never been synced).
-  const cached = await loadProjectTasksFromCache(project.notion_project_id)
-  if (cached.length > 0) return enrichTasksWithNames(cached, notionKey)
-  if (liveThrew) return []
-  return enrichTasksWithNames(liveTasks, notionKey)
+  // 3. Relation filter returned nothing. This can happen when the Notion
+  //    "Projects" relation property has been renamed and the filter no longer
+  //    matches — in that case getAllTasks (no filter) still returns rows, so
+  //    we re-fetch everything and filter client-side. Last line of defense
+  //    before declaring the project genuinely empty.
+  if (!liveThrew) {
+    try {
+      const allTasks = await withTimeout(
+        getAllTasks(notionKey, null),
+        NOTION_TIMEOUT_MS,
+        'Notion getAllTasks (project fallback)'
+      )
+      const matched = allTasks.filter(t => t.projectIds.includes(targetProjectId))
+      if (matched.length > 0) {
+        replaceProjectTasksInCache(targetProjectId, matched).catch(() => {})
+        return enrichTasksWithNames(matched, notionKey)
+      }
+    } catch {
+      // If this also fails, fall through to empty.
+    }
+  }
+
+  return []
 }
 
 export async function fetchNotionProjects(): Promise<{ id: string; name: string }[]> {

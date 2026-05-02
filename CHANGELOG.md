@@ -6,6 +6,22 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.4 (resilient project-task lookup + UI polish)
+
+### Fixed
+- **Project detail page still showed 0 tasks even after the 5.5.3 cache fix.** Root cause this round: Notion's project relation property is named `'🏆 Projects '` (emoji + trailing space). If anyone renames it in the workspace, every `parseNotionTask()` call silently sets `projectIds = []`, the global cache fills up with empty `project_notion_ids`, and no project page can ever match anything.
+- **Resilient lookup in `parseNotionTask()`** — new `pickProp()` helper tries multiple property-name candidates (with-emoji, without, trailing-space, no trailing-space, plus a fuzzy normalised match) for Task Name, Status, Priority, Due Date, Assigned to, Tags, AND Projects. A schema rename no longer silently breaks the parser.
+- **Hard fallback in `fetchNotionTasksForProject`** — order is now: cache → relation-filtered Notion query → `getAllTasks(no filter)` + client-side filter by `project_notion_ids`. The last step keeps project pages working even if the relation filter is broken.
+- **Removed the colored left-edge stripe on list rows.** The 4px solid left border combined with the 12px corner radius was rendering as little crescent slivers down the side of the page. Priority is now read off the background tint + status dot + priority pill.
+
+### Changed
+- **Kanban card title is now `font-weight: 600` (semibold).** Was rendering at default 400, looked thin against the bigger meta below it.
+
+### Why both regressions slipped through
+The 5.4.0 cache layer assumed `getTasksForProject()` was authoritative. It isn't — it swallows Notion errors and returns `[]`, AND its filter relies on a property name that's been renamed at least once. The 5.5.3 fix stopped the cache from being wiped on empty results; this 5.5.4 fix stops the parser and project-page reads from being disabled by a property rename.
+
+---
+
 ## [2026-05-02] — v5.5.3 (list view rebuild + project-tasks regression fix)
 
 ### Fixed
