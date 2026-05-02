@@ -6,6 +6,31 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.6.0 (security pass before client portal)
+
+### Why
+Per the security plan written into our brainstorm: before any `client` role can log in, three loose RLS policies were data leaks waiting to happen, and the middleware had zero role-based path protection. This locks them down so the client portal can be built on a safe foundation.
+
+### Database (migration 006)
+- **`task_comments` SELECT** was `USING (true)` — any authenticated user could read every comment on every project. New policy scopes reads to admin/PM, project members, and the comment's author.
+- **`launch_reviews` SELECT** was `USING (true)` — same issue. New policy scopes reads to admin/PM, project members, the submitter, and the reviewer.
+- **`notifications` INSERT** only checked `auth.uid() = sender_id`, which let any authenticated user spam any other user's feed. New policy additionally requires the sender to be admin/PM OR share a project with the recipient. System notifications (sender_id NULL) are inserted via the admin client, which bypasses RLS, so this restriction doesn't affect task-assignment notifications.
+- **`profiles` SELECT** had no scoping — every user could enumerate every other user's email. New policy: always see self; admin/PM see all; non-client team members see other non-client team members; clients see only their own row + admin/PM contact rows.
+
+### Middleware
+- **Role-based path gating** added to `src/middleware.ts`. A logged-in user with `role = 'client'` can only access `/dashboard/projects`, `/dashboard/notifications`, and `/dashboard/settings`. Anything else redirects to `/dashboard/projects`. This is defence in depth — each page already does its own server-side role check, but the middleware ensures a client can't even render any other dashboard page by URL.
+
+### Safe for existing users
+All current users are admin / project_manager / designer / developer / designer_dev / viewer. The new policies preserve current behaviour for those roles (admin/PM see everything; everyone else sees their member projects). The new behaviour kicks in once a client account is created — at which point you can flip the switch on the client portal feature without RLS holes.
+
+### Migration to apply
+- `migrations/006_tighten_rls_security_pass.sql` — run in Supabase SQL Editor before deploying.
+
+### Cost
+- Middleware now does one `profiles` SELECT per `/dashboard/*` request to read the user's role. Adds ~5–20ms to those requests. Acceptable; can be optimised via a JWT custom claim later if it ever becomes a hot spot.
+
+---
+
 ## [2026-05-02] — v5.5.6 (flush list rows)
 
 ### Fixed
