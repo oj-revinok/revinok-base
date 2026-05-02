@@ -266,7 +266,7 @@ export default function Sidebar({ userInitials, fullName, email, role, unreadNot
         gap: '4px',
       }}>
         <span style={{ fontSize: '9px', color: colors.textMuted, opacity: 0.5, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3px' }}>
-          Revinok Base &copy; Build 5.6.0
+          Revinok Base &copy; Build 5.6.1
         </span>
       </div>
     </aside>

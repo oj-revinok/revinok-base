@@ -6,6 +6,23 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.6.1 (HOTFIX: profiles RLS rollback)
+
+### Fixed
+- **Every user appeared as `viewer` and lost their admin/PM tabs after 5.6.0 deployed.** Cause: the new `profiles_select` policy used a recursive subquery `(SELECT role FROM profiles WHERE id = auth.uid())` inside its USING clause, which Postgres evaluated under the policy's own RLS — returning null for every read, including the user's own row. The app's `profile?.role ?? 'viewer'` fallback then kicked in everywhere.
+- **DB rows were not affected** — only the SELECT policy. Verified all 7 team members' roles intact via `postgres` role.
+- **Migration 007** rolls back `profiles_select` to permissive `USING (true)` — restores 5.5.6 behaviour. Profile-level scoping for the future client portal will use a SECURITY DEFINER function for the role lookup so it can't recurse on itself.
+
+### Status of 5.6.0 work
+- The `task_comments`, `launch_reviews`, and `notifications` RLS tightening is **still in place** — those didn't recurse and aren't affected.
+- Middleware role gating is **still in place** — unaffected.
+- Only the `profiles` SELECT scoping was rolled back. Will redo it correctly before any client account is created.
+
+### Migration to apply
+- `migrations/007_hotfix_profiles_rls.sql` — already applied on prod DB.
+
+---
+
 ## [2026-05-02] — v5.6.0 (security pass before client portal)
 
 ### Why
