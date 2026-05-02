@@ -6,6 +6,17 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-01] — v5.4.1 (logo loading screen)
+
+### Added
+- **`src/app/loading.tsx`** — root-level loading screen with the Revinok logo (40px, pulsing). Replaces the black void users saw during the very first paint of any route. Uses the dark logo variant unconditionally because we can't read theme preference before hydration.
+- **`src/app/dashboard/loading.tsx`** — same treatment for dashboard route transitions. Replaces the green CSS spinner.
+
+### Why
+First paint on staging looked like a broken/black page. The new loaders make it feel like the brand even before React hydrates.
+
+---
+
 ## [2026-05-01] — v5.4.0 (Notion fallback cache)
 
 ### Added
