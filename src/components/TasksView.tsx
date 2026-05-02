@@ -37,6 +37,48 @@ const PRIORITY_COLORS: Record<string, string> = {
   'Low':    '#eab308',
 }
 
+// Priority-tinted card backgrounds. Mix the priority hue with the surface
+// colour so the card reads "this is a HIGH" at a glance without becoming a
+// solid block of red. Gradient sits on top of the existing surface so light
+// mode still looks reasonable.
+function priorityCardTint(priority: string | null, fallbackBg: string): {
+  background: string
+  borderColor: string
+} {
+  if (!priority || !PRIORITY_COLORS[priority]) {
+    return { background: fallbackBg, borderColor: '' }
+  }
+  // (r, g, b) for the rgba blends — keep them in sync with PRIORITY_COLORS.
+  const rgb: Record<string, string> = {
+    High:   '239, 68, 68',
+    Medium: '34, 197, 94',
+    Low:    '234, 179, 8',
+  }
+  const c = rgb[priority]
+  return {
+    background: `linear-gradient(135deg, rgba(${c}, 0.20) 0%, rgba(${c}, 0.06) 55%, ${fallbackBg} 100%)`,
+    borderColor: `rgba(${c}, 0.45)`,
+  }
+}
+
+// Lighter version for the list view — a left-edge accent rather than a full
+// gradient, so densely packed rows stay scannable.
+function priorityRowTint(priority: string | null): { background: string; borderLeftColor: string } {
+  if (!priority || !PRIORITY_COLORS[priority]) {
+    return { background: 'transparent', borderLeftColor: 'transparent' }
+  }
+  const rgb: Record<string, string> = {
+    High:   '239, 68, 68',
+    Medium: '34, 197, 94',
+    Low:    '234, 179, 8',
+  }
+  const c = rgb[priority]
+  return {
+    background: `linear-gradient(90deg, rgba(${c}, 0.10) 0%, transparent 60%)`,
+    borderLeftColor: `rgba(${c}, 0.65)`,
+  }
+}
+
 const PRIMARY_STATUSES = ['Not started', 'In progress', 'Waiting for info', 'Inhouse Review', 'Feedback']
 const SECONDARY_STATUSES = ['On Hold', 'Complete']
 
@@ -517,17 +559,19 @@ function KanbanView({
 
 function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }) {
   const { colors } = useTheme()
+  const tint = priorityCardTint(task.priority, colors.bg)
+  const restingBorder = tint.borderColor || colors.border
   return (
     <button
       onClick={onClick}
       style={{
         display: 'block', width: '100%', textAlign: 'left',
-        padding: '12px', backgroundColor: colors.bg, border: `1px solid ${colors.border}`,
+        padding: '12px', background: tint.background, border: `1px solid ${restingBorder}`,
         cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-        transition: 'border-color 0.15s', borderRadius: 16,
+        transition: 'border-color 0.15s, transform 0.15s', borderRadius: 16,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.borderLight }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = restingBorder }}
     >
       <p style={{ fontSize: '14px', color: colors.text, margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -655,12 +699,14 @@ function ListView({
 
 function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
   const { colors } = useTheme()
+  const tint = priorityRowTint(task.priority)
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-        width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+        width: '100%', textAlign: 'left', background: tint.background, border: 'none',
+        borderLeft: `3px solid ${tint.borderLeftColor}`,
         borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
         opacity: faded ? 0.5 : 1, borderRadius: 10000,

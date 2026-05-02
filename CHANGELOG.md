@@ -6,6 +6,20 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.1 (priority-tinted task cards)
+
+### Added
+- **Priority tints on task cards** (kanban view) — High = red, Medium = green, Low = yellow. Diagonal gradient (135°) blending the priority hue at 20% top-left into 6% middle into the standard surface. Border colour also picks up the priority hue at 45% alpha so the card edge reads at a glance.
+- **Priority indicator on list rows** — 3px left-border accent in the priority hue plus a soft horizontal fade (10% → transparent over 60% of the row width). Less loud than the kanban treatment so densely packed lists stay scannable.
+
+### Why
+Looking at the kanban without priority colour cues meant scanning every card to see its label. Now the eye lands on red cards first, then green, then yellow — matches how the team already mentally bucketed the work.
+
+### Implementation
+- Two helpers in `src/components/TasksView.tsx`: `priorityCardTint()` for kanban, `priorityRowTint()` for list. Both take the priority string and return ready-to-spread style props. RGB triples are duplicated alongside the existing `PRIORITY_COLORS` map — keep them in sync if priority colours ever change.
+
+---
+
 ## [2026-05-02] — v5.5.0 (task assignment notifications)
 
 ### Added
