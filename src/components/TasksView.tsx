@@ -712,58 +712,100 @@ function ListView({
 
 function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
   const { colors } = useTheme()
+  const tint = priorityCardTint(task.priority, 'transparent')
   const accent = priorityRowAccent(task.priority)
+  const overdue = isTaskOverdue(task.dueDate, task.status)
+  const statusColor = STATUS_COLORS[task.status] || colors.textMuted
+  const dueDateText = task.dueDate
+    ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null
   return (
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-        width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
-        borderLeft: `3px solid ${accent}`,
+        display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px',
+        width: '100%', textAlign: 'left', background: tint.background, border: 'none',
+        borderLeft: `4px solid ${accent === 'transparent' ? colors.bgSecondary : accent}`,
         borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
-        opacity: faded ? 0.5 : 1, borderRadius: 10000,
+        opacity: faded ? 0.5 : 1, borderRadius: 12,
+        transition: 'background 0.15s',
       }}
     >
-      <p style={{ margin: 0, fontSize: '13px', color: faded ? colors.textMuted : colors.text, flex: 1, lineHeight: 1.4, textDecoration: faded ? 'line-through' : 'none' }}>
-        {task.name}
-      </p>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-        {task.assignedNames.length > 0 && (
-          <span style={{ fontSize: '10px', color: colors.textMuted, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {task.assignedNames.join(', ')}
-          </span>
-        )}
-        {task.tags.slice(0, 2).map(tag => (
-          <span key={tag} style={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, backgroundColor: colors.bgSecondary, padding: '2px 6px', textTransform: 'uppercase', border: `1px solid ${colors.border}`, borderRadius: 10000 }}>
-            {tag}
-          </span>
-        ))}
+      {/* Status indicator dot */}
+      <div style={{
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        backgroundColor: statusColor,
+        boxShadow: `0 0 0 3px ${statusColor}22`,
+      }} />
+
+      {/* Title + meta column (two-line layout) */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <p style={{
+          margin: 0, fontSize: '14px', fontWeight: 600,
+          color: faded ? colors.textMuted : colors.text,
+          lineHeight: 1.3,
+          textDecoration: faded ? 'line-through' : 'none',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {task.name}
+        </p>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {task.tags.slice(0, 3).map(tag => (
+            <span key={tag} style={{
+              fontSize: '9px', fontWeight: 700, color: colors.textMuted,
+              backgroundColor: colors.bgSecondary, padding: '2px 7px',
+              textTransform: 'uppercase', borderRadius: 4, letterSpacing: '0.4px',
+            }}>
+              {tag}
+            </span>
+          ))}
+          {task.assignedNames.length > 0 && (
+            <span style={{
+              fontSize: '11px', color: colors.accent, fontWeight: 600,
+              maxWidth: '320px', overflow: 'hidden',
+              textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {task.assignedNames.join(' · ')}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Right rail: priority pill, due date, DUE flag, chevron */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
         {task.priority && (
-          <span style={{ fontSize: '10px', fontWeight: 700, color: PRIORITY_COLORS[task.priority] || colors.textMuted, textTransform: 'uppercase' }}>
+          <span style={{
+            fontSize: '10px', fontWeight: 700,
+            color: PRIORITY_COLORS[task.priority] || colors.textMuted,
+            border: `1px solid ${PRIORITY_COLORS[task.priority] || colors.border}55`,
+            padding: '3px 9px', borderRadius: 10000,
+            textTransform: 'uppercase', letterSpacing: '0.5px',
+          }}>
             {task.priority}
           </span>
         )}
-        {task.dueDate && (
+        {dueDateText && (
           <span style={{
-            fontSize: '10px',
-            color: isTaskOverdue(task.dueDate, task.status) ? '#ef4444' : colors.textMuted,
-            fontWeight: isTaskOverdue(task.dueDate, task.status) ? 700 : 400,
+            fontSize: '11px',
+            color: overdue ? '#ef4444' : colors.textMuted,
+            fontWeight: overdue ? 700 : 500,
+            whiteSpace: 'nowrap',
           }}>
-            {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {dueDateText}
           </span>
         )}
-        {isTaskOverdue(task.dueDate, task.status) && (
+        {overdue && (
           <span style={{
             fontSize: '9px', fontWeight: 800, letterSpacing: '0.5px',
             color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)',
             border: '1px solid rgba(239, 68, 68, 0.45)',
-            padding: '1px 6px', borderRadius: 10000, textTransform: 'uppercase',
+            padding: '2px 7px', borderRadius: 10000, textTransform: 'uppercase',
           }}>
             Due
           </span>
         )}
-        <span style={{ fontSize: '10px', color: colors.borderLight }}>›</span>
+        <span style={{ fontSize: '14px', color: colors.borderLight, marginLeft: '4px' }}>›</span>
       </div>
     </button>
   )

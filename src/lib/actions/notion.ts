@@ -259,26 +259,31 @@ async function emitTaskAssignedNotifications(diffs: AssignmentDiff[]): Promise<v
 // also the only place we emit task_assigned notifications, because admin/PM
 // is the only sync path with a complete view — partial (designer) syncs and
 // per-project syncs would emit phantom notifications for unrelated tasks.
+//
+// IMPORTANT: empty `tasks` is treated as a no-op, NOT as "wipe the cache."
+// The underlying getAllTasks() swallows Notion errors and returns []. A
+// transient Notion blip would otherwise erase every cached row and the page
+// would go empty for everyone. The cost of this defensiveness is at most one
+// stale sync window if the workload DB ever genuinely empties.
 async function replaceAllTasksInCache(tasks: NotionTask[]): Promise<void> {
+  if (tasks.length === 0) {
+    await bumpLastSync()
+    return
+  }
   try {
     // Compute the assignment diff BEFORE writing — we need the prior state.
     const diffs = await diffAssignments(tasks)
 
     const supabase = createClient()
-    if (tasks.length > 0) {
-      const rows = tasks.map(taskToCacheRow)
-      const { error: upsertErr } = await supabase
-        .from('notion_tasks_cache')
-        .upsert(rows, { onConflict: 'id' })
-      if (upsertErr) throw upsertErr
-      // Drop rows not in current set so deletions in Notion propagate.
-      const ids = tasks.map(t => t.id)
-      const idList = `(${ids.map(i => `"${i}"`).join(',')})`
-      await supabase.from('notion_tasks_cache').delete().not('id', 'in', idList)
-    } else {
-      // Empty result is still a successful sync — wipe the cache.
-      await supabase.from('notion_tasks_cache').delete().neq('id', '__never__')
-    }
+    const rows = tasks.map(taskToCacheRow)
+    const { error: upsertErr } = await supabase
+      .from('notion_tasks_cache')
+      .upsert(rows, { onConflict: 'id' })
+    if (upsertErr) throw upsertErr
+    // Drop rows not in current set so deletions in Notion propagate.
+    const ids = tasks.map(t => t.id)
+    const idList = `(${ids.map(i => `"${i}"`).join(',')})`
+    await supabase.from('notion_tasks_cache').delete().not('id', 'in', idList)
     await bumpLastSync()
 
     // Emit notifications AFTER the cache is durable so a notification can't
@@ -303,27 +308,32 @@ async function upsertPartialTasksInCache(tasks: NotionTask[]): Promise<void> {
 }
 
 // Replace cache for a single project (used by project detail page).
+//
+// IMPORTANT: same defensive rule as replaceAllTasksInCache — empty `tasks` is
+// a no-op, not a wipe. getTasksForProject() swallows Notion errors, so an
+// empty result frequently means "Notion blipped" rather than "this project
+// genuinely has no tasks." Wiping the project's cached rows on every blip
+// gave us the "project tasks suddenly disappeared" regression in 5.4.0.
 async function replaceProjectTasksInCache(projectNotionId: string, tasks: NotionTask[]): Promise<void> {
+  if (tasks.length === 0) {
+    await bumpLastSync()
+    return
+  }
   try {
     const supabase = createClient()
-    if (tasks.length > 0) {
-      const rows = tasks.map(taskToCacheRow)
-      const { error: upsertErr } = await supabase
-        .from('notion_tasks_cache')
-        .upsert(rows, { onConflict: 'id' })
-      if (upsertErr) throw upsertErr
-    }
+    const rows = tasks.map(taskToCacheRow)
+    const { error: upsertErr } = await supabase
+      .from('notion_tasks_cache')
+      .upsert(rows, { onConflict: 'id' })
+    if (upsertErr) throw upsertErr
     // Drop cached rows for this project that aren't in the new set.
     const keepIds = tasks.map(t => t.id)
-    let q = supabase
+    const idList = `(${keepIds.map(i => `"${i}"`).join(',')})`
+    await supabase
       .from('notion_tasks_cache')
       .delete()
       .contains('project_notion_ids', [projectNotionId])
-    if (keepIds.length > 0) {
-      const idList = `(${keepIds.map(i => `"${i}"`).join(',')})`
-      q = q.not('id', 'in', idList)
-    }
-    await q
+      .not('id', 'in', idList)
     await bumpLastSync()
   } catch (err) {
     console.error('replaceProjectTasksInCache error:', err)
@@ -412,21 +422,35 @@ export async function fetchNotionTasksForProject(projectId: string): Promise<Not
   ])
   if (!project?.notion_project_id) return []
 
+  let liveTasks: NotionTask[] = []
+  let liveThrew = false
   try {
-    const tasks = await withTimeout(
+    liveTasks = await withTimeout(
       getTasksForProject(project.notion_project_id, notionKey),
       NOTION_TIMEOUT_MS,
       'Notion getTasksForProject'
     )
-    // Fire-and-forget cache write — don't block the response on it.
-    replaceProjectTasksInCache(project.notion_project_id, tasks).catch(() => {})
-    return enrichTasksWithNames(tasks, notionKey)
   } catch (err) {
+    liveThrew = true
     console.error('Notion getTasksForProject failed, falling back to cache:', err)
     recordNotionError(`getTasksForProject: ${(err as Error).message}`).catch(() => {})
-    const cached = await loadProjectTasksFromCache(project.notion_project_id)
-    return enrichTasksWithNames(cached, notionKey)
   }
+
+  // Live fetch returned data → update cache + return.
+  if (liveTasks.length > 0) {
+    replaceProjectTasksInCache(project.notion_project_id, liveTasks).catch(() => {})
+    return enrichTasksWithNames(liveTasks, notionKey)
+  }
+
+  // Live threw OR returned empty (often a silent Notion error since the
+  // underlying fn swallows them). Prefer the persistent cache if it has
+  // anything — that's the whole point of the fallback layer. If cache is
+  // empty too, return the empty live result (this project genuinely has
+  // no tasks, or has never been synced).
+  const cached = await loadProjectTasksFromCache(project.notion_project_id)
+  if (cached.length > 0) return enrichTasksWithNames(cached, notionKey)
+  if (liveThrew) return []
+  return enrichTasksWithNames(liveTasks, notionKey)
 }
 
 export async function fetchNotionProjects(): Promise<{ id: string; name: string }[]> {
@@ -453,26 +477,37 @@ export async function fetchAllNotionTasks(): Promise<NotionTask[]> {
   const isAdminOrPM = profile?.role === 'admin' || profile?.role === 'project_manager'
   const personId = isAdminOrPM ? null : profile?.notion_person_id || null
 
+  let liveTasks: NotionTask[] = []
+  let liveThrew = false
   try {
-    const tasks = await withTimeout(
+    liveTasks = await withTimeout(
       getCachedAllTasks(notionKey, personId),
       NOTION_TIMEOUT_MS,
       'Notion getAllTasks'
     )
-    // Admin/PM has the full set → safe to replace cache (propagates deletions).
-    // Other roles see only their slice → upsert without deleting others' rows.
-    if (isAdminOrPM) {
-      replaceAllTasksInCache(tasks).catch(() => {})
-    } else {
-      upsertPartialTasksInCache(tasks).catch(() => {})
-    }
-    return enrichTasksWithNames(tasks, notionKey)
   } catch (err) {
+    liveThrew = true
     console.error('Notion getAllTasks failed, falling back to cache:', err)
     recordNotionError(`getAllTasks: ${(err as Error).message}`).catch(() => {})
-    const cached = await loadAllTasksFromCache(personId)
-    return enrichTasksWithNames(cached, notionKey)
   }
+
+  // Live fetch returned data → update cache + return.
+  // Admin/PM has the full set → safe to replace cache (propagates deletions).
+  // Other roles see only their slice → upsert without deleting others' rows.
+  if (liveTasks.length > 0) {
+    if (isAdminOrPM) {
+      replaceAllTasksInCache(liveTasks).catch(() => {})
+    } else {
+      upsertPartialTasksInCache(liveTasks).catch(() => {})
+    }
+    return enrichTasksWithNames(liveTasks, notionKey)
+  }
+
+  // Live threw or returned empty — fall back to the persistent cache.
+  const cached = await loadAllTasksFromCache(personId)
+  if (cached.length > 0) return enrichTasksWithNames(cached, notionKey)
+  if (liveThrew) return []
+  return enrichTasksWithNames(liveTasks, notionKey)
 }
 
 export async function getTaskNotionComments(taskId: string): Promise<{ author: string; text: string; date: string }[]> {

@@ -6,6 +6,22 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.3 (list view rebuild + project-tasks regression fix)
+
+### Fixed
+- **Project detail page showed "No tasks found in Notion for this project" even when there were tasks** (regression introduced by the 5.4.0 cache layer). Root cause: `getTasksForProject()` in `src/lib/notion.ts` swallows Notion errors and returns `[]`. The new wrapper treated that empty result as a successful "Notion has no tasks" response, then called `replaceProjectTasksInCache(project, [])` — which deleted every cached row for that project. One transient Notion blip = wiped project cache = empty page forever after. Fix: cache writes are now no-ops on empty results (`replaceAllTasksInCache` and `replaceProjectTasksInCache` both bail at the top); reads now distinguish between "live had data" / "live empty, cache had data" / "both empty". Same defensiveness applied to `fetchAllNotionTasks`.
+
+### Changed
+- **List view rebuilt around the same priority palette as kanban.** Each row now gets the solid dark tint (High `rgb(29, 3, 3)`, Medium `#031700`, Low `rgb(25, 24, 0)`) instead of just a left-edge stripe — the priority is finally readable at a glance in the list mode.
+- **Two-line layout, more info per row.** Top line: status dot indicator + task title. Bottom line: tag chips (up to 3) + full assignee list in brand green. Right rail: priority pill (proper outlined badge instead of bare text), due date in larger font, red DUE flag, chevron.
+- **Status dot with halo.** Small colored circle on the left of each row in the status's accent colour (matches kanban column header) — gives a second priority/status read alongside the row tint. Halo is `boxShadow: 0 0 0 3px ${statusColor}22`.
+- **Border-radius dropped from `10000` (pill) to `12px` (rounded rect).** The pill shape was clipping the left stripe into a tiny curved sliver; rectangular rows give the stripe a clean 4px edge.
+
+### Removed
+- Implicit-fallback `'transparent'` on the left border when priority was unset — now falls back to `colors.bgSecondary` so rows without a priority still align cleanly with priority rows.
+
+---
+
 ## [2026-05-02] — v5.5.2 (priority palette + DUE pill + debounced refresh)
 
 ### Changed
