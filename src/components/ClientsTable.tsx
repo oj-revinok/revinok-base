@@ -45,16 +45,23 @@ export default function ClientsTable({ clients, canEdit }: ClientsTableProps) {
       })
     : clients
 
-  // Live updates — refresh server data whenever clients table changes
+  // Live updates — refresh whenever clients table changes. Debounced 1.5s so
+  // a burst of UPDATEs collapses into one refresh instead of repeatedly
+  // tearing down the page (see ProjectGrid for the same pattern).
   useEffect(() => {
     const supabase = createClient()
+    let pending: ReturnType<typeof setTimeout> | null = null
     const channel = supabase
       .channel('clients-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => {
-        router.refresh()
+        if (pending) clearTimeout(pending)
+        pending = setTimeout(() => router.refresh(), 1500)
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (pending) clearTimeout(pending)
+      supabase.removeChannel(channel)
+    }
   }, [router])
 
   function getInitials(client: Client) {

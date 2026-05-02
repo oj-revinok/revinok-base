@@ -151,16 +151,24 @@ export default function TeamPage() {
     setTeamMembers(members || [])
   }
 
-  // Live updates — refresh team list when profiles change (new invite, role update, etc.)
+  // Live updates — refresh team list when profiles change (new invite, role
+  // update, etc.). Debounced 1.5s — last_seen bumps fire on every dashboard
+  // load by every member, so without debouncing this would cause a stream of
+  // refreshes any time multiple people are online.
   useEffect(() => {
     if (loading) return
+    let pending: ReturnType<typeof setTimeout> | null = null
     const channel = supabase
       .channel('team-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        refreshMembers()
+        if (pending) clearTimeout(pending)
+        pending = setTimeout(() => refreshMembers(), 1500)
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (pending) clearTimeout(pending)
+      supabase.removeChannel(channel)
+    }
   }, [loading])
 
   async function handleInvite(e: React.FormEvent) {

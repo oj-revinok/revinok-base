@@ -6,6 +6,20 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.2 (priority palette + DUE pill + debounced refresh)
+
+### Changed
+- **Priority card backgrounds now use OJ-picked solid dark tints** instead of the gradient/border treatment from 5.5.1. Final palette: High = `rgb(29, 3, 3)`, Medium = `rgb(3, 23, 0)` (`#031700`), Low = `rgb(25, 24, 0)`. Near-black with a hint of hue — stacked cards stay restful, the eye still picks up red/green/yellow at a glance, and the border stays neutral.
+- **List rows lost the background tint entirely.** Stacked rows with even a faint horizontal fade read as a stripe-painted page. Kept the 3px left-edge accent in the priority hue at 55% alpha.
+
+### Added
+- **"DUE" pill on overdue tasks.** Any kanban card or list row whose `dueDate < startOfToday` and isn't in `Complete` status gets a small red DUE pill next to the date, plus the date itself flips from muted-grey to red bold. Driven by `isTaskOverdue()` in `TasksView.tsx`.
+
+### Fixed
+- **Random "the portal refreshed itself" complaint.** Realtime subscriptions on `projects`, `clients`, and `profiles` were calling `router.refresh()` on every postgres event, including UPDATE storms (last_seen bumps every time a teammate loads the dashboard). Now debounced 1.5s in `ProjectGrid.tsx`, `ClientsTable.tsx`, and `dashboard/team/page.tsx` — burst events collapse into one refresh instead of repeatedly tearing down the page.
+
+---
+
 ## [2026-05-02] — v5.5.1 (priority-tinted task cards)
 
 ### Added

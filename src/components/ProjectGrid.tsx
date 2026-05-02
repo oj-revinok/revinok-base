@@ -83,16 +83,24 @@ export default function ProjectGrid({ projects, canCreate }: ProjectGridProps) {
   const [activeFilter, setActiveFilter] = useState('All')
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // Live updates — refresh server data whenever projects table changes
+  // Live updates — refresh server data whenever projects table changes.
+  // Debounced 1.5s so a burst of UPDATEs (last_seen bumps, edits by other
+  // users) collapses into a single router.refresh() instead of repeatedly
+  // tearing down and re-rendering the page.
   useEffect(() => {
     const supabase = createClient()
+    let pending: ReturnType<typeof setTimeout> | null = null
     const channel = supabase
       .channel('projects-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
-        router.refresh()
+        if (pending) clearTimeout(pending)
+        pending = setTimeout(() => router.refresh(), 1500)
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (pending) clearTimeout(pending)
+      supabase.removeChannel(channel)
+    }
   }, [router])
 
   const filtered = activeFilter === 'All'

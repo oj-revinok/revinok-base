@@ -37,46 +37,46 @@ const PRIORITY_COLORS: Record<string, string> = {
   'Low':    '#eab308',
 }
 
-// Priority-tinted card backgrounds. Mix the priority hue with the surface
-// colour so the card reads "this is a HIGH" at a glance without becoming a
-// solid block of red. Gradient sits on top of the existing surface so light
-// mode still looks reasonable.
-function priorityCardTint(priority: string | null, fallbackBg: string): {
-  background: string
-  borderColor: string
-} {
-  if (!priority || !PRIORITY_COLORS[priority]) {
-    return { background: fallbackBg, borderColor: '' }
-  }
-  // (r, g, b) for the rgba blends — keep them in sync with PRIORITY_COLORS.
-  const rgb: Record<string, string> = {
-    High:   '239, 68, 68',
-    Medium: '34, 197, 94',
-    Low:    '234, 179, 8',
-  }
-  const c = rgb[priority]
-  return {
-    background: `linear-gradient(135deg, rgba(${c}, 0.20) 0%, rgba(${c}, 0.06) 55%, ${fallbackBg} 100%)`,
-    borderColor: `rgba(${c}, 0.45)`,
-  }
+// Priority-tinted card backgrounds. Flat solid near-black tints picked by
+// OJ in 5.5.2 — these are dark enough that stacked cards stay restful but
+// the eye still picks up red/green/yellow at a glance. Border stays neutral.
+const PRIORITY_CARD_BG: Record<string, string> = {
+  High:   'rgb(29, 3, 3)',    // very dark red
+  Medium: 'rgb(3, 23, 0)',    // very dark green (#031700)
+  Low:    'rgb(25, 24, 0)',   // very dark yellow / olive
 }
 
-// Lighter version for the list view — a left-edge accent rather than a full
-// gradient, so densely packed rows stay scannable.
-function priorityRowTint(priority: string | null): { background: string; borderLeftColor: string } {
-  if (!priority || !PRIORITY_COLORS[priority]) {
-    return { background: 'transparent', borderLeftColor: 'transparent' }
+function priorityCardTint(priority: string | null, fallbackBg: string): {
+  background: string
+} {
+  if (!priority || !PRIORITY_CARD_BG[priority]) {
+    return { background: fallbackBg }
   }
+  return { background: PRIORITY_CARD_BG[priority] }
+}
+
+// List rows: just a left-edge accent stripe. No background tint at all —
+// stacked rows would otherwise read as a stripe-painted page.
+function priorityRowAccent(priority: string | null): string {
+  if (!priority || !PRIORITY_COLORS[priority]) return 'transparent'
   const rgb: Record<string, string> = {
     High:   '239, 68, 68',
     Medium: '34, 197, 94',
     Low:    '234, 179, 8',
   }
-  const c = rgb[priority]
-  return {
-    background: `linear-gradient(90deg, rgba(${c}, 0.10) 0%, transparent 60%)`,
-    borderLeftColor: `rgba(${c}, 0.65)`,
-  }
+  return `rgba(${rgb[priority]}, 0.55)`
+}
+
+// True when the task has a due date in the past and isn't already complete.
+// Drives the red "DUE" pill on the card.
+function isTaskOverdue(dueDate: string | null, status: string): boolean {
+  if (!dueDate) return false
+  if (status === 'Complete') return false
+  const due = new Date(dueDate)
+  if (Number.isNaN(due.getTime())) return false
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return due < startOfToday
 }
 
 const PRIMARY_STATUSES = ['Not started', 'In progress', 'Waiting for info', 'Inhouse Review', 'Feedback']
@@ -560,18 +560,17 @@ function KanbanView({
 function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }) {
   const { colors } = useTheme()
   const tint = priorityCardTint(task.priority, colors.bg)
-  const restingBorder = tint.borderColor || colors.border
   return (
     <button
       onClick={onClick}
       style={{
         display: 'block', width: '100%', textAlign: 'left',
-        padding: '12px', background: tint.background, border: `1px solid ${restingBorder}`,
+        padding: '12px', background: tint.background, border: `1px solid ${colors.border}`,
         cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-        transition: 'border-color 0.15s, transform 0.15s', borderRadius: 16,
+        transition: 'border-color 0.15s', borderRadius: 16,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.borderLight }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = restingBorder }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border }}
     >
       <p style={{ fontSize: '14px', color: colors.text, margin: '0 0 10px 0', lineHeight: 1.4 }}>{task.name}</p>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -581,8 +580,22 @@ function KanbanCard({ task, onClick }: { task: NotionTask; onClick: () => void }
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '11px', color: colors.textMuted }}>
+          <span style={{
+            fontSize: '11px',
+            color: isTaskOverdue(task.dueDate, task.status) ? '#ef4444' : colors.textMuted,
+            fontWeight: isTaskOverdue(task.dueDate, task.status) ? 700 : 400,
+          }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        {isTaskOverdue(task.dueDate, task.status) && (
+          <span style={{
+            fontSize: '10px', fontWeight: 800, letterSpacing: '0.5px',
+            color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.45)',
+            padding: '2px 7px', borderRadius: 10000, textTransform: 'uppercase',
+          }}>
+            Due
           </span>
         )}
         {task.tags.slice(0, 1).map(tag => (
@@ -699,14 +712,14 @@ function ListView({
 
 function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded?: boolean; onClick: () => void }) {
   const { colors } = useTheme()
-  const tint = priorityRowTint(task.priority)
+  const accent = priorityRowAccent(task.priority)
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-        width: '100%', textAlign: 'left', background: tint.background, border: 'none',
-        borderLeft: `3px solid ${tint.borderLeftColor}`,
+        width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+        borderLeft: `3px solid ${accent}`,
         borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
         opacity: faded ? 0.5 : 1, borderRadius: 10000,
@@ -732,8 +745,22 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
           </span>
         )}
         {task.dueDate && (
-          <span style={{ fontSize: '10px', color: colors.textMuted }}>
+          <span style={{
+            fontSize: '10px',
+            color: isTaskOverdue(task.dueDate, task.status) ? '#ef4444' : colors.textMuted,
+            fontWeight: isTaskOverdue(task.dueDate, task.status) ? 700 : 400,
+          }}>
             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        {isTaskOverdue(task.dueDate, task.status) && (
+          <span style={{
+            fontSize: '9px', fontWeight: 800, letterSpacing: '0.5px',
+            color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.45)',
+            padding: '1px 6px', borderRadius: 10000, textTransform: 'uppercase',
+          }}>
+            Due
           </span>
         )}
         <span style={{ fontSize: '10px', color: colors.borderLight }}>›</span>
