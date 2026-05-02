@@ -67,11 +67,13 @@ function priorityRowAccent(priority: string | null): string {
   return `rgba(${rgb[priority]}, 0.55)`
 }
 
-// True when the task has a due date in the past and isn't already complete.
-// Drives the red "DUE" pill on the card.
+// True when an actively-worked task has slipped past its due date. Scoped
+// to status "In progress" only — tasks waiting on review, feedback, info, or
+// sitting on hold have a different reason for not moving, and flagging them
+// red would be noise. (5.5.5)
 function isTaskOverdue(dueDate: string | null, status: string): boolean {
   if (!dueDate) return false
-  if (status === 'Complete') return false
+  if (status !== 'In progress') return false
   const due = new Date(dueDate)
   if (Number.isNaN(due.getTime())) return false
   const startOfToday = new Date()

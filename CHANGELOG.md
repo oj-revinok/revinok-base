@@ -6,6 +6,13 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.5 (DUE flag scoped to In progress)
+
+### Changed
+- **DUE pill now only fires on `In progress` tasks.** Previously every task with a past due date got the flag (regardless of status), which meant tasks legitimately parked on Inhouse Review / Feedback / Waiting for info / On Hold were lighting up red and adding noise. The pill is now a focused signal: "you're working on this AND you're past the date."
+
+---
+
 ## [2026-05-02] — v5.5.4 (resilient project-task lookup + UI polish)
 
 ### Fixed
