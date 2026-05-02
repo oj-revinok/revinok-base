@@ -6,6 +6,35 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.0 (task assignment notifications)
+
+### Added
+- **Task assignment notifications.** When an admin/PM syncs the Tasks page and Notion has new assignees on a task, every newly added assignee gets an in-portal notification (`type='task_assigned'`). Realtime — appears instantly on the recipient's notifications page via the existing Supabase channel.
+- **Migration 005:** `notion_sync_meta.seeded_at` (nullable timestamptz). Used as a one-shot guard to skip notifications on the very first sync — otherwise every existing assignment in Notion would fan out as a "new" notification on day one. Set automatically on the first admin/PM sync.
+- **`emitTaskAssignedNotifications`** in `src/lib/actions/notion.ts` — uses `createAdminClient()` to bypass the notifications RLS insert policy (which requires `sender_id = auth.uid()`; system notifications have `sender_id = NULL`).
+- **`diffAssignments`** computes `addedAssignees = newAssignees − oldAssignees` per task by reading the cache state BEFORE the upsert. Idempotent: a task that's already in the cache with the same assignee yields an empty diff, so no duplicate notifications.
+- **Notifications page UI:** new accent (`#BDD630` brand green), label ("New Task"), title (`You've been assigned "${task_title}" · due ${date}`), and an "Open Tasks →" CTA button that routes to `/dashboard/tasks`.
+
+### Why scoped to admin/PM only
+Other sync paths (`upsertPartialTasksInCache` on a designer's view, `replaceProjectTasksInCache` on a project page) intentionally don't emit notifications — they only see a slice of the task graph, so their diff would falsely flag tasks they just hadn't seen before. The admin/PM full-replace path has the complete view and is the single source of truth for assignment changes.
+
+### Notification payload
+```json
+{
+  "task_id": "<notion page id>",
+  "task_title": "...",
+  "task_status": "Not started" | "In progress" | ...,
+  "task_priority": "High" | null,
+  "due_date": "2026-05-15" | null,
+  "project_notion_ids": ["..."]
+}
+```
+
+### Migration to apply
+- `migrations/005_notion_sync_seeded.sql` — run in Supabase SQL Editor before deploying. Just adds a nullable column to `notion_sync_meta`; idempotent.
+
+---
+
 ## [2026-05-01] — v5.4.1 (logo loading screen)
 
 ### Added

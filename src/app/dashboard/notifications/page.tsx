@@ -22,6 +22,7 @@ function notifAccent(type: string) {
   if (type === 'note_shared') return '#a78bfa'
   if (type === 'file_uploaded') return '#f59e0b'
   if (type === 'note_added') return '#a78bfa'
+  if (type === 'task_assigned') return '#BDD630'
   return '#333333'
 }
 
@@ -33,6 +34,7 @@ function notifTypeLabel(type: string) {
   if (type === 'note_shared') return 'Note Shared'
   if (type === 'file_uploaded') return 'File Uploaded'
   if (type === 'note_added') return 'Note Added'
+  if (type === 'task_assigned') return 'New Task'
   return 'Notification'
 }
 
@@ -55,6 +57,12 @@ function notifTitle(n: Notification) {
     const noteTitle = n.data?.note_title || 'a note'
     const access = n.data?.access_level || 'view'
     return `${sender} shared "${noteTitle}" with you (${access} access)`
+  }
+  if (n.type === 'task_assigned') {
+    const taskTitle = n.data?.task_title || 'a new task'
+    const due = n.data?.due_date
+    const tail = due ? ` · due ${new Date(due).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''
+    return `You've been assigned "${taskTitle}"${tail}`
   }
   // Fallback: use any message/body from data, or humanise the type
   if (n.data?.message) return n.data.message as string
@@ -294,6 +302,28 @@ export default function NotificationsPage() {
                         }}
                       >
                         Open Project →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Task-assigned CTA */}
+                  {n.type === 'task_assigned' && (
+                    <div style={{ marginTop: '10px' }}>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await markRead(n.id)
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x))
+                          router.push('/dashboard/tasks')
+                        }}
+                        style={{
+                          padding: '6px 14px', backgroundColor: 'transparent',
+                          border: '1px solid #BDD630', color: '#BDD630',
+                          fontSize: '13px', fontWeight: 700, borderRadius: 10000, textTransform: 'uppercase',
+                          letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                        }}
+                      >
+                        Open Tasks →
                       </button>
                     </div>
                   )}

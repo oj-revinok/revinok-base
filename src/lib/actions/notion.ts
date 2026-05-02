@@ -1,6 +1,7 @@
 'use server'
 import { unstable_cache, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getTasksForProject, getNotionProjectsPage, getAllTasks, getNotionTeamPersons, NotionTask, getNotionClient } from '@/lib/notion'
 
 // Hard ceiling on any Notion API call. Without this, a slow Notion can
@@ -122,10 +123,147 @@ async function bumpLastSync(): Promise<void> {
   } catch {}
 }
 
+// ── Task assignment notifications (added in 5.5.0) ─────────────────────────
+//
+// On every admin/PM sync we compare the new Notion task set against what's
+// already in the cache and notify users about any newly added assignees.
+// Idempotency comes for free: if the cache already has the assignee, the diff
+// is empty and no notification is emitted.
+
+interface AssignmentDiff {
+  taskId: string
+  taskTitle: string
+  taskStatus: string
+  taskPriority: string | null
+  dueDate: string | null
+  projectNotionIds: string[]
+  addedNotionPersonIds: string[]
+}
+
+// Compare the new Notion task set against the cached assignment state and
+// produce a diff per task. Only tasks with new assignees end up in the
+// returned array. Read against the LIVE cache (not the about-to-be-written
+// state), so this must be called BEFORE any cache upsert.
+async function diffAssignments(newTasks: NotionTask[]): Promise<AssignmentDiff[]> {
+  if (newTasks.length === 0) return []
+  try {
+    const supabase = createClient()
+    const { data: existing } = await supabase
+      .from('notion_tasks_cache')
+      .select('id, assigned_to')
+    const oldMap = new Map<string, string[]>(
+      ((existing ?? []) as { id: string; assigned_to: string[] | null }[])
+        .map(r => [r.id, r.assigned_to ?? []])
+    )
+
+    const diffs: AssignmentDiff[] = []
+    for (const task of newTasks) {
+      const oldAssignees = oldMap.get(task.id) ?? []
+      const added = task.assignedTo.filter(id => !oldAssignees.includes(id))
+      if (added.length === 0) continue
+      diffs.push({
+        taskId: task.id,
+        taskTitle: task.name,
+        taskStatus: task.status,
+        taskPriority: task.priority,
+        dueDate: task.dueDate,
+        projectNotionIds: task.projectIds,
+        addedNotionPersonIds: added,
+      })
+    }
+    return diffs
+  } catch (err) {
+    console.error('diffAssignments error:', err)
+    return []
+  }
+}
+
+// Resolve Notion person IDs to Supabase profile IDs and insert one
+// notification per (recipient, task) pair. Uses the admin client because the
+// notifications table's INSERT RLS policy requires sender_id = auth.uid(),
+// and these are system-generated (sender_id = NULL).
+//
+// First-ever-sync guard: if notion_sync_meta.seeded_at is NULL, this is the
+// initial population pass — set seeded_at and return without notifying.
+// Otherwise every existing assignment in Notion would fan out as a "new"
+// notification on day one. seeded_at gets set after the first admin sync.
+async function emitTaskAssignedNotifications(diffs: AssignmentDiff[]): Promise<void> {
+  try {
+    const supabase = createClient()
+    const { data: meta } = await supabase
+      .from('notion_sync_meta')
+      .select('seeded_at')
+      .eq('id', 1)
+      .single()
+
+    if (!meta?.seeded_at) {
+      // Mark the cache as seeded; never notify on the very first sync.
+      await supabase
+        .from('notion_sync_meta')
+        .update({ seeded_at: new Date().toISOString() })
+        .eq('id', 1)
+      return
+    }
+
+    if (diffs.length === 0) return
+
+    const allPersonIds = Array.from(new Set(diffs.flatMap(d => d.addedNotionPersonIds)))
+    if (allPersonIds.length === 0) return
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, notion_person_id')
+      .in('notion_person_id', allPersonIds)
+
+    const personToProfile = new Map<string, string>()
+    ;(profiles ?? []).forEach((p: any) => {
+      if (p.notion_person_id) personToProfile.set(p.notion_person_id, p.id)
+    })
+    if (personToProfile.size === 0) return
+
+    const rows: any[] = []
+    for (const diff of diffs) {
+      for (const personId of diff.addedNotionPersonIds) {
+        const recipient = personToProfile.get(personId)
+        if (!recipient) continue
+        rows.push({
+          recipient_id: recipient,
+          sender_id: null, // system-generated
+          type: 'task_assigned',
+          project_id: null, // Notion project IDs aren't Supabase UUIDs
+          data: {
+            task_id: diff.taskId,
+            task_title: diff.taskTitle,
+            task_status: diff.taskStatus,
+            task_priority: diff.taskPriority,
+            due_date: diff.dueDate,
+            project_notion_ids: diff.projectNotionIds,
+          },
+        })
+      }
+    }
+    if (rows.length === 0) return
+
+    // Bypass RLS — the regular client policy requires sender_id=auth.uid(),
+    // which we don't have for system notifications.
+    const admin = createAdminClient()
+    const { error } = await admin.from('notifications').insert(rows)
+    if (error) console.error('emitTaskAssignedNotifications insert error:', error)
+  } catch (err) {
+    console.error('emitTaskAssignedNotifications error:', err)
+  }
+}
+
 // Replace the entire cache with the current full task set. Used when the
-// admin/PM (who sees everything) successfully fetches from Notion.
+// admin/PM (who sees everything) successfully fetches from Notion. This is
+// also the only place we emit task_assigned notifications, because admin/PM
+// is the only sync path with a complete view — partial (designer) syncs and
+// per-project syncs would emit phantom notifications for unrelated tasks.
 async function replaceAllTasksInCache(tasks: NotionTask[]): Promise<void> {
   try {
+    // Compute the assignment diff BEFORE writing — we need the prior state.
+    const diffs = await diffAssignments(tasks)
+
     const supabase = createClient()
     if (tasks.length > 0) {
       const rows = tasks.map(taskToCacheRow)
@@ -142,6 +280,10 @@ async function replaceAllTasksInCache(tasks: NotionTask[]): Promise<void> {
       await supabase.from('notion_tasks_cache').delete().neq('id', '__never__')
     }
     await bumpLastSync()
+
+    // Emit notifications AFTER the cache is durable so a notification can't
+    // point to a state that wasn't persisted.
+    await emitTaskAssignedNotifications(diffs)
   } catch (err) {
     console.error('replaceAllTasksInCache error:', err)
   }
