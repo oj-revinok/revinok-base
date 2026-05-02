@@ -724,14 +724,16 @@ function TaskListRow({ task, faded = false, onClick }: { task: NotionTask; faded
     <button
       onClick={onClick}
       style={{
-        // No coloured left border / radius on list rows — the rounded corners
-        // were rendering the colour as little crescent slivers down the page.
-        // Priority is read off the bg tint + status dot + priority pill.
-        display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px',
+        // Rows render flush with no per-row border-radius. The parent group
+        // container already provides the outer rounded shell — adding a 12px
+        // radius to each row stacked them as floating cards with mismatched
+        // curves at every junction (5.5.5 regression). Priority is conveyed
+        // by the bg tint + status dot + priority pill.
+        display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
         width: '100%', textAlign: 'left', background: tint.background, border: 'none',
         borderBottom: `1px solid ${colors.bgSecondary}`, cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif',
-        opacity: faded ? 0.5 : 1, borderRadius: 12,
+        opacity: faded ? 0.5 : 1, borderRadius: 0,
         transition: 'background 0.15s',
       }}
     >

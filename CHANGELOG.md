@@ -6,6 +6,13 @@ Format: each entry includes the date, commit hash, and a summary of changes.
 
 ---
 
+## [2026-05-02] — v5.5.6 (flush list rows)
+
+### Fixed
+- **List rows had a 12px radius on each individual row** which, stacked, looked like floating cards with mismatched curves at every junction. Set `borderRadius: 0` on the row itself — the parent group container already supplies the outer rounded shell, so the rows now flow together as one clean continuous list. Bumped padding to 14px so the higher density still has breathing room.
+
+---
+
 ## [2026-05-02] — v5.5.5 (DUE flag scoped to In progress)
 
 ### Changed
